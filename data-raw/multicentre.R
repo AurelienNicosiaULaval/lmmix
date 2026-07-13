@@ -1,8 +1,8 @@
-# Reproduce Table 5.20 from the source thesis.
+# Reproduce the multilocation example in Milliken and Johnson (2009).
 #
-# Source: Mahsa Mohseni Bonab, "Programmation R et SAS pour modèles
-# linéaires mixtes", Table 5.20, p. 144. The table was transcribed from the
-# locally supplied final manuscript and checked against its rendered PDF page.
+# Source: Milliken, G. A., and Johnson, D. E. (2009), Analysis of Messy Data,
+# Volume 1: Designed Experiments, 2nd ed., Section 28.3. Chapman and Hall/CRC.
+# https://doi.org/10.1201/EBK1584883340
 
 response_matrices <- list(
   "R.1" = rbind(

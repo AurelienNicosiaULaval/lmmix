@@ -14,7 +14,7 @@ expect_absolute_error_below <- function(actual, expected, tolerance = 1e-3) {
   )
 }
 
-test_that("Table 5.20 is transcribed completely", {
+test_that("the multilocation example data are complete", {
   expect_equal(nrow(multicentre), 153L)
   expect_equal(sum(is.na(multicentre$Y)), 28L)
   expect_equal(sum(!is.na(multicentre$Y)), 125L)
@@ -43,7 +43,7 @@ test_that("fixed-effect estimates are reproduced to 1e-3", {
   expect_absolute_error_below(sas_fixed, expected)
 })
 
-test_that("published type III F statistics are reproduced", {
+test_that("stored type III F statistics are reproduced", {
   expect_equal(round(sas_type3$statistic, 2), c(11.43, 59.27, 1.35))
   expect_absolute_error_below(sas_type3$p.value[[3L]], 0.2597)
 })
@@ -133,21 +133,4 @@ test_that("SAS Time 2 minus Time 3 contrast is reproduced to 1e-3", {
   expect_absolute_error_below(comparison$std.error, 0.2056)
   expect_equal(round(comparison$df, 1), 68.6)
   expect_lt(comparison$p.value, 0.0001)
-})
-
-test_that("the Annex B Drug 3 prototype value is traceable", {
-  prototype_contrast <- c(1, 0, 1, 1 / 3, 0, 0, 1 / 3, 0, 1 / 3)
-  prototype_result <- lmmix:::contrast_statistics(
-    sas_fit,
-    prototype_contrast
-  )
-
-  expect_absolute_error_below(prototype_result[["estimate"]], 16.25425)
-  expect_absolute_error_below(prototype_result[["std.error"]], 1.54069)
-  expect_equal(round(prototype_result[["df"]], 2), 3.06)
-  expect_absolute_error_below(
-    sas_drug_means$estimate[[3L]] - prototype_result[["estimate"]],
-    sas_fixed[["Time3"]] / 3,
-    tolerance = 1e-10
-  )
 })

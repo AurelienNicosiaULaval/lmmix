@@ -11,6 +11,31 @@ profiled ML or REML criterion. It supports models that combine random
 effects with correlated residual structures and provides Satterthwaite
 inference.
 }
+\references{
+Patterson, H. D., and Thompson, R. (1971). Recovery of inter-block
+information when block sizes are unequal. \emph{Biometrika}, 58(3), 545-554.
+\url{https://doi.org/10.1093/biomet/58.3.545}
+
+Harville, D. A. (1977). Maximum likelihood approaches to variance component
+estimation and to related problems. \emph{Journal of the American Statistical
+Association}, 72(358), 320-338.
+\url{https://doi.org/10.1080/01621459.1977.10480998}
+
+Satterthwaite, F. E. (1946). An approximate distribution of estimates of
+variance components. \emph{Biometrics Bulletin}, 2(6), 110-114.
+\url{https://doi.org/10.2307/3002019}
+
+Fai, A. H.-T., and Cornelius, P. L. (1996). Approximate F-tests of multiple
+degree of freedom hypotheses in generalized least squares analyses of
+unbalanced split-plot experiments. \emph{Journal of Statistical Computation and
+Simulation}, 54(4), 363-378.
+\url{https://doi.org/10.1080/00949659608811740}
+
+Searle, S. R., Speed, F. M., and Milliken, G. A. (1980). Population marginal
+means in the linear model: An alternative to least squares means.
+\emph{The American Statistician}, 34(4), 216-221.
+\url{https://doi.org/10.1080/00031305.1980.10483031}
+}
 \author{
 \strong{Maintainer}: Package Maintainer \email{maintainer@example.org}
 

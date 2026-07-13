@@ -55,3 +55,16 @@ fit <- lmm(
 )
 summary(fit)
 }
+\references{
+Harville, D. A. (1977). Maximum likelihood approaches to variance component
+estimation and to related problems. \emph{Journal of the American Statistical
+Association}, 72(358), 320-338.
+\url{https://doi.org/10.1080/01621459.1977.10480998}
+
+LaMotte, L. R. (2007). A direct derivation of the REML likelihood function.
+\emph{Statistical Papers}, 48(2), 321-327.
+\url{https://doi.org/10.1007/s00362-006-0335-6}
+
+Pinheiro, J. C., and Bates, D. M. (2000). \emph{Mixed-Effects Models in S and
+S-PLUS}. Springer. \url{https://doi.org/10.1007/b98882}
+}

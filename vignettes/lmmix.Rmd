@@ -1,6 +1,8 @@
 ---
 title: "Getting started with lmmix"
 output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: true
 vignette: >
   %\VignetteIndexEntry{Getting started with lmmix}
   %\VignetteEngine{knitr::rmarkdown}
@@ -19,7 +21,9 @@ Y = X\beta + Zu + \varepsilon,
 V = ZGZ^\mathsf{T} + R,
 \]
 
-by directly optimizing a profiled ML or REML objective.
+by directly optimizing a profiled ML or REML objective. The model formulation
+and covariance decomposition follow standard mixed-model theory
+[@harville1977; @pinheiro2000].
 
 ```{r}
 library(lmmix)
@@ -52,7 +56,8 @@ summary(fit)
 ## Estimated marginal means
 
 Nuisance-factor levels receive equal weights. Numeric covariates not requested
-in `specs` are held at their observed means.
+in `specs` are held at their observed means. This construction targets
+population marginal means in the sense of @searle1980.
 
 ```{r}
 lsmeans(fit, ~Drug)

@@ -8,5 +8,8 @@
 * Added Satterthwaite fixed-effect inference, type III tests, estimated
   marginal means, and pairwise contrasts.
 * Added standard model, broom, and `emmeans` methods.
-* Added the multi-site data from the source thesis and validation tests against
-  its SAS reference tables, `nlme`, and `lmerTest`.
+* Added the multilocation example from Milliken and Johnson (2009, Section
+  28.3) and validation tests against SAS PROC MIXED, `nlme`, `lmerTest`, and
+  `mmrm`.
+* Added primary theoretical references for REML, Satterthwaite inference,
+  multi-degree-of-freedom tests, and estimated marginal means.

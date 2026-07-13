@@ -1,17 +1,14 @@
-# Validation against the source thesis
+# Validation scope and theoretical sources
 
 ## Data provenance
 
-The `multicentre` data reproduce Table 5.20, p. 144, of Mahsa Mohseni
-Bonab's thesis *Programmation R et SAS pour modèles linéaires mixtes*. The
-table was transcribed from the locally supplied final PDF and checked against
-a rendered image of the source page.
+The `multicentre` data reproduce the multilocation repeated-measures example
+in Section 28.3 of Milliken and Johnson (2009). The data contain 153 rows,
+including 28 missing responses, so the reference model uses 125 observations.
 
-The source PDF used for this transcription has SHA-256 checksum
-`14d50797851080f64b7aa46eed230356e4085011c29ab1a9c50d24e152da8148`.
-
-The resulting data contain 153 rows, including 28 missing responses. The model
-therefore uses 125 observations, as reported in Table 5.6.
+Milliken, G. A., and Johnson, D. E. (2009). *Analysis of Messy Data, Volume 1:
+Designed Experiments* (2nd ed.). Chapman and Hall/CRC.
+<https://doi.org/10.1201/EBK1584883340>
 
 ## Reference model
 
@@ -29,30 +26,31 @@ fit <- lmm(
 
 The active tests compare covariance parameters, fixed effects, type III tests,
 LS-means, pairwise differences, and rowwise Satterthwaite degrees of freedom
-with Tables 5.8 to 5.19.
+with stored SAS PROC MIXED benchmarks for this specification. The exact SAS
+statements are given in the validation vignette. PROC MIXED algorithms and
+syntax are documented in the current SAS/STAT User's Guide:
+<https://documentation.sas.com/doc/en/statug/latest/statug_mixed_syntax01.htm>.
 
-## Annex B erratum
+Estimates and standard errors are tested with absolute tolerance `1e-3`.
+Degrees of freedom are compared at the precision stored with the benchmark.
+Overlapping model classes are independently compared with `nlme`, `lmerTest`,
+and `mmrm`.
 
-Annex B reports `16.25425` as the Drug 3 LS-mean. This is not the SAS LS-mean.
-The data-aligned comparison in Table 5.17 gives `17.0516`, and the
-automatically generated LS-mean is `17.05158`. Table 5.11 contains the same
-set of estimates but presents the outer drug and time levels in reverse order.
+## Theoretical foundations
 
-The value `16.25425` comes from the prototype contrast on p. 109. That contrast
-omits one third of the `Time3` main-effect coefficient. Its rows are equivalent
-to:
+The implementation is grounded in the following primary references:
 
-```r
-c(1, 0, 1, 1 / 3, 0, 0, 1 / 3, 0, 1 / 3)
-```
-
-The difference between the correct LS-mean and the prototype value is exactly
-one third of the fitted `Time3` coefficient. A regression test preserves this
-traceability without making the production `lsmeans()` function return an
-incorrect marginal mean.
-
-Some denominator degrees of freedom in Annex B are printed with only one or
-two decimal places. Those values cannot support an absolute `1e-3` comparison.
-The tests compare degrees of freedom at the precision printed in the source,
-while estimates and standard errors are tested with an absolute tolerance of
-`1e-3`.
+* Patterson, H. D., and Thompson, R. (1971), for restricted maximum
+  likelihood. <https://doi.org/10.1093/biomet/58.3.545>
+* Harville, D. A. (1977), for ML and REML variance-component estimation and
+  mixed-model prediction. <https://doi.org/10.1080/01621459.1977.10480998>
+* LaMotte, L. R. (2007), for a direct derivation of the REML likelihood.
+  <https://doi.org/10.1007/s00362-006-0335-6>
+* Satterthwaite, F. E. (1946), for approximate denominator degrees of freedom.
+  <https://doi.org/10.2307/3002019>
+* Fai, A. H.-T., and Cornelius, P. L. (1996), for multi-degree-of-freedom
+  approximate F-tests. <https://doi.org/10.1080/00949659608811740>
+* Searle, S. R., Speed, F. M., and Milliken, G. A. (1980), for population
+  marginal means. <https://doi.org/10.1080/00031305.1980.10483031>
+* Pinheiro, J. C., and Bates, D. M. (2000), for structured covariance models.
+  <https://doi.org/10.1007/b98882>

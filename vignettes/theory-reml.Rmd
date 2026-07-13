@@ -1,6 +1,8 @@
 ---
 title: "ML, REML, and Satterthwaite inference"
 output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: true
 vignette: >
   %\VignetteIndexEntry{ML, REML, and Satterthwaite inference}
   %\VignetteEngine{knitr::rmarkdown}
@@ -18,6 +20,10 @@ For covariance parameters \(\eta\), `lmmix` constructs
 \[
 V(\eta) = ZG(\eta)Z^\mathsf{T} + R(\eta).
 \]
+
+This decomposition and the use of structured residual covariance matrices
+follow the general Gaussian mixed-model framework described by @harville1977
+and @pinheiro2000.
 
 Variances and Cholesky diagonal elements are represented on a log scale.
 AR(1) correlations use the hyperbolic tangent. Compound symmetry uses a
@@ -44,8 +50,9 @@ n\log(2\pi) + \log|V| +
 \]
 
 The REML criterion adds \(\log|X^\mathsf{T}V^{-1}X|\) and replaces \(n\) by
-\(n-p\) in the normalizing constant. Cholesky solves are used instead of
-explicit matrix inverses.
+\(n-p\) in the normalizing constant. REML originates with @patterson1971;
+direct likelihood derivations are given by @harville1977 and @lamotte2007.
+Cholesky solves are used instead of explicit matrix inverses.
 
 ## Satterthwaite degrees of freedom
 
@@ -56,7 +63,8 @@ q(\eta) = L\operatorname{Var}(\widehat\beta)L^\mathsf{T}.
 \]
 
 If \(g = \partial q/\partial\eta\) and \(\widehat\Sigma_\eta\) is the inverse
-observed-information matrix, the implemented approximation is
+observed-information matrix, the implemented approximation is the
+Satterthwaite approximation [@satterthwaite1946]:
 
 \[
 \nu = \frac{2q^2}{g^\mathsf{T}\widehat\Sigma_\eta g}.
@@ -65,7 +73,7 @@ observed-information matrix, the implemented approximation is
 The gradient and likelihood Hessian are calculated with `numDeriv`. For a
 multi-row hypothesis, the covariance of \(L\widehat\beta\) is decomposed into
 orthogonal one-dimensional contrasts and combined with the Fai-Cornelius
-moment-matching formula used by `lmerTest`.
+moment-matching formula [@fai1996].
 
 ## Random effects
 
@@ -75,13 +83,5 @@ After covariance estimation, the empirical BLUP is
 \widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 \]
 
-## References
-
-Satterthwaite, F. E. (1946). An approximate distribution of estimates of
-variance components. *Biometrics Bulletin*, 2(6), 110-114.
-<https://doi.org/10.2307/3002019>
-
-Fai, A. H. T., and Cornelius, P. L. (1996). Approximate F-tests of multiple
-degree of freedom hypotheses in generalized least squares analyses of
-unbalanced split-plot experiments. *Journal of Statistical Computation and
-Simulation*, 54(4), 363-378. <https://doi.org/10.1080/00949659608811740>
+This empirical best linear unbiased predictor follows the mixed-model
+derivation in @harville1977.
