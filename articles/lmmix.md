@@ -200,7 +200,7 @@ anova(fit)
 #> 2 Time           2   68.5     59.3  1.16e-15
 #> 3 Drug:Time      4   68.4      1.35 2.60e- 1
 confint(fit)
-#>                   2.5%      97.5%
+#>               conf.low  conf.high
 #> (Intercept)  7.2059109 16.8988517
 #> Drug2        2.5140873  7.0153244
 #> Drug3        1.6905579  6.1917950
@@ -234,11 +234,11 @@ VarCorr(fit)
 #> 3 Residual ar1         cor          0.935    0.0169
 ranef(fit)
 #> # A tibble: 3 × 2
-#>   Center `(Intercept)`
-#>   <chr>          <dbl>
-#> 1 R              0.901
-#> 2 S              1.55 
-#> 3 T             -2.45
+#>   Center X.Intercept.
+#>   <chr>         <dbl>
+#> 1 R             0.901
+#> 2 S             1.55 
+#> 3 T            -2.45
 ```
 
 For a random-slope model, the random-effect covariance is unstructured.
@@ -343,7 +343,47 @@ random effect. New groups receive a random contribution of zero. Set
 `re.form` to a non-`NULL` value to request fixed-effects-only
 predictions.
 
+## Diagnostic plots
+
+The S3 method [`plot.lmm()`](../reference/lmm-methods.md) returns a
+`ggplot2` object. Three diagnostics are available through `which`:
+standardized residuals against fitted values, a normal Q-Q plot, and
+observed against fitted values.
+
+``` r
+
+plot(fit, which = "residuals")
+plot(fit, which = "qq")
+```
+
+![Residual and normal Q-Q diagnostic
+plots](lmmix_files/figure-html/diagnostic-plots-1.png)![Residual and
+normal Q-Q diagnostic
+plots](lmmix_files/figure-html/diagnostic-plots-2.png)
+
+Because the returned object is a `ggplot`, layers and themes can be
+added in the usual way.
+
+``` r
+
+plot(fit, which = "fitted") +
+  ggplot2::theme_minimal()
+```
+
+![Observed values plotted against fitted
+values](lmmix_files/figure-html/customize-plot-1.png)
+
+For correlated residual structures, the plotted Pearson residuals are
+scaled by their marginal residual standard deviations. They are not
+decorrelated innovations, so residual dependence should also be assessed
+within the repeated-measures groups.
+
 The `generics` methods return tibbles.
+
+All table-returning methods use syntactic dot-separated column names,
+such as `std.error`, `p.value`, `conf.low`, and `conf.high`. Names
+inherited from input data are normalized in the same way when returned
+by `augment()` or [`ranef()`](../reference/ranef.md).
 
 ``` r
 

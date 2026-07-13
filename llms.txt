@@ -33,15 +33,14 @@ devtools::install_local("/path/to/lmmix")
 
 The package contains three complementary vignettes:
 
-- [Using lmmix](articles/lmmix.md)
-  ([source](https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/lmmix.Rmd))
+- [Using lmmix](articles/lmmix.md) ([source](vignettes/lmmix.Rmd))
   presents the fitting workflow and the main methods;
 - [Estimation and inference in lmmix](articles/theory-reml.md)
-  ([source](https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/theory-reml.Rmd))
-  gives the mathematical formulation, covariance parameterizations, ML
-  and REML criteria, and Satterthwaite inference;
-- [Validation strategy and numerical benchmarks](articles/validation.md)
-  ([source](https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/validation.Rmd))
+  ([source](vignettes/theory-reml.Rmd)) gives the mathematical
+  formulation, covariance parameterizations, ML and REML criteria, and
+  Satterthwaite inference;
+- [Validation against independent R implementations and PROC
+  MIXED](articles/validation.md) ([source](vignettes/validation.Rmd))
   documents the independent comparisons, numerical tolerances, and
   validation boundaries.
 
@@ -68,6 +67,7 @@ vignette("validation", package = "lmmix")
 | Marginal means | Equal-weight estimated marginal means and automatic pairwise contrasts |
 | Multiplicity | Any method accepted by [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) for pairwise p-values |
 | Interoperability | `emmeans`, `tidy()`, `glance()`, and `augment()` |
+| Diagnostic plots | [`plot.lmm()`](reference/lmm-methods.md) returns `ggplot2` residual, Q-Q, and fitted-value diagnostics |
 | Not implemented | Kenward-Roger inference, likelihood-ratio model comparison, multiple random-effect terms, generalized responses |
 
 ## Quick start: random center effect and AR(1) residuals
@@ -227,11 +227,11 @@ fixef(fit)
 #>  -0.4735144   0.8233159   0.3342512
 head(ranef(fit))
 #> # A tibble: 3 × 2
-#>   Center `(Intercept)`
-#>   <chr>          <dbl>
-#> 1 R              0.901
-#> 2 S              1.55
-#> 3 T             -2.45
+#>   Center X.Intercept.
+#>   <chr>         <dbl>
+#> 1 R             0.901
+#> 2 S             1.55
+#> 3 T            -2.45
 head(residuals(fit))
 #>          1          4          5          6          7          8
 #>  4.0463233 -0.9536767  0.1252311 -0.3459090 -0.9536767 -2.8747689
@@ -241,6 +241,8 @@ head(predict(fit))
 ```
 
 The `generics` methods return tibbles suitable for downstream analysis.
+Their generated column names are syntactic and dot-separated, including
+`std.error`, `p.value`, `conf.low`, and `conf.high`.
 
 ``` r
 
@@ -273,6 +275,18 @@ head(generics::augment(fit))
 #> 5 R      1     3       1        12    13.0 -0.954    -0.292
 #> 6 R      1     3       2        11    13.9 -2.87     -0.880
 ```
+
+The S3 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method
+returns a `ggplot2` object and supports residual, normal Q-Q, and
+observed-versus-fitted diagnostics.
+
+``` r
+
+plot(fit, which = "residuals")
+```
+
+![Standardized residuals plotted against fitted
+values](reference/figures/README-diagnostic-plot-1.png)
 
 When `emmeans` is installed, the package supplies the fixed-effects
 basis and model-specific denominator degrees of freedom.
@@ -369,6 +383,7 @@ package help and the [theory vignette](articles/theory-reml.md).
   [`nobs(`*`<lmm>`*`)`](lmm-methods.md)
   [`fitted(`*`<lmm>`*`)`](lmm-methods.md)
   [`residuals(`*`<lmm>`*`)`](lmm-methods.md)
+  [`plot(`*`<lmm>`*`)`](lmm-methods.md)
   [`sigma(`*`<lmm>`*`)`](lmm-methods.md)
   [`predict(`*`<lmm>`*`)`](lmm-methods.md)
   [`model.matrix(`*`<lmm>`*`)`](lmm-methods.md)
@@ -417,4 +432,5 @@ package help and the [theory vignette](articles/theory-reml.md).
 
 - [Using lmmix](lmmix.md):
 - [Estimation and inference in lmmix](theory-reml.md):
-- [Validation strategy and numerical benchmarks](validation.md):
+- [Validation against independent R implementations and PROC
+  MIXED](validation.md):

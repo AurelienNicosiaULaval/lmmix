@@ -30,6 +30,7 @@
   [`nobs(`*`<lmm>`*`)`](lmm-methods.md)
   [`fitted(`*`<lmm>`*`)`](lmm-methods.md)
   [`residuals(`*`<lmm>`*`)`](lmm-methods.md)
+  [`plot(`*`<lmm>`*`)`](lmm-methods.md)
   [`sigma(`*`<lmm>`*`)`](lmm-methods.md)
   [`predict(`*`<lmm>`*`)`](lmm-methods.md)
   [`model.matrix(`*`<lmm>`*`)`](lmm-methods.md)

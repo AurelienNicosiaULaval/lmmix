@@ -41,7 +41,7 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="articles/theory-reml.html">Estimation and inference in lmmix</a></li>
-    <li><a class="dropdown-item" href="articles/validation.html">Validation strategy and numerical benchmarks</a></li>
+    <li><a class="dropdown-item" href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -79,11 +79,11 @@
 <p>The package contains three complementary vignettes:</p>
 <ul>
 <li>
-<a href="articles/lmmix.html">Using lmmix</a> (<a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/lmmix.Rmd" class="external-link">source</a>) presents the fitting workflow and the main methods;</li>
+<a href="articles/lmmix.html">Using lmmix</a> (<a href="vignettes/lmmix.Rmd">source</a>) presents the fitting workflow and the main methods;</li>
 <li>
-<a href="articles/theory-reml.html">Estimation and inference in lmmix</a> (<a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/theory-reml.Rmd" class="external-link">source</a>) gives the mathematical formulation, covariance parameterizations, ML and REML criteria, and Satterthwaite inference;</li>
+<a href="articles/theory-reml.html">Estimation and inference in lmmix</a> (<a href="vignettes/theory-reml.Rmd">source</a>) gives the mathematical formulation, covariance parameterizations, ML and REML criteria, and Satterthwaite inference;</li>
 <li>
-<a href="articles/validation.html">Validation strategy and numerical benchmarks</a> (<a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/validation.Rmd" class="external-link">source</a>) documents the independent comparisons, numerical tolerances, and validation boundaries.</li>
+<a href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a> (<a href="vignettes/validation.Rmd">source</a>) documents the independent comparisons, numerical tolerances, and validation boundaries.</li>
 </ul>
 <p>They are also available from an installed package:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -147,6 +147,11 @@
 <td align="left">
 <code>emmeans</code>, <code>tidy()</code>, <code>glance()</code>, and <code>augment()</code>
 </td>
+</tr>
+<tr>
+<td align="left">Diagnostic plots</td>
+<td align="left">
+<code><a href="reference/lmm-methods.html">plot.lmm()</a></code> returns <code>ggplot2</code> residual, Q-Q, and fitted-value diagnostics</td>
 </tr>
 <tr>
 <td align="left">Not implemented</td>
@@ -283,18 +288,18 @@
 <span><span class="co">#&gt;  -0.4735144   0.8233159   0.3342512</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 3 × 2</span></span>
-<span><span class="co">#&gt;   Center `(Intercept)`</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;          &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 R              0.901</span></span>
-<span><span class="co">#&gt; 2 S              1.55</span></span>
-<span><span class="co">#&gt; 3 T             -2.45</span></span>
+<span><span class="co">#&gt;   Center X.Intercept.</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;         &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 R             0.901</span></span>
+<span><span class="co">#&gt; 2 S             1.55</span></span>
+<span><span class="co">#&gt; 3 T            -2.45</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          1          4          5          6          7          8</span></span>
 <span><span class="co">#&gt;  4.0463233 -0.9536767  0.1252311 -0.3459090 -0.9536767 -2.8747689</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        1        4        5        6        7        8</span></span>
 <span><span class="co">#&gt; 12.95368 12.95368 13.87477 15.34591 12.95368 13.87477</span></span></code></pre></div>
-<p>The <code>generics</code> methods return tibbles suitable for downstream analysis.</p>
+<p>The <code>generics</code> methods return tibbles suitable for downstream analysis. Their generated column names are syntactic and dot-separated, including <code>std.error</code>, <code>p.value</code>, <code>conf.low</code>, and <code>conf.high</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 9 × 7</span></span>
@@ -324,8 +329,12 @@
 <span><span class="co">#&gt; 4 R      1     2       3        15    15.3 -0.346    -0.106</span></span>
 <span><span class="co">#&gt; 5 R      1     3       1        12    13.0 -0.954    -0.292</span></span>
 <span><span class="co">#&gt; 6 R      1     3       2        11    13.9 -2.87     -0.880</span></span></code></pre></div>
-<p>When <code>emmeans</code> is installed, the package supplies the fixed-effects basis and model-specific denominator degrees of freedom.</p>
+<p>The S3 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method returns a <code>ggplot2</code> object and supports residual, normal Q-Q, and observed-versus-fitted diagnostics.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"residuals"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-diagnostic-plot-1.png" alt="Standardized residuals plotted against fitted values"></p>
+<p>When <code>emmeans</code> is installed, the package supplies the fixed-effects basis and model-specific denominator degrees of freedom.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emmeans</span><span class="fu">::</span><span class="fu"><a href="https://rvlenth.github.io/emmeans/reference/emmeans.html" class="external-link">emmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
 <span><span class="co">#&gt; NOTE: Results may be misleading due to involvement in interactions</span></span>
 <span><span class="co">#&gt;  Drug emmean   SE   df lower.CL upper.CL</span></span>

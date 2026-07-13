@@ -22,7 +22,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
-    <li><a class="dropdown-item" href="../articles/validation.html">Validation strategy and numerical benchmarks</a></li>
+    <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -46,8 +46,11 @@
 <li>Added random intercepts and slopes with an unstructured covariance matrix.</li>
 <li>Added Satterthwaite fixed-effect inference, type III tests, estimated marginal means, and pairwise contrasts.</li>
 <li>Added standard model, broom, and <code>emmeans</code> methods.</li>
+<li>Added <code><a href="../reference/lmm-methods.html">plot.lmm()</a></code> diagnostics that return <code>ggplot2</code> objects for residual, normal Q-Q, and observed-versus-fitted displays.</li>
+<li>Standardized public table column names to syntactic dot-separated names, including <code>std.error</code>, <code>p.value</code>, <code>conf.low</code>, and <code>conf.high</code>.</li>
 <li>Added the multilocation example from Milliken and Johnson (2009, Section 28.3) and validation tests against SAS PROC MIXED, <code>nlme</code>, <code>lmerTest</code>, and <code>mmrm</code>.</li>
 <li>Added primary theoretical references for REML, Satterthwaite inference, multi-degree-of-freedom tests, and estimated marginal means.</li>
+<li>Expanded the validation vignette with executable comparisons against <code>nlme</code>, <code>mmrm</code>, and <code>lmerTest</code>, plus every stored PROC MIXED target and its observed numerical difference.</li>
 <li>Reworked the README, vignettes, package overview, and method documentation to describe the implemented API, validation evidence, and current limits.</li>
 <li>Added combined-model convergence tests for every residual covariance structure.</li>
 </ul></div>

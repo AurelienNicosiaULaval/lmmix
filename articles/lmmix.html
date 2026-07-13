@@ -37,7 +37,7 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
-    <li><a class="dropdown-item" href="../articles/validation.html">Validation strategy and numerical benchmarks</a></li>
+    <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -276,7 +276,7 @@ methods.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Time           2   68.5     59.3  1.16<span style="color: #949494;">e</span><span style="color: #BB0000;">-15</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Drug:Time      4   68.4      1.35 2.60<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span></span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                   2.5%      97.5%</span></span>
+<span><span class="co">#&gt;               conf.low  conf.high</span></span>
 <span><span class="co">#&gt; (Intercept)  7.2059109 16.8988517</span></span>
 <span><span class="co">#&gt; Drug2        2.5140873  7.0153244</span></span>
 <span><span class="co">#&gt; Drug3        1.6905579  6.1917950</span></span>
@@ -307,11 +307,11 @@ tibble.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Residual ar1         cor          0.935    0.016<span style="text-decoration: underline;">9</span></span></span>
 <span><span class="fu"><a href="../reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
-<span><span class="co">#&gt;   Center `(Intercept)`</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> R              0.901</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> S              1.55 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> T             -<span style="color: #BB0000;">2.45</span></span></span></code></pre></div>
+<span><span class="co">#&gt;   Center X.Intercept.</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> R             0.901</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> S             1.55 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> T            -<span style="color: #BB0000;">2.45</span></span></span></code></pre></div>
 <p>For a random-slope model, the random-effect covariance is
 unstructured. Its variances and correlations appear as separate rows in
 <code><a href="../reference/VarCorr.html">VarCorr()</a></code>.</p>
@@ -397,8 +397,35 @@ fitted values use fixed effects only.</p>
 their fitted random effect. New groups receive a random contribution of
 zero. Set <code>re.form</code> to a non-<code>NULL</code> value to
 request fixed-effects-only predictions.</p>
-<p>The <code>generics</code> methods return tibbles.</p>
+</div>
+<div class="section level2">
+<h2 id="diagnostic-plots">Diagnostic plots<a class="anchor" aria-label="anchor" href="#diagnostic-plots"></a>
+</h2>
+<p>The S3 method <code><a href="../reference/lmm-methods.html">plot.lmm()</a></code> returns a <code>ggplot2</code>
+object. Three diagnostics are available through <code>which</code>:
+standardized residuals against fitted values, a normal Q-Q plot, and
+observed against fitted values.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"residuals"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="lmmix_files/figure-html/diagnostic-plots-1.png" class="r-plt" alt="Residual and normal Q-Q diagnostic plots" width="48%"><img src="lmmix_files/figure-html/diagnostic-plots-2.png" class="r-plt" alt="Residual and normal Q-Q diagnostic plots" width="48%"></p>
+<p>Because the returned object is a <code>ggplot</code>, layers and
+themes can be added in the usual way.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="lmmix_files/figure-html/customize-plot-1.png" class="r-plt" alt="Observed values plotted against fitted values" width="700"></p>
+<p>For correlated residual structures, the plotted Pearson residuals are
+scaled by their marginal residual standard deviations. They are not
+decorrelated innovations, so residual dependence should also be assessed
+within the repeated-measures groups.</p>
+<p>The <code>generics</code> methods return tibbles.</p>
+<p>All table-returning methods use syntactic dot-separated column names,
+such as <code>std.error</code>, <code>p.value</code>,
+<code>conf.low</code>, and <code>conf.high</code>. Names inherited from
+input data are normalized in the same way when returned by
+<code>augment()</code> or <code><a href="../reference/ranef.html">ranef()</a></code>.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 7</span></span></span>
 <span><span class="co">#&gt;   effect term        estimate std.error statistic    df     p.value</span></span>
@@ -433,7 +460,7 @@ request fixed-effects-only predictions.</p>
 </h2>
 <p>The same interface covers marginal, random-effects and combined
 models.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Marginal model with unstructured repeated-measures covariance</span></span>
 <span><span class="va">fit_marginal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>

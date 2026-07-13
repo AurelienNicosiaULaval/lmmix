@@ -38,6 +38,9 @@ fitted(object, type = c("conditional", "marginal"), ...)
 residuals(object, type = c("response", "pearson", "marginal"), ...)
 
 # S3 method for class 'lmm'
+plot(x, which = c("residuals", "qq", "fitted"), ...)
+
+# S3 method for class 'lmm'
 sigma(object, ...)
 
 # S3 method for class 'lmm'
@@ -93,6 +96,11 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
   `"response"`, `"pearson"`, or `"marginal"`. For
   [`anova()`](https://rdrr.io/r/stats/anova.html), only type `3` is
   implemented.
+
+- which:
+
+  Diagnostic plot to draw: standardized residuals against fitted values,
+  a normal quantile-quantile plot, or observed against fitted values.
 
 - newdata:
 

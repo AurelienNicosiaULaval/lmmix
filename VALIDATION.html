@@ -22,7 +22,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="articles/theory-reml.html">Estimation and inference in lmmix</a></li>
-    <li><a class="dropdown-item" href="articles/validation.html">Validation strategy and numerical benchmarks</a></li>
+    <li><a class="dropdown-item" href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -57,14 +57,24 @@
 <th align="left">Tolerance</th>
 </tr></thead><tbody><tr><td align="left">Random-intercept REML</td>
 <td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code></td>
-<td align="left">Fixed effects, covariance parameters, log-likelihood</td>
-<td align="left">
-<code>1e-5</code> or smaller</td>
+<td align="left">Fixed effects and log-likelihood</td>
+<td align="left">absolute <code>1e-6</code>
+</td>
+</tr><tr><td align="left">Random-intercept REML</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code></td>
+<td align="left">Covariance parameters</td>
+<td align="left">absolute <code>1e-4</code>
+</td>
 </tr><tr><td align="left">Random-slope REML</td>
 <td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code></td>
-<td align="left">Fixed effects, random covariance, log-likelihood</td>
-<td align="left">
-<code>1e-4</code> or smaller</td>
+<td align="left">Fixed effects and log-likelihood</td>
+<td align="left">absolute <code>1e-5</code>
+</td>
+</tr><tr><td align="left">Random-slope REML</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code></td>
+<td align="left">Random covariance and residual variance</td>
+<td align="left">absolute <code>1e-4</code>
+</td>
 </tr><tr><td align="left">Random-intercept ML</td>
 <td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code></td>
 <td align="left">Fixed effects and log-likelihood</td>
@@ -75,13 +85,29 @@
 <td align="left"><code>1e-5</code></td>
 </tr><tr><td align="left">Marginal AR(1)</td>
 <td align="left"><code><a href="https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html" class="external-link">mmrm::mmrm()</a></code></td>
-<td align="left">Fixed effects, residual covariance, log-likelihood</td>
-<td align="left"><code>1e-5</code></td>
-</tr><tr><td align="left">Satterthwaite inference</td>
+<td align="left">Fixed effects and log-likelihood</td>
+<td align="left">absolute <code>1e-5</code>
+</td>
+</tr><tr><td align="left">Marginal AR(1)</td>
+<td align="left"><code><a href="https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html" class="external-link">mmrm::mmrm()</a></code></td>
+<td align="left">Residual covariance matrix</td>
+<td align="left">absolute <code>1e-4</code>
+</td>
+</tr><tr><td align="left">Satterthwaite coefficients</td>
 <td align="left"><code><a href="https://rdrr.io/pkg/lmerTest/man/lmer.html" class="external-link">lmerTest::lmer()</a></code></td>
-<td align="left">Coefficient df and type III tests</td>
-<td align="left">
-<code>1e-3</code> or smaller</td>
+<td align="left">Estimates and standard errors</td>
+<td align="left">absolute <code>1e-5</code>
+</td>
+</tr><tr><td align="left">Satterthwaite coefficients</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/lmerTest/man/lmer.html" class="external-link">lmerTest::lmer()</a></code></td>
+<td align="left">Denominator df</td>
+<td align="left">absolute <code>5e-3</code>
+</td>
+</tr><tr><td align="left">Type III Satterthwaite tests</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/lmerTest/man/lmer.html" class="external-link">lmerTest::lmer()</a></code></td>
+<td align="left">Numerator df, denominator df, F statistics</td>
+<td align="left">absolute <code>1e-6</code>, <code>5e-3</code>, and <code>5e-3</code>
+</td>
 </tr></tbody></table><p>The combined-model tests fit <code>id</code>, <code>cs</code>, <code>ar1</code>, <code>toep</code>, and <code>un</code> residual structures together with a random center intercept. Every fit must converge with a positive-definite likelihood Hessian and marginal covariance matrix.</p>
 </div>
 <div class="section level2">
@@ -98,7 +124,7 @@
 <span>  method <span class="op">=</span> <span class="st">"REML"</span>,</span>
 <span>  ddf <span class="op">=</span> <span class="st">"satterthwaite"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The stored PROC MIXED targets correspond to this model specification. The exact PROC MIXED program and numerical tables are included in the validation vignette. The repository does not contain a SAS execution transcript, so these targets are described as regression benchmarks rather than a new independent SAS run. Estimates and standard errors use absolute tolerance <code>1e-3</code>; denominator degrees of freedom are compared at their stored decimal precision.</p>
+<p>The stored PROC MIXED targets correspond to this model specification. The validation vignette includes the executable R comparisons, their observed absolute differences, the exact PROC MIXED program, and every stored numerical target. The repository does not contain a SAS execution transcript, so these targets are described as regression benchmarks rather than a new independent SAS run. Estimates and standard errors use absolute tolerance <code>1e-3</code>; denominator degrees of freedom are compared at their stored decimal precision.</p>
 </div>
 <div class="section level2">
 <h2 id="theoretical-foundations">Theoretical foundations<a class="anchor" aria-label="anchor" href="#theoretical-foundations"></a></h2>

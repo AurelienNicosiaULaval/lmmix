@@ -11,12 +11,20 @@
 - Added Satterthwaite fixed-effect inference, type III tests, estimated
   marginal means, and pairwise contrasts.
 - Added standard model, broom, and `emmeans` methods.
+- Added [`plot.lmm()`](../reference/lmm-methods.md) diagnostics that
+  return `ggplot2` objects for residual, normal Q-Q, and
+  observed-versus-fitted displays.
+- Standardized public table column names to syntactic dot-separated
+  names, including `std.error`, `p.value`, `conf.low`, and `conf.high`.
 - Added the multilocation example from Milliken and Johnson (2009,
   Section 28.3) and validation tests against SAS PROC MIXED, `nlme`,
   `lmerTest`, and `mmrm`.
 - Added primary theoretical references for REML, Satterthwaite
   inference, multi-degree-of-freedom tests, and estimated marginal
   means.
+- Expanded the validation vignette with executable comparisons against
+  `nlme`, `mmrm`, and `lmerTest`, plus every stored PROC MIXED target
+  and its observed numerical difference.
 - Reworked the README, vignettes, package overview, and method
   documentation to describe the implemented API, validation evidence,
   and current limits.
