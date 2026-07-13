@@ -15,25 +15,14 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 
 ## Model scope
 
-`lmmix` fits the Gaussian linear mixed model
+`lmmix` fits Gaussian linear mixed models with random effects, structured
+residual covariance, or both components in the same model. The package
+directly optimizes a profiled ML or REML objective and does not delegate
+estimation to another mixed-model package.
 
-\[
-Y = X\beta + Zu + \varepsilon,
-\qquad
-u \sim N(0, G),
-\qquad
-\varepsilon \sim N(0, R),
-\]
-
-so the marginal covariance is
-
-\[
-V = ZGZ^\mathsf{T} + R.
-\]
-
-The package directly optimizes a profiled ML or REML objective. It does not
-delegate estimation to another mixed-model package. The formulation follows
-the Gaussian mixed-model framework of @harville1977 and @pinheiro2000.
+This vignette focuses on practical use. The mathematical formulation,
+covariance parameterizations, likelihood criteria, and inference derivations
+are presented separately in the vignette *Estimation and inference in lmmix*.
 
 ```{r}
 library(lmmix)
