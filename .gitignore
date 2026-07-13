@@ -5,3 +5,10 @@
 docs/
 lmmix.Rcheck/
 lmmix_*.tar.gz
+* [0-9]*.R
+* [0-9]*.Rmd
+* [0-9]*.md
+* [0-9]*.Rd
+* [0-9]*.bib
+* [0-9]*.yml
+* [0-9]*.yaml
