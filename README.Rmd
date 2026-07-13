@@ -36,9 +36,9 @@ devtools::install("path/to/lmmix")
 
 ## Combined random-effect and residual-correlation model
 
-The included `multicentre` data are simulated. They reproduce the design in
-the development brief, not the original observations used for the SAS
-reference table.
+The included `multicentre` data reproduce Table 5.20 of the source thesis.
+They contain the 153 rows of the multi-site design, including 28 missing
+responses.
 
 ```{r combined-example, eval=FALSE}
 library(lmmix)
@@ -47,7 +47,7 @@ fit <- lmm(
   data = multicentre,
   formula = Y ~ Drug * Time,
   random = ~ 1 | Center,
-  repeated = ~ Time | Center:Subject,
+  repeated = ~ Time | Center:Drug:Subject,
   structure = "ar1",
   method = "REML",
   ddf = "satterthwaite"
@@ -65,7 +65,7 @@ fit <- multicentre |>
   lmm(
     formula = Y ~ Drug * Time,
     random = ~ 1 | Center,
-    repeated = ~ Time | Center:Subject,
+    repeated = ~ Time | Center:Drug:Subject,
     structure = "ar1"
   )
 ```
@@ -87,12 +87,16 @@ Random intercepts and random slopes use an unstructured Cholesky-parameterized
 ## Validation status
 
 Executable tests compare the package with `nlme` for ML, REML, random
-intercepts, random slopes, compound symmetry, and AR(1). Satterthwaite tests
-are compared with `lmerTest` where the models overlap.
+intercepts, random slopes, compound symmetry, and AR(1). A marginal AR(1)
+model is also compared with `mmrm`. Satterthwaite tests are compared with
+`lmerTest` where the models overlap.
 
-The original multi-site observations needed to verify the numerical SAS
-targets were not supplied. Those target tests are included and explicitly
-skipped. They must not be treated as passed until the original data are added.
+The multi-site validation tests compare fitted covariance parameters, fixed
+effects, type III tests, LS-means, pairwise differences, and Satterthwaite
+degrees of freedom with the reference tables in the source thesis.
+The validation vignette documents the data provenance, the published
+precision of the reference values, and an erroneous Drug 3 prototype contrast
+carried into Annex B.
 
 ## References
 

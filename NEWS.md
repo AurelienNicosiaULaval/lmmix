@@ -8,5 +8,5 @@
 * Added Satterthwaite fixed-effect inference, type III tests, estimated
   marginal means, and pairwise contrasts.
 * Added standard model, broom, and `emmeans` methods.
-* Added simulated multi-site example data and validation tests against `nlme`
-  and `lmerTest`.
+* Added the multi-site data from the source thesis and validation tests against
+  its SAS reference tables, `nlme`, and `lmerTest`.

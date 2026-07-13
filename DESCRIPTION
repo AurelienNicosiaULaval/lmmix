@@ -29,6 +29,7 @@ Suggests:
     emmeans,
     knitr,
     lmerTest,
+    mmrm,
     nlme,
     pkgdown,
     rmarkdown,

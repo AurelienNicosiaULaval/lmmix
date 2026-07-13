@@ -6,7 +6,7 @@ test_that("LS-means average nuisance-factor levels equally", {
   expect_equal(nrow(result), 3L)
   expect_equal(
     result$estimate,
-    c(13.973956, 19.710671, 16.900468),
+    c(13.156822, 18.148383, 17.051577),
     tolerance = 1e-3
   )
 })
@@ -20,7 +20,7 @@ test_that("pairwise LS-mean contrasts are automatic", {
   expect_equal(result$contrasts$contrast, c("1 - 2", "1 - 3", "2 - 3"))
   expect_equal(
     result$contrasts$estimate,
-    c(-5.736715, -2.926512, 2.810203),
+    c(-4.991561, -3.894755, 1.096806),
     tolerance = 1e-3
   )
   expect_message(print(result), "Pairwise contrasts")

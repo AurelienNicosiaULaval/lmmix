@@ -14,14 +14,10 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ## Scope of the available data
 
 Annex B describes a three-center, three-drug, three-time design and provides
-selected PROC MIXED outputs. It does not provide the original observation
-table. The package therefore includes `multicentre`, a simulated data set with
-the same design characteristics and several missing responses.
-
-The simulated data cannot validate the numerical SAS targets. Tests for those
-targets are present in `tests/testthat/test-validation-sas.R` and are skipped
-with this reason. They can only be activated after the original observations
-are supplied.
+selected PROC MIXED outputs. The complete observation table was recovered
+from Table 5.20 of the locally supplied final thesis manuscript. The included
+`multicentre` data reproduce its 153 rows and 28 missing responses. The fitted
+model consequently uses 125 complete responses, as reported in Table 5.6.
 
 ## End-to-end model
 
@@ -32,7 +28,7 @@ fit <- lmm(
   data = multicentre,
   formula = Y ~ Drug * Time,
   random = ~ 1 | Center,
-  repeated = ~ Time | Center:Subject,
+  repeated = ~ Time | Center:Drug:Subject,
   structure = "ar1",
   method = "REML",
   ddf = "satterthwaite"
@@ -52,20 +48,55 @@ lsmeans(fit, ~Time)
 lsmeans(fit, pairwise ~ Drug)
 ```
 
-## Targets awaiting original data
+## Reference targets
 
-The following values are transcribed from Annex B and are not results from the
-simulated data.
+The following values follow the SAS column of Table 5.17, which aligns the
+levels with the ascending coding in Table 5.20. Table 5.11 contains the same
+sets of drug and time estimates, but displays the outer levels in reverse
+order. The tests use the data-aligned level labels.
 
 | Quantity | Level or contrast | Estimate | Standard error | df |
 |:--|:--|--:|--:|--:|
-| Drug LS-mean | 1 | 13.156900 | 1.529980 | 2.97 |
-| Drug LS-mean | 2 | 18.148460 | 1.533334 | 3.00 |
-| Drug LS-mean | 3 | 16.254250 | 1.540690 | 3.06 |
-| Time LS-mean | 1 | 14.954420 | 1.397169 | 2.07 |
-| Time LS-mean | 2 | 15.670090 | 1.399488 | 2.09 |
-| Time LS-mean | 3 | 17.732510 | 1.404265 | 2.12 |
-| Drug difference | 1 minus 2 | -4.991562 | 1.099005 | 46.10 |
+| Drug LS-mean | 1 | 13.1568 | 1.5290 | 2.98 |
+| Drug LS-mean | 2 | 18.1484 | 1.5324 | 3.01 |
+| Drug LS-mean | 3 | 17.0516 | 1.5327 | 3.01 |
+| Time LS-mean | 1 | 14.9543 | 1.3961 | 2.08 |
+| Time LS-mean | 2 | 15.6700 | 1.3985 | 2.09 |
+| Time LS-mean | 3 | 17.7324 | 1.4032 | 2.12 |
+| Drug difference | 1 minus 2 | -4.9916 | 1.0990 | 46.1 |
 
-The Annex B two-sided p-value for the last contrast is `4.0e-05`. No tolerance
-claim is made until the original data are available.
+The two-sided p-value for the last contrast is below `0.0001`; the package
+computes `3.998e-05` before rounding.
+
+Table 5.18 supplies the remaining pairwise references. With contrasts oriented
+in ascending level order, they are:
+
+| Factor | Contrast | Estimate | Standard error | df | p-value |
+|:--|:--|--:|--:|--:|--:|
+| Drug | 1 minus 3 | -3.8948 | 1.0987 | 46.1 | 0.0009 |
+| Drug | 2 minus 3 | 1.0968 | 1.1043 | 46.9 | 0.3257 |
+| Time | 1 minus 2 | -0.7157 | 0.1845 | 68.1 | 0.0002 |
+| Time | 1 minus 3 | -2.7781 | 0.2714 | 73.2 | below 0.0001 |
+| Time | 2 minus 3 | -2.0624 | 0.2056 | 68.6 | below 0.0001 |
+
+## Source erratum and numerical precision
+
+Annex B reports `16.25425` for the Drug 3 LS-mean. This is the result of the
+prototype contrast on p. 109, not the SAS LS-mean. That contrast omits one
+third of the `Time3` main-effect coefficient. In the fitted coefficient order,
+the prototype row is
+
+```{r, eval=FALSE}
+c(1, 0, 1, 1 / 3, 0, 0, 1 / 3, 0, 1 / 3)
+```
+
+The automatically constructed Drug 3 LS-mean includes all three time levels
+and gives `17.05158`, agreeing with the SAS value `17.0516`. An executable
+regression test preserves the traceability of the prototype value without
+returning it as a marginal mean.
+
+Some source degrees of freedom are printed with only one or two decimal
+places. Such printed values do not contain enough precision for an absolute
+`1e-3` comparison. Tests therefore compare estimates and standard errors at
+absolute tolerance `1e-3`, and compare degrees of freedom at their published
+precision.

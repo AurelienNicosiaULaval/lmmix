@@ -1,6 +1,10 @@
 test_that("every residual covariance structure is positive definite", {
   for (structure in c("id", "cs", "ar1", "toep", "un")) {
-    repeated <- if (structure == "id") NULL else ~ Time | Center:Subject
+    repeated <- if (structure == "id") {
+      NULL
+    } else {
+      ~ Time | Center:Drug:Subject
+    }
     fit <- lmm(
       multicentre,
       Y ~ Drug * Time,
@@ -50,7 +54,7 @@ test_that("unstructured covariance has occasion-specific variances", {
   fit <- lmm(
     multicentre,
     Y ~ Drug * Time,
-    repeated = ~ Time | Center:Subject,
+    repeated = ~ Time | Center:Drug:Subject,
     structure = "un"
   )
   covariance <- VarCorr(fit)

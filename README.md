@@ -1,16 +1,17 @@
+
 # lmmix
 
-`lmmix` fits Gaussian linear mixed models by explicitly optimizing the ML or
-REML criterion for
+`lmmix` fits Gaussian linear mixed models by explicitly optimizing the
+ML or REML criterion for
 
-\[
+$$
 V = ZGZ^\mathsf{T} + R.
-\]
+$$
 
-The package is designed for models that combine random effects with correlated
-residuals. It provides Satterthwaite denominator degrees of freedom, type III
-tests, estimated marginal means, pairwise contrasts, broom methods, and
-`emmeans` interoperability.
+The package is designed for models that combine random effects with
+correlated residuals. It provides Satterthwaite denominator degrees of
+freedom, type III tests, estimated marginal means, pairwise contrasts,
+broom methods, and `emmeans` interoperability.
 
 The package name is `lmmix`; the main fitting function is `lmm()`.
 
@@ -18,24 +19,24 @@ The package name is `lmmix`; the main fitting function is `lmm()`.
 
 Install the package from a local checkout:
 
-```r
+``` r
 devtools::install("path/to/lmmix")
 ```
 
 ## Combined random-effect and residual-correlation model
 
-The included `multicentre` data are simulated. They reproduce the design in
-the development brief, not the original observations used for the SAS
-reference table.
+The included `multicentre` data reproduce Table 5.20 of the source
+thesis. They contain the 153 rows of the multi-site design, including 28
+missing responses.
 
-```r
+``` r
 library(lmmix)
 
 fit <- lmm(
   data = multicentre,
   formula = Y ~ Drug * Time,
   random = ~ 1 | Center,
-  repeated = ~ Time | Center:Subject,
+  repeated = ~ Time | Center:Drug:Subject,
   structure = "ar1",
   method = "REML",
   ddf = "satterthwaite"
@@ -48,12 +49,12 @@ lsmeans(fit, pairwise ~ Drug)
 
 The data-first interface also works with the base R pipe:
 
-```r
+``` r
 fit <- multicentre |>
   lmm(
     formula = Y ~ Drug * Time,
     random = ~ 1 | Center,
-    repeated = ~ Time | Center:Subject,
+    repeated = ~ Time | Center:Drug:Subject,
     structure = "ar1"
   )
 ```
@@ -62,30 +63,34 @@ fit <- multicentre |>
 
 The residual structures are:
 
-* `id`: homogeneous independent residuals;
-* `cs`: compound symmetry;
-* `ar1`: first-order autoregression, including negative correlation;
-* `toep`: positive-definite Toeplitz covariance parameterized through partial
-  autocorrelations;
-* `un`: unstructured covariance parameterized through a Cholesky factor.
+- `id`: homogeneous independent residuals;
+- `cs`: compound symmetry;
+- `ar1`: first-order autoregression, including negative correlation;
+- `toep`: positive-definite Toeplitz covariance parameterized through
+  partial autocorrelations;
+- `un`: unstructured covariance parameterized through a Cholesky factor.
 
-Random intercepts and random slopes use an unstructured Cholesky-parameterized
-`G` matrix.
+Random intercepts and random slopes use an unstructured
+Cholesky-parameterized `G` matrix.
 
 ## Validation status
 
 Executable tests compare the package with `nlme` for ML, REML, random
-intercepts, random slopes, compound symmetry, and AR(1). Satterthwaite tests
-are compared with `lmerTest` where the models overlap.
+intercepts, random slopes, compound symmetry, and AR(1). A marginal
+AR(1) model is also compared with `mmrm`. Satterthwaite tests are
+compared with `lmerTest` where the models overlap.
 
-The original multi-site observations needed to verify the numerical SAS
-targets were not supplied. Those target tests are included and explicitly
-skipped. They must not be treated as passed until the original data are added.
+The multi-site validation tests compare fitted covariance parameters,
+fixed effects, type III tests, LS-means, pairwise differences, and
+Satterthwaite degrees of freedom with the reference tables in the source
+thesis. The validation vignette documents the data provenance, the
+published precision of the reference values, and an erroneous Drug 3
+prototype contrast carried into Annex B.
 
 ## References
 
-* Satterthwaite, F. E. (1946). An approximate distribution of estimates of
-  variance components. *Biometrics Bulletin*, 2(6), 110-114.
+- Satterthwaite, F. E. (1946). An approximate distribution of estimates
+  of variance components. *Biometrics Bulletin*, 2(6), 110-114.
   <https://doi.org/10.2307/3002019>
-* Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S and
-  S-PLUS*. Springer. <https://doi.org/10.1007/b98882>
+- Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S
+  and S-PLUS*. Springer. <https://doi.org/10.1007/b98882>

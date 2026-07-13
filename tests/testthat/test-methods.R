@@ -90,6 +90,42 @@ test_that("missing responses are removed reproducibly", {
 
   expect_equal(nrow(augmented), sum(!is.na(multicentre$Y)))
   expect_false(anyNA(augmented$Y))
+
+  group_size <- table(
+    interaction(
+      fit$data$Center,
+      fit$data$Drug,
+      fit$data$Subject,
+      drop = TRUE
+    )
+  )
+  expect_gt(length(unique(as.integer(group_size))), 1L)
+})
+
+test_that("small samples produce finite estimates and inference", {
+  small_data <- data.frame(
+    subject = factor(rep(seq_len(6), each = 3)),
+    time = rep(0:2, 6),
+    response = c(
+      1.0, 1.8, 2.7,
+      1.4, 2.1, 3.1,
+      0.7, 1.6, 2.2,
+      1.8, 2.4, 3.6,
+      1.2, 2.0, 2.5,
+      0.9, 1.9, 2.8
+    )
+  )
+  fit <- lmm(
+    small_data,
+    response ~ time,
+    random = ~ 1 | subject
+  )
+  fixed <- generics::tidy(fit)
+
+  expect_identical(fit$convergence$code, 0L)
+  expect_true(all(is.finite(fixed$estimate)))
+  expect_true(all(is.finite(fixed$std.error)))
+  expect_true(all(is.finite(fixed$df)))
 })
 
 test_that("marginal models have no random-effect table", {

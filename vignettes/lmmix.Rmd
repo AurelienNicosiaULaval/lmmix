@@ -35,7 +35,7 @@ fit <- lmm(
   multicentre,
   Y ~ Drug * Time,
   random = ~ 1 | Center,
-  repeated = ~ Time | Center:Subject,
+  repeated = ~ Time | Center:Drug:Subject,
   structure = "ar1"
 )
 
