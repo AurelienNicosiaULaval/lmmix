@@ -77,6 +77,9 @@
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>Z</mi><mi>G</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><msup><mi>Z</mi><mi>𝖳</mi></msup><mo>+</mo><mi>R</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
 V(\eta) = ZG(\eta)Z^\mathsf{T} + R(\eta).
 </annotation></semantics></math></p>
+<p>This decomposition and the use of structured residual covariance
+matrices follow the general Gaussian mixed-model framework described by
+<span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span> and <span class="citation">Pinheiro and Bates (<a href="#ref-pinheiro2000">2000</a>)</span>.</p>
 <p>Variances and Cholesky diagonal elements are represented on a log
 scale. AR(1) correlations use the hyperbolic tangent. Compound symmetry
 uses a scaled logistic transformation that respects its
@@ -107,8 +110,9 @@ and replaces
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
 by
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">n-p</annotation></semantics></math>
-in the normalizing constant. Cholesky solves are used instead of
-explicit matrix inverses.</p>
+in the normalizing constant. REML originates with <span class="citation">Patterson and Thompson (<a href="#ref-patterson1971">1971</a>)</span>; direct likelihood
+derivations are given by <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span> and <span class="citation">LaMotte (<a href="#ref-lamotte2007">2007</a>)</span>.
+Cholesky solves are used instead of explicit matrix inverses.</p>
 </div>
 <div class="section level2">
 <h2 id="satterthwaite-degrees-of-freedom">Satterthwaite degrees of freedom<a class="anchor" aria-label="anchor" href="#satterthwaite-degrees-of-freedom"></a>
@@ -124,7 +128,8 @@ q(\eta) = L\operatorname{Var}(\widehat\beta)L^\mathsf{T}.
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><annotation encoding="application/x-tex">\widehat\Sigma_\eta</annotation></semantics></math>
 is the inverse observed-information matrix, the implemented
-approximation is</p>
+approximation is the Satterthwaite approximation <span class="citation">(<a href="#ref-satterthwaite1946">Satterthwaite
+1946</a>)</span>:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>=</mo><mfrac><mrow><mn>2</mn><msup><mi>q</mi><mn>2</mn></msup></mrow><mrow><msup><mi>g</mi><mi>𝖳</mi></msup><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><mi>g</mi></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \nu = \frac{2q^2}{g^\mathsf{T}\widehat\Sigma_\eta g}.
 </annotation></semantics></math></p>
@@ -132,8 +137,8 @@ approximation is</p>
 <code>numDeriv</code>. For a multi-row hypothesis, the covariance of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover></mrow><annotation encoding="application/x-tex">L\widehat\beta</annotation></semantics></math>
 is decomposed into orthogonal one-dimensional contrasts and combined
-with the Fai-Cornelius moment-matching formula used by
-<code>lmerTest</code>.</p>
+with the Fai-Cornelius moment-matching formula <span class="citation">(<a href="#ref-fai1996">Fai and Cornelius
+1996</a>)</span>.</p>
 </div>
 <div class="section level2">
 <h2 id="random-effects">Random effects<a class="anchor" aria-label="anchor" href="#random-effects"></a>
@@ -142,16 +147,41 @@ with the Fai-Cornelius moment-matching formula used by
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>u</mi><mo accent="true">̂</mo></mover><mo>=</mo><mi>G</mi><msup><mi>Z</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>−</mo><mi>X</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 </annotation></semantics></math></p>
+<p>This empirical best linear unbiased predictor follows the mixed-model
+derivation in <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-fai1996" class="csl-entry">
+Fai, Alex Hrong-Tai, and Paul L. Cornelius. 1996. <span>“Approximate
+f-Tests of Multiple Degree of Freedom Hypotheses in Generalized Least
+Squares Analyses of Unbalanced Split-Plot Experiments.”</span>
+<em>Journal of Statistical Computation and Simulation</em> 54 (4):
+363–78. <a href="https://doi.org/10.1080/00949659608811740" class="external-link">https://doi.org/10.1080/00949659608811740</a>.
 </div>
-<div class="section level2">
-<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h2>
-<p>Satterthwaite, F. E. (1946). An approximate distribution of estimates
-of variance components. <em>Biometrics Bulletin</em>, 2(6), 110-114. <a href="https://doi.org/10.2307/3002019" class="external-link uri">https://doi.org/10.2307/3002019</a></p>
-<p>Fai, A. H. T., and Cornelius, P. L. (1996). Approximate F-tests of
-multiple degree of freedom hypotheses in generalized least squares
-analyses of unbalanced split-plot experiments. <em>Journal of
-Statistical Computation and Simulation</em>, 54(4), 363-378. <a href="https://doi.org/10.1080/00949659608811740" class="external-link uri">https://doi.org/10.1080/00949659608811740</a></p>
+<div id="ref-harville1977" class="csl-entry">
+Harville, David A. 1977. <span>“Maximum Likelihood Approaches to
+Variance Component Estimation and to Related Problems.”</span>
+<em>Journal of the American Statistical Association</em> 72 (358):
+320–38. <a href="https://doi.org/10.1080/01621459.1977.10480998" class="external-link">https://doi.org/10.1080/01621459.1977.10480998</a>.
+</div>
+<div id="ref-lamotte2007" class="csl-entry">
+LaMotte, Lynn R. 2007. <span>“A Direct Derivation of the REML Likelihood
+Function.”</span> <em>Statistical Papers</em> 48 (2): 321–27. <a href="https://doi.org/10.1007/s00362-006-0335-6" class="external-link">https://doi.org/10.1007/s00362-006-0335-6</a>.
+</div>
+<div id="ref-patterson1971" class="csl-entry">
+Patterson, H. D., and R. Thompson. 1971. <span>“Recovery of Inter-Block
+Information When Block Sizes Are Unequal.”</span> <em>Biometrika</em> 58
+(3): 545–54. <a href="https://doi.org/10.1093/biomet/58.3.545" class="external-link">https://doi.org/10.1093/biomet/58.3.545</a>.
+</div>
+<div id="ref-pinheiro2000" class="csl-entry">
+Pinheiro, José C., and Douglas M. Bates. 2000. <em>Mixed-Effects Models
+in s and s-PLUS</em>. Springer. <a href="https://doi.org/10.1007/b98882" class="external-link">https://doi.org/10.1007/b98882</a>.
+</div>
+<div id="ref-satterthwaite1946" class="csl-entry">
+Satterthwaite, F. E. 1946. <span>“An Approximate Distribution of
+Estimates of Variance Components.”</span> <em>Biometrics Bulletin</em> 2
+(6): 110–14. <a href="https://doi.org/10.2307/3002019" class="external-link">https://doi.org/10.2307/3002019</a>.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -74,7 +74,11 @@ Y = X\beta + Zu + \varepsilon,
 \qquad
 V = ZGZ^\mathsf{T} + R,
 </annotation></semantics></math></p>
-<p>by directly optimizing a profiled ML or REML objective.</p>
+<p>by directly optimizing a profiled ML or REML objective. The model
+formulation and covariance decomposition follow standard mixed-model
+theory <span class="citation">(<a href="#ref-harville1977">Harville
+1977</a>; <a href="#ref-pinheiro2000">Pinheiro and Bates
+2000</a>)</span>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">lmmix</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
@@ -144,7 +148,8 @@ covariance parameters, and information criteria.</p>
 <h2 id="estimated-marginal-means">Estimated marginal means<a class="anchor" aria-label="anchor" href="#estimated-marginal-means"></a>
 </h2>
 <p>Nuisance-factor levels receive equal weights. Numeric covariates not
-requested in <code>specs</code> are held at their observed means.</p>
+requested in <code>specs</code> are held at their observed means. This
+construction targets population marginal means in the sense of <span class="citation">Searle et al. (<a href="#ref-searle1980">1980</a>)</span>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 8</span></span></span>
@@ -215,6 +220,23 @@ freedom.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Results are averaged over the levels of: Time </span></span>
 <span><span class="co">#&gt; Confidence level used: 0.95</span></span></code></pre></div>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-harville1977" class="csl-entry">
+Harville, David A. 1977. <span>“Maximum Likelihood Approaches to
+Variance Component Estimation and to Related Problems.”</span>
+<em>Journal of the American Statistical Association</em> 72 (358):
+320–38. <a href="https://doi.org/10.1080/01621459.1977.10480998" class="external-link">https://doi.org/10.1080/01621459.1977.10480998</a>.
+</div>
+<div id="ref-pinheiro2000" class="csl-entry">
+Pinheiro, José C., and Douglas M. Bates. 2000. <em>Mixed-Effects Models
+in s and s-PLUS</em>. Springer. <a href="https://doi.org/10.1007/b98882" class="external-link">https://doi.org/10.1007/b98882</a>.
+</div>
+<div id="ref-searle1980" class="csl-entry">
+Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. <span>“Population
+Marginal Means in the Linear Model: An Alternative to Least Squares
+Means.”</span> <em>The American Statistician</em> 34 (4): 216–21. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link">https://doi.org/10.1080/00031305.1980.10483031</a>.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -8,7 +8,10 @@ Y = X\beta + Zu + \varepsilon,
 V = ZGZ^\mathsf{T} + R,
 ```
 
-by directly optimizing a profiled ML or REML objective.
+by directly optimizing a profiled ML or REML objective. The model
+formulation and covariance decomposition follow standard mixed-model
+theory ([Harville 1977](#ref-harville1977); [Pinheiro and Bates
+2000](#ref-pinheiro2000)).
 
 ``` r
 
@@ -87,7 +90,9 @@ summary(fit)
 ## Estimated marginal means
 
 Nuisance-factor levels receive equal weights. Numeric covariates not
-requested in `specs` are held at their observed means.
+requested in `specs` are held at their observed means. This construction
+targets population marginal means in the sense of Searle et al.
+([1980](#ref-searle1980)).
 
 ``` r
 
@@ -165,3 +170,16 @@ emmeans::emmeans(fit, ~Drug)
 #> Results are averaged over the levels of: Time 
 #> Confidence level used: 0.95
 ```
+
+Harville, David A. 1977. “Maximum Likelihood Approaches to Variance
+Component Estimation and to Related Problems.” *Journal of the American
+Statistical Association* 72 (358): 320–38.
+<https://doi.org/10.1080/01621459.1977.10480998>.
+
+Pinheiro, José C., and Douglas M. Bates. 2000. *Mixed-Effects Models in
+s and s-PLUS*. Springer. <https://doi.org/10.1007/b98882>.
+
+Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. “Population
+Marginal Means in the Linear Model: An Alternative to Least Squares
+Means.” *The American Statistician* 34 (4): 216–21.
+<https://doi.org/10.1080/00031305.1980.10483031>.

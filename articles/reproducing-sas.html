@@ -71,12 +71,12 @@
 <div class="section level2">
 <h2 id="scope-of-the-available-data">Scope of the available data<a class="anchor" aria-label="anchor" href="#scope-of-the-available-data"></a>
 </h2>
-<p>Annex B describes a three-center, three-drug, three-time design and
-provides selected PROC MIXED outputs. The complete observation table was
-recovered from Table 5.20 of the locally supplied final thesis
-manuscript. The included <code>multicentre</code> data reproduce its 153
-rows and 28 missing responses. The fitted model consequently uses 125
-complete responses, as reported in Table 5.6.</p>
+<p>The <code>multicentre</code> data reproduce the multilocation
+repeated-measures example described by <span class="citation">Milliken
+and Johnson (<a href="#ref-milliken2009">2009</a>)</span> in Section
+28.3. The design has three centers, three drugs, three measurement
+times, and 153 rows. There are 28 missing responses, so the fitted model
+uses 125 complete responses.</p>
 </div>
 <div class="section level2">
 <h2 id="end-to-end-model">End-to-end model<a class="anchor" aria-label="anchor" href="#end-to-end-model"></a>
@@ -152,13 +152,21 @@ without hand-written contrast rows.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2 - 3        1.10      1.10  46.9     0.993 0.326        -<span style="color: #BB0000;">1.12</span>      3.32</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="reference-targets">Reference targets<a class="anchor" aria-label="anchor" href="#reference-targets"></a>
+<h2 id="proc-mixed-benchmark">PROC MIXED benchmark<a class="anchor" aria-label="anchor" href="#proc-mixed-benchmark"></a>
 </h2>
-<p>The following values follow the SAS column of Table 5.17, which
-aligns the levels with the ascending coding in Table 5.20. Table 5.11
-contains the same sets of drug and time estimates, but displays the
-outer levels in reverse order. The tests use the data-aligned level
-labels.</p>
+<p>The stored reference values correspond to the following PROC MIXED
+specification. The RANDOM and REPEATED statements represent the two
+covariance sources, and <code>DDFM=SATTERTHWAITE</code> requests
+row-specific denominator degrees of freedom as documented by <span class="citation">SAS Institute Inc. (<a href="#ref-sas2026">2026</a>)</span>.</p>
+<pre class="sas"><code>proc mixed data=multicentre method=reml;
+  class Center Drug Subject Time;
+  model Y = Drug Time Drug*Time / ddfm=satterth solution;
+  random Center;
+  repeated Time / type=ar(1) subject=Subject(Center*Drug);
+  lsmeans Drug Time / diff;
+run;</code></pre>
+<p>The stored SAS reference values, with levels oriented in ascending
+data order, are:</p>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Quantity</th>
@@ -222,8 +230,7 @@ labels.</p>
 <p>The two-sided p-value for the last contrast is below
 <code>0.0001</code>; the package computes <code>3.998e-05</code> before
 rounding.</p>
-<p>Table 5.18 supplies the remaining pairwise references. With contrasts
-oriented in ascending level order, they are:</p>
+<p>The remaining pairwise references are:</p>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Factor</th>
@@ -278,24 +285,24 @@ oriented in ascending level order, they are:</p>
 </table>
 </div>
 <div class="section level2">
-<h2 id="source-erratum-and-numerical-precision">Source erratum and numerical precision<a class="anchor" aria-label="anchor" href="#source-erratum-and-numerical-precision"></a>
+<h2 id="numerical-precision">Numerical precision<a class="anchor" aria-label="anchor" href="#numerical-precision"></a>
 </h2>
-<p>Annex B reports <code>16.25425</code> for the Drug 3 LS-mean. This is
-the result of the prototype contrast on p. 109, not the SAS LS-mean.
-That contrast omits one third of the <code>Time3</code> main-effect
-coefficient. In the fitted coefficient order, the prototype row is</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span> <span class="op">/</span> <span class="fl">3</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span> <span class="op">/</span> <span class="fl">3</span>, <span class="fl">0</span>, <span class="fl">1</span> <span class="op">/</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p>The automatically constructed Drug 3 LS-mean includes all three time
-levels and gives <code>17.05158</code>, agreeing with the SAS value
-<code>17.0516</code>. An executable regression test preserves the
-traceability of the prototype value without returning it as a marginal
-mean.</p>
-<p>Some source degrees of freedom are printed with only one or two
-decimal places. Such printed values do not contain enough precision for
-an absolute <code>1e-3</code> comparison. Tests therefore compare
-estimates and standard errors at absolute tolerance <code>1e-3</code>,
-and compare degrees of freedom at their published precision.</p>
+<p>The benchmark degrees of freedom are retained at the precision shown
+by PROC MIXED. Tests compare estimates and standard errors with absolute
+tolerance <code>1e-3</code>, and degrees of freedom at the displayed
+precision. The implementation is also checked against <code>nlme</code>,
+<code>lmerTest</code>, and <code>mmrm</code> in model classes where
+those packages overlap with <code>lmmix</code>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-milliken2009" class="csl-entry">
+Milliken, George A., and Dallas E. Johnson. 2009. <em>Analysis of Messy
+Data, Volume 1: Designed Experiments</em>. 2nd ed. Chapman; Hall/CRC. <a href="https://doi.org/10.1201/EBK1584883340" class="external-link">https://doi.org/10.1201/EBK1584883340</a>.
+</div>
+<div id="ref-sas2026" class="csl-entry">
+SAS Institute Inc. 2026. <em>SAS/STAT User’s Guide: The MIXED
+Procedure</em>. <a href="https://documentation.sas.com/doc/en/statug/latest/statug_mixed_syntax01.htm" class="external-link">https://documentation.sas.com/doc/en/statug/latest/statug_mixed_syntax01.htm</a>.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

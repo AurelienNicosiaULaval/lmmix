@@ -2,12 +2,11 @@
 
 ## Scope of the available data
 
-Annex B describes a three-center, three-drug, three-time design and
-provides selected PROC MIXED outputs. The complete observation table was
-recovered from Table 5.20 of the locally supplied final thesis
-manuscript. The included `multicentre` data reproduce its 153 rows and
-28 missing responses. The fitted model consequently uses 125 complete
-responses, as reported in Table 5.6.
+The `multicentre` data reproduce the multilocation repeated-measures
+example described by Milliken and Johnson ([2009](#ref-milliken2009)) in
+Section 28.3. The design has three centers, three drugs, three
+measurement times, and 153 rows. There are 28 missing responses, so the
+fitted model uses 125 complete responses.
 
 ## End-to-end model
 
@@ -87,12 +86,26 @@ lsmeans(fit, pairwise ~ Drug)
 #> 3 2 - 3        1.10      1.10  46.9     0.993 0.326        -1.12      3.32
 ```
 
-## Reference targets
+## PROC MIXED benchmark
 
-The following values follow the SAS column of Table 5.17, which aligns
-the levels with the ascending coding in Table 5.20. Table 5.11 contains
-the same sets of drug and time estimates, but displays the outer levels
-in reverse order. The tests use the data-aligned level labels.
+The stored reference values correspond to the following PROC MIXED
+specification. The RANDOM and REPEATED statements represent the two
+covariance sources, and `DDFM=SATTERTHWAITE` requests row-specific
+denominator degrees of freedom as documented by SAS Institute Inc.
+([2026](#ref-sas2026)).
+
+``` sas
+proc mixed data=multicentre method=reml;
+  class Center Drug Subject Time;
+  model Y = Drug Time Drug*Time / ddfm=satterth solution;
+  random Center;
+  repeated Time / type=ar(1) subject=Subject(Center*Drug);
+  lsmeans Drug Time / diff;
+run;
+```
+
+The stored SAS reference values, with levels oriented in ascending data
+order, are:
 
 | Quantity        | Level or contrast | Estimate | Standard error |   df |
 |:----------------|:------------------|---------:|---------------:|-----:|
@@ -107,8 +120,7 @@ in reverse order. The tests use the data-aligned level labels.
 The two-sided p-value for the last contrast is below `0.0001`; the
 package computes `3.998e-05` before rounding.
 
-Table 5.18 supplies the remaining pairwise references. With contrasts
-oriented in ascending level order, they are:
+The remaining pairwise references are:
 
 | Factor | Contrast  | Estimate | Standard error |   df |      p-value |
 |:-------|:----------|---------:|---------------:|-----:|-------------:|
@@ -118,25 +130,17 @@ oriented in ascending level order, they are:
 | Time   | 1 minus 3 |  -2.7781 |         0.2714 | 73.2 | below 0.0001 |
 | Time   | 2 minus 3 |  -2.0624 |         0.2056 | 68.6 | below 0.0001 |
 
-## Source erratum and numerical precision
+## Numerical precision
 
-Annex B reports `16.25425` for the Drug 3 LS-mean. This is the result of
-the prototype contrast on p. 109, not the SAS LS-mean. That contrast
-omits one third of the `Time3` main-effect coefficient. In the fitted
-coefficient order, the prototype row is
+The benchmark degrees of freedom are retained at the precision shown by
+PROC MIXED. Tests compare estimates and standard errors with absolute
+tolerance `1e-3`, and degrees of freedom at the displayed precision. The
+implementation is also checked against `nlme`, `lmerTest`, and `mmrm` in
+model classes where those packages overlap with `lmmix`.
 
-``` r
+Milliken, George A., and Dallas E. Johnson. 2009. *Analysis of Messy
+Data, Volume 1: Designed Experiments*. 2nd ed. Chapman; Hall/CRC.
+<https://doi.org/10.1201/EBK1584883340>.
 
-c(1, 0, 1, 1 / 3, 0, 0, 1 / 3, 0, 1 / 3)
-```
-
-The automatically constructed Drug 3 LS-mean includes all three time
-levels and gives `17.05158`, agreeing with the SAS value `17.0516`. An
-executable regression test preserves the traceability of the prototype
-value without returning it as a marginal mean.
-
-Some source degrees of freedom are printed with only one or two decimal
-places. Such printed values do not contain enough precision for an
-absolute `1e-3` comparison. Tests therefore compare estimates and
-standard errors at absolute tolerance `1e-3`, and compare degrees of
-freedom at their published precision.
+SAS Institute Inc. 2026. *SAS/STAT User’s Guide: The MIXED Procedure*.
+<https://documentation.sas.com/doc/en/statug/latest/statug_mixed_syntax01.htm>.

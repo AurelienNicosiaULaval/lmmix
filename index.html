@@ -76,7 +76,7 @@ V = ZGZ^\mathsf{T} + R.
 <div class="section level2">
 <h2 id="combined-random-effect-and-residual-correlation-model">Combined random-effect and residual-correlation model<a class="anchor" aria-label="anchor" href="#combined-random-effect-and-residual-correlation-model"></a>
 </h2>
-<p>The included <code>multicentre</code> data reproduce Table 5.20 of the source thesis. They contain the 153 rows of the multi-site design, including 28 missing responses.</p>
+<p>The included <code>multicentre</code> data reproduce the multilocation repeated-measures example of Milliken and Johnson (2009, Section 28.3). They contain 153 rows, including 28 missing responses.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">lmmix</span><span class="op">)</span></span>
 <span></span>
@@ -125,15 +125,27 @@ V = ZGZ^\mathsf{T} + R.
 <h2 id="validation-status">Validation status<a class="anchor" aria-label="anchor" href="#validation-status"></a>
 </h2>
 <p>Executable tests compare the package with <code>nlme</code> for ML, REML, random intercepts, random slopes, compound symmetry, and AR(1). A marginal AR(1) model is also compared with <code>mmrm</code>. Satterthwaite tests are compared with <code>lmerTest</code> where the models overlap.</p>
-<p>The multi-site validation tests compare fitted covariance parameters, fixed effects, type III tests, LS-means, pairwise differences, and Satterthwaite degrees of freedom with the reference tables in the source thesis. The validation vignette documents the data provenance, the published precision of the reference values, and an erroneous Drug 3 prototype contrast carried into Annex B.</p>
+<p>The multilocation validation tests compare fitted covariance parameters, fixed effects, type III tests, LS-means, pairwise differences, and Satterthwaite degrees of freedom with stored SAS PROC MIXED benchmarks for the same model specification. The <a href="VALIDATION.html">validation note</a> documents the theoretical sources, model specification, and numerical tolerances.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <ul>
+<li>Patterson, H. D., and Thompson, R. (1971). Recovery of inter-block information when block sizes are unequal. <em>Biometrika</em>, 58(3), 545-554. <a href="https://doi.org/10.1093/biomet/58.3.545" class="external-link uri">https://doi.org/10.1093/biomet/58.3.545</a>
+</li>
+<li>Harville, D. A. (1977). Maximum likelihood approaches to variance component estimation and to related problems. <em>Journal of the American Statistical Association</em>, 72(358), 320-338. <a href="https://doi.org/10.1080/01621459.1977.10480998" class="external-link uri">https://doi.org/10.1080/01621459.1977.10480998</a>
+</li>
+<li>LaMotte, L. R. (2007). A direct derivation of the REML likelihood function. <em>Statistical Papers</em>, 48(2), 321-327. <a href="https://doi.org/10.1007/s00362-006-0335-6" class="external-link uri">https://doi.org/10.1007/s00362-006-0335-6</a>
+</li>
 <li>Satterthwaite, F. E. (1946). An approximate distribution of estimates of variance components. <em>Biometrics Bulletin</em>, 2(6), 110-114. <a href="https://doi.org/10.2307/3002019" class="external-link uri">https://doi.org/10.2307/3002019</a>
 </li>
+<li>Fai, A. H.-T., and Cornelius, P. L. (1996). Approximate F-tests of multiple degree of freedom hypotheses in generalized least squares analyses of unbalanced split-plot experiments. <em>Journal of Statistical Computation and Simulation</em>, 54(4), 363-378. <a href="https://doi.org/10.1080/00949659608811740" class="external-link uri">https://doi.org/10.1080/00949659608811740</a>
+</li>
+<li>Searle, S. R., Speed, F. M., and Milliken, G. A. (1980). Population marginal means in the linear model: An alternative to least squares means. <em>The American Statistician</em>, 34(4), 216-221. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link uri">https://doi.org/10.1080/00031305.1980.10483031</a>
+</li>
 <li>Pinheiro, J. C., and Bates, D. M. (2000). <em>Mixed-Effects Models in S and S-PLUS</em>. Springer. <a href="https://doi.org/10.1007/b98882" class="external-link uri">https://doi.org/10.1007/b98882</a>
+</li>
+<li>Milliken, G. A., and Johnson, D. E. (2009). <em>Analysis of Messy Data, Volume 1: Designed Experiments</em> (2nd ed.), Section 28.3. Chapman and Hall/CRC. <a href="https://doi.org/10.1201/EBK1584883340" class="external-link uri">https://doi.org/10.1201/EBK1584883340</a>
 </li>
 </ul>
 </div>

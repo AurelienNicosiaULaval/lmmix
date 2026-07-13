@@ -26,9 +26,9 @@ devtools::install("path/to/lmmix")
 
 ## Combined random-effect and residual-correlation model
 
-The included `multicentre` data reproduce Table 5.20 of the source
-thesis. They contain the 153 rows of the multi-site design, including 28
-missing responses.
+The included `multicentre` data reproduce the multilocation
+repeated-measures example of Milliken and Johnson (2009, Section 28.3).
+They contain 153 rows, including 28 missing responses.
 
 ``` r
 
@@ -83,17 +83,39 @@ intercepts, random slopes, compound symmetry, and AR(1). A marginal
 AR(1) model is also compared with `mmrm`. Satterthwaite tests are
 compared with `lmerTest` where the models overlap.
 
-The multi-site validation tests compare fitted covariance parameters,
+The multilocation validation tests compare fitted covariance parameters,
 fixed effects, type III tests, LS-means, pairwise differences, and
-Satterthwaite degrees of freedom with the reference tables in the source
-thesis. The validation vignette documents the data provenance, the
-published precision of the reference values, and an erroneous Drug 3
-prototype contrast carried into Annex B.
+Satterthwaite degrees of freedom with stored SAS PROC MIXED benchmarks
+for the same model specification. The [validation note](VALIDATION.md)
+documents the theoretical sources, model specification, and numerical
+tolerances.
 
 ## References
 
+- Patterson, H. D., and Thompson, R. (1971). Recovery of inter-block
+  information when block sizes are unequal. *Biometrika*, 58(3),
+  545-554. <https://doi.org/10.1093/biomet/58.3.545>
+- Harville, D. A. (1977). Maximum likelihood approaches to variance
+  component estimation and to related problems. *Journal of the American
+  Statistical Association*, 72(358), 320-338.
+  <https://doi.org/10.1080/01621459.1977.10480998>
+- LaMotte, L. R. (2007). A direct derivation of the REML likelihood
+  function. *Statistical Papers*, 48(2), 321-327.
+  <https://doi.org/10.1007/s00362-006-0335-6>
 - Satterthwaite, F. E. (1946). An approximate distribution of estimates
   of variance components. *Biometrics Bulletin*, 2(6), 110-114.
   <https://doi.org/10.2307/3002019>
+- Fai, A. H.-T., and Cornelius, P. L. (1996). Approximate F-tests of
+  multiple degree of freedom hypotheses in generalized least squares
+  analyses of unbalanced split-plot experiments. *Journal of Statistical
+  Computation and Simulation*, 54(4), 363-378.
+  <https://doi.org/10.1080/00949659608811740>
+- Searle, S. R., Speed, F. M., and Milliken, G. A. (1980). Population
+  marginal means in the linear model: An alternative to least squares
+  means. *The American Statistician*, 34(4), 216-221.
+  <https://doi.org/10.1080/00031305.1980.10483031>
 - Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S
   and S-PLUS*. Springer. <https://doi.org/10.1007/b98882>
+- Milliken, G. A., and Johnson, D. E. (2009). *Analysis of Messy Data,
+  Volume 1: Designed Experiments* (2nd ed.), Section 28.3. Chapman and
+  Hall/CRC. <https://doi.org/10.1201/EBK1584883340>

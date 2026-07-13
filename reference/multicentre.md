@@ -1,8 +1,8 @@
 # Multi-site repeated-measures experiment
 
 An unbalanced experiment with three drugs in three centers and three
-repeated measurement times. The data reproduce Table 5.20 of the source
-thesis and include the missing responses shown in that table.
+repeated measurement times. This is the multilocation repeated-measures
+example described by Milliken and Johnson (2009, Section 28.3).
 
 ## Usage
 
@@ -36,5 +36,6 @@ A data frame with 153 rows and 5 variables:
 
 ## Source
 
-Mahsa Mohseni Bonab, *Programmation R et SAS pour modèles linéaires
-mixtes*, Table 5.20, p. 144, locally supplied final manuscript.
+Milliken, G. A., and Johnson, D. E. (2009). *Analysis of Messy Data,
+Volume 1: Designed Experiments* (2nd ed.), Section 28.3. Chapman and
+Hall/CRC. <https://doi.org/10.1201/EBK1584883340>
