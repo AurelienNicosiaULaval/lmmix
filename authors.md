@@ -2,16 +2,16 @@
 
 ## Authors
 
-- **Package Maintainer**. Author, maintainer.
+- **Aurélien Nicosia**. Author, maintainer.
 
 ## Citation
 
-Maintainer P (2026). *lmmix: Linear Mixed Models with Correlated
+Nicosia A (2026). *lmmix: Linear Mixed Models with Correlated
 Residuals*. R package version 0.1.0.
 
     @Manual{,
       title = {lmmix: Linear Mixed Models with Correlated Residuals},
-      author = {Package Maintainer},
+      author = {Aurélien Nicosia},
       year = {2026},
       note = {R package version 0.1.0},
     }

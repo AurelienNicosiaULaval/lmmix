@@ -18,6 +18,29 @@
 
   Summarize an `lmm` fit
 
+## Model methods
+
+- [`print(`*`<lmm>`*`)`](lmm-methods.md)
+  [`coef(`*`<lmm>`*`)`](lmm-methods.md)
+  [`vcov(`*`<lmm>`*`)`](lmm-methods.md)
+  [`logLik(`*`<lmm>`*`)`](lmm-methods.md)
+  [`AIC(`*`<lmm>`*`)`](lmm-methods.md)
+  [`BIC(`*`<lmm>`*`)`](lmm-methods.md)
+  [`deviance(`*`<lmm>`*`)`](lmm-methods.md)
+  [`nobs(`*`<lmm>`*`)`](lmm-methods.md)
+  [`fitted(`*`<lmm>`*`)`](lmm-methods.md)
+  [`residuals(`*`<lmm>`*`)`](lmm-methods.md)
+  [`sigma(`*`<lmm>`*`)`](lmm-methods.md)
+  [`predict(`*`<lmm>`*`)`](lmm-methods.md)
+  [`model.matrix(`*`<lmm>`*`)`](lmm-methods.md)
+  [`model.frame(`*`<lmm>`*`)`](lmm-methods.md)
+  [`formula(`*`<lmm>`*`)`](lmm-methods.md)
+  [`terms(`*`<lmm>`*`)`](lmm-methods.md)
+  [`anova(`*`<lmm>`*`)`](lmm-methods.md)
+  [`confint(`*`<lmm>`*`)`](lmm-methods.md) :
+
+  Standard methods for `lmm` fits
+
 ## Extractors
 
 - [`fixef()`](fixef.md) : Extract fixed effects

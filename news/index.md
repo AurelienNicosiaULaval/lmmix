@@ -17,3 +17,8 @@
 - Added primary theoretical references for REML, Satterthwaite
   inference, multi-degree-of-freedom tests, and estimated marginal
   means.
+- Reworked the README, vignettes, package overview, and method
+  documentation to describe the implemented API, validation evidence,
+  and current limits.
+- Added combined-model convergence tests for every residual covariance
+  structure.

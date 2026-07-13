@@ -21,8 +21,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
-    <li><a class="dropdown-item" href="../articles/theory-reml.html">ML, REML, and Satterthwaite inference</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-sas.html">Multi-site PROC MIXED validation workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/validation.html">Validation strategy and numerical benchmarks</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -84,6 +84,22 @@
 
         </dt>
         <dd>Summarize an <code>lmm</code> fit</dd>
+      </dl></div><div class="section level2">
+      <h2 id="model-methods">Model methods<a class="anchor" aria-label="anchor" href="#model-methods"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="lmm-methods.html">print(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">coef(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">vcov(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">logLik(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">AIC(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">BIC(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">deviance(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">nobs(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">fitted(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">residuals(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">sigma(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">predict(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">model.matrix(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">model.frame(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">formula(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">terms(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">anova(<i>&lt;lmm&gt;</i>)</a></code> <code><a href="lmm-methods.html">confint(<i>&lt;lmm&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Standard methods for <code>lmm</code> fits</dd>
       </dl></div><div class="section level2">
       <h2 id="extractors">Extractors<a class="anchor" aria-label="anchor" href="#extractors"></a></h2>
 
@@ -182,7 +198,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Package Maintainer.</p>
+  <p>Developed by Aurélien Nicosia.</p>
 </div>
 
 <div class="pkgdown-footer-right">

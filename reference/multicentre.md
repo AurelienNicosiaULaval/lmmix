@@ -38,4 +38,5 @@ A data frame with 153 rows and 5 variables:
 
 Milliken, G. A., and Johnson, D. E. (2009). *Analysis of Messy Data,
 Volume 1: Designed Experiments* (2nd ed.), Section 28.3. Chapman and
-Hall/CRC. <https://doi.org/10.1201/EBK1584883340>
+Hall/CRC.
+[doi:10.1201/EBK1584883340](https://doi.org/10.1201/EBK1584883340)

@@ -1,34 +1,62 @@
 # lmmix
 
 `lmmix` fits Gaussian linear mixed models by explicitly optimizing the
-ML or REML criterion for
+ML or REML criterion. Its main use case is a model that contains both
+random effects and a structured residual covariance:
 
 ``` math
+Y = X\beta + Zu + \varepsilon,
+\qquad
 V = ZGZ^\mathsf{T} + R.
 ```
 
-The package is designed for models that combine random effects with
-correlated residuals. It provides Satterthwaite denominator degrees of
-freedom, type III tests, estimated marginal means, pairwise contrasts,
-broom methods, and `emmeans` interoperability.
+The package estimates the covariance parameters, fixed effects and
+empirical BLUPs in one fitted object. It also provides Satterthwaite
+inference, type III tests, estimated marginal means, pairwise contrasts,
+standard model methods, `broom` methods and `emmeans` interoperability.
 
-The package name is `lmmix`; the main fitting function is
-[`lmm()`](reference/lmm.md).
+The package is under active development. The table below distinguishes
+current functionality from features that are not implemented.
 
 ## Installation
 
-Install the package from a local checkout:
+The repository is private. Clone it with the configured GitHub SSH key,
+then install the local checkout:
+
+``` sh
+git clone git@github.com:AurelienNicosiaULaval/lmmix.git
+R CMD INSTALL lmmix
+```
+
+From an existing checkout, installation from R is also possible:
 
 ``` r
 
-devtools::install("path/to/lmmix")
+devtools::install_local("/path/to/lmmix")
 ```
 
-## Combined random-effect and residual-correlation model
+## Current capability matrix
 
-The included `multicentre` data reproduce the multilocation
-repeated-measures example of Milliken and Johnson (2009, Section 28.3).
-They contain 153 rows, including 28 missing responses.
+| Component | Current behavior |
+|:---|:---|
+| Response | Univariate continuous Gaussian response |
+| Estimation | Explicit profiled ML and REML optimization |
+| Random effects | No random effect, random intercept, or correlated random slopes for one grouping formula |
+| Residual covariance | `id`, `cs`, `ar1`, `toep`, and `un` |
+| Combined covariance | Random effects and any supported residual structure in the same model |
+| Denominator degrees of freedom | Satterthwaite or residual |
+| Fixed-effect tests | Coefficient tests and type III tests |
+| Marginal means | Equal-weight estimated marginal means and automatic pairwise contrasts |
+| Multiplicity | Any method accepted by [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) for pairwise p-values |
+| Interoperability | `emmeans`, `tidy()`, `glance()`, and `augment()` |
+| Not implemented | Kenward-Roger inference, likelihood-ratio model comparison, multiple random-effect terms, generalized responses |
+
+## Quick start: random center effect and AR(1) residuals
+
+The included `multicentre` data are a three-center repeated-measures
+example with three treatments and three measurement occasions. The data
+contain 153 rows, including 28 missing responses. Their source is
+Milliken and Johnson (2009, Section 28.3).
 
 ``` r
 
@@ -44,81 +72,251 @@ fit <- lmm(
   ddf = "satterthwaite"
 )
 
-summary(fit)
-anova(fit)
-lsmeans(fit, pairwise ~ Drug)
+fit
+#> Linear mixed model fit by REML
+#> Formula: `Y ~ Drug * Time`
+#> Random: `~1 | Center`
+#> Repeated: `~Time | Center:Drug:Subject` (AR1)
+#> Log-likelihood: -245.313
+#> Convergence code: 0
 ```
 
-The data-first interface also works with the base R pipe:
+[`lmm()`](reference/lmm.md) uses complete cases across every variable
+required by the fixed, random and repeated formulas. The fitted object
+therefore records 125 observations for this example.
 
 ``` r
 
-fit <- multicentre |>
-  lmm(
-    formula = Y ~ Drug * Time,
-    random = ~ 1 | Center,
-    repeated = ~ Time | Center:Drug:Subject,
-    structure = "ar1"
-  )
+nobs(fit)
+#> [1] 125
+anova(fit)
+#> Type III tests with satterthwaite degrees of freedom
+#> # A tibble: 3 × 5
+#>   term      num.df den.df statistic  p.value
+#>   <chr>      <dbl>  <dbl>     <dbl>    <dbl>
+#> 1 Drug           2   46.4     11.4  9.23e- 5
+#> 2 Time           2   68.5     59.3  1.16e-15
+#> 3 Drug:Time      4   68.4      1.35 2.60e- 1
+VarCorr(fit)
+#> # A tibble: 3 × 5
+#>   group    term        component estimate std.error
+#>   <chr>    <chr>       <chr>        <dbl>     <dbl>
+#> 1 Center   (Intercept) var          5.17     5.73
+#> 2 Residual ar1         var         10.7      2.14
+#> 3 Residual ar1         cor          0.935    0.0169
 ```
 
-## Supported covariance structures
+Estimated marginal means and their pairwise differences are generated
+from the fixed-effects reference grid. No contrast rows need to be
+written by hand.
 
-The residual structures are:
+``` r
 
-- `id`: homogeneous independent residuals;
-- `cs`: compound symmetry;
-- `ar1`: first-order autoregression, including negative correlation;
-- `toep`: positive-definite Toeplitz covariance parameterized through
-  partial autocorrelations;
-- `un`: unstructured covariance parameterized through a Cholesky factor.
+lsmeans(fit, ~Drug)
+#> # A tibble: 3 × 8
+#>   Drug  estimate std.error    df statistic p.value conf.low conf.high
+#>   <fct>    <dbl>     <dbl> <dbl>     <dbl>   <dbl>    <dbl>     <dbl>
+#> 1 1         13.2      1.53  2.98      8.60 0.00339     8.27      18.0
+#> 2 2         18.1      1.53  3.01     11.8  0.00128    13.3       23.0
+#> 3 3         17.1      1.53  3.01     11.1  0.00154    12.2       21.9
+lsmeans(fit, pairwise ~ Drug, adjust = "holm")
+#>
+#> ── Estimated marginal means ──
+#>
+#> # A tibble: 3 × 8
+#>   Drug  estimate std.error    df statistic p.value conf.low conf.high
+#>   <fct>    <dbl>     <dbl> <dbl>     <dbl>   <dbl>    <dbl>     <dbl>
+#> 1 1         13.2      1.53  2.98      8.60 0.00339     8.27      18.0
+#> 2 2         18.1      1.53  3.01     11.8  0.00128    13.3       23.0
+#> 3 3         17.1      1.53  3.01     11.1  0.00154    12.2       21.9
+#> ── Pairwise contrasts ──
+#> # A tibble: 3 × 8
+#>   contrast estimate std.error    df statistic  p.value conf.low conf.high
+#>   <chr>       <dbl>     <dbl> <dbl>     <dbl>    <dbl>    <dbl>     <dbl>
+#> 1 1 - 2       -4.99      1.10  46.1    -4.54  0.000120    -7.20     -2.78
+#> 2 1 - 3       -3.89      1.10  46.1    -3.54  0.00183     -6.11     -1.68
+#> 3 2 - 3        1.10      1.10  46.9     0.993 0.326       -1.12      3.32
+```
 
-Random intercepts and random slopes use an unstructured
-Cholesky-parameterized `G` matrix.
+The convergence code and Hessian diagnostic should be checked before
+interpreting inference.
 
-## Validation status
+``` r
 
-Executable tests compare the package with `nlme` for ML, REML, random
-intercepts, random slopes, compound symmetry, and AR(1). A marginal
-AR(1) model is also compared with `mmrm`. Satterthwaite tests are
-compared with `lmerTest` where the models overlap.
+fit$convergence[c(
+  "code",
+  "optimizer",
+  "hessian_positive_definite"
+)]
+#> $code
+#> [1] 0
+#>
+#> $optimizer
+#> [1] "nlminb"
+#>
+#> $hessian_positive_definite
+#> [1] TRUE
+```
 
-The multilocation validation tests compare fitted covariance parameters,
-fixed effects, type III tests, LS-means, pairwise differences, and
-Satterthwaite degrees of freedom with stored SAS PROC MIXED benchmarks
-for the same model specification. The [validation note](VALIDATION.md)
-documents the theoretical sources, model specification, and numerical
-tolerances.
+## Three supported model families
 
-## References
+The same function covers three model families.
 
-- Patterson, H. D., and Thompson, R. (1971). Recovery of inter-block
-  information when block sizes are unequal. *Biometrika*, 58(3),
-  545-554. <https://doi.org/10.1093/biomet/58.3.545>
-- Harville, D. A. (1977). Maximum likelihood approaches to variance
-  component estimation and to related problems. *Journal of the American
-  Statistical Association*, 72(358), 320-338.
-  <https://doi.org/10.1080/01621459.1977.10480998>
-- LaMotte, L. R. (2007). A direct derivation of the REML likelihood
-  function. *Statistical Papers*, 48(2), 321-327.
-  <https://doi.org/10.1007/s00362-006-0335-6>
-- Satterthwaite, F. E. (1946). An approximate distribution of estimates
-  of variance components. *Biometrics Bulletin*, 2(6), 110-114.
-  <https://doi.org/10.2307/3002019>
-- Fai, A. H.-T., and Cornelius, P. L. (1996). Approximate F-tests of
-  multiple degree of freedom hypotheses in generalized least squares
-  analyses of unbalanced split-plot experiments. *Journal of Statistical
-  Computation and Simulation*, 54(4), 363-378.
-  <https://doi.org/10.1080/00949659608811740>
-- Searle, S. R., Speed, F. M., and Milliken, G. A. (1980). Population
-  marginal means in the linear model: An alternative to least squares
-  means. *The American Statistician*, 34(4), 216-221.
-  <https://doi.org/10.1080/00031305.1980.10483031>
-- Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S
-  and S-PLUS*. Springer. <https://doi.org/10.1007/b98882>
-- Milliken, G. A., and Johnson, D. E. (2009). *Analysis of Messy Data,
-  Volume 1: Designed Experiments* (2nd ed.), Section 28.3. Chapman and
-  Hall/CRC. <https://doi.org/10.1201/EBK1584883340>
+``` r
+
+# Marginal repeated-measures model
+marginal_fit <- lmm(
+  data,
+  response ~ treatment * time,
+  repeated = ~ time | subject,
+  structure = "un"
+)
+
+# Random-effects model with independent residuals
+random_fit <- lmm(
+  data,
+  response ~ treatment + time,
+  random = ~ 1 + time | subject,
+  structure = "id"
+)
+
+# Combined random-effect and correlated-residual model
+combined_fit <- lmm(
+  data,
+  response ~ treatment * time,
+  random = ~ 1 | center,
+  repeated = ~ time | center:subject,
+  structure = "ar1"
+)
+```
+
+For `cs`, `ar1`, `toep`, or `un`, `repeated` must identify one ordering
+variable and one grouping expression. Each repeated-measures group may
+contain at most one observation at a given ordering value.
+
+## Working with a fitted model
+
+Standard methods return fixed effects, random effects, covariance
+components, predictions, residuals and information criteria.
+
+``` r
+
+fixef(fit)
+#> (Intercept)       Drug2       Drug3       Time2       Time3 Drug2:Time2
+#>  12.0523806   4.7647059   3.9411765   0.9210922   2.3922323  -0.1427492
+#> Drug3:Time2 Drug2:Time3 Drug3:Time3
+#>  -0.4735144   0.8233159   0.3342512
+head(ranef(fit))
+#> # A tibble: 3 × 2
+#>   Center `(Intercept)`
+#>   <chr>          <dbl>
+#> 1 R              0.901
+#> 2 S              1.55
+#> 3 T             -2.45
+head(residuals(fit))
+#>          1          4          5          6          7          8
+#>  4.0463233 -0.9536767  0.1252311 -0.3459090 -0.9536767 -2.8747689
+head(predict(fit))
+#>        1        4        5        6        7        8
+#> 12.95368 12.95368 13.87477 15.34591 12.95368 13.87477
+```
+
+The `generics` methods return tibbles suitable for downstream analysis.
+
+``` r
+
+generics::tidy(fit)
+#> # A tibble: 9 × 7
+#>   effect term        estimate std.error statistic    df     p.value
+#>   <chr>  <chr>          <dbl>     <dbl>     <dbl> <dbl>       <dbl>
+#> 1 fixed  (Intercept)   12.1       1.54      7.83   3.06 0.00405
+#> 2 fixed  Drug2          4.76      1.12      4.25  49.8  0.0000928
+#> 3 fixed  Drug3          3.94      1.12      3.52  49.8  0.000939
+#> 4 fixed  Time2          0.921     0.294     3.13  67.5  0.00255
+#> 5 fixed  Time3          2.39      0.441     5.42  72.1  0.000000750
+#> 6 fixed  Drug2:Time2   -0.143     0.438    -0.326 67.9  0.746
+#> 7 fixed  Drug3:Time2   -0.474     0.448    -1.06  68.0  0.294
+#> 8 fixed  Drug2:Time3    0.823     0.666     1.24  72.7  0.221
+#> 9 fixed  Drug3:Time3    0.334     0.644     0.519 73.1  0.605
+generics::glance(fit)
+#> # A tibble: 1 × 8
+#>   logLik   AIC   BIC deviance    df  nobs convergence method
+#>    <dbl> <dbl> <dbl>    <dbl> <int> <int>       <int> <chr>
+#> 1  -245.  515.  549.     491.    12   125           0 REML
+head(generics::augment(fit))
+#> # A tibble: 6 × 8
+#>   Center Drug  Subject Time      Y .fitted .resid .std.resid
+#>   <fct>  <fct> <fct>   <fct> <dbl>   <dbl>  <dbl>      <dbl>
+#> 1 R      1     1       1        17    13.0  4.05      1.24
+#> 2 R      1     2       1        12    13.0 -0.954    -0.292
+#> 3 R      1     2       2        14    13.9  0.125     0.0383
+#> 4 R      1     2       3        15    15.3 -0.346    -0.106
+#> 5 R      1     3       1        12    13.0 -0.954    -0.292
+#> 6 R      1     3       2        11    13.9 -2.87     -0.880
+```
+
+When `emmeans` is installed, the package supplies the fixed-effects
+basis and model-specific denominator degrees of freedom.
+
+``` r
+
+emmeans::emmeans(fit, ~Drug)
+#> NOTE: Results may be misleading due to involvement in interactions
+#>  Drug emmean   SE   df lower.CL upper.CL
+#>  1      13.2 1.53 2.98     8.27     18.0
+#>  2      18.1 1.53 3.01    13.28     23.0
+#>  3      17.1 1.53 3.01    12.18     21.9
+#>
+#> Results are averaged over the levels of: Time
+#> Confidence level used: 0.95
+```
+
+## Validation
+
+The test suite separates numerical agreement from general software
+tests.
+
+| Model component | External comparison | Quantities checked |
+|:---|:---|:---|
+| Random intercept and random slope | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html) | Fixed effects, covariance parameters, log-likelihood |
+| Marginal CS and AR(1) | [`nlme::gls()`](https://rdrr.io/pkg/nlme/man/gls.html) | Fixed effects, covariance parameters, log-likelihood |
+| Marginal AR(1) | [`mmrm::mmrm()`](https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html) | Fixed effects, residual covariance, log-likelihood |
+| Satterthwaite inference | [`lmerTest::lmer()`](https://rdrr.io/pkg/lmerTest/man/lmer.html) | Coefficient degrees of freedom and type III tests |
+| Combined random center and AR(1) | Stored PROC MIXED targets | Covariance parameters, fixed effects, type III tests and marginal means |
+
+The package also tests positive definiteness and convergence for every
+supported residual structure in a combined model. See `VALIDATION.md`
+and the validation vignette for model specifications, tolerances and
+limitations.
+
+## Current limitations
+
+The following limitations are part of the current `0.1.0` interface:
+
+- `ddf = "kenward-roger"` is rejected because Kenward-Roger inference is
+  not implemented.
+- [`anova()`](https://rdrr.io/r/stats/anova.html) provides type III
+  tests for one fitted model. It does not compare nested fitted models.
+- Only one random-effects formula is accepted. Multiple crossed
+  random-effect terms are not implemented.
+- The implementation constructs a dense marginal covariance matrix. It
+  is intended for small and moderate data sets, not large-scale sparse
+  problems.
+- Missing observations are removed by complete-case analysis over all
+  model variables.
+- Pairwise multiplicity adjustments modify p-values. The reported
+  confidence intervals remain pointwise intervals.
+- New random-effect groups receive a random contribution of zero in
+  conditional prediction.
+
+## Theoretical sources
+
+The REML implementation follows Patterson and Thompson (1971), Harville
+(1977), and LaMotte (2007). Satterthwaite inference follows
+Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai
+and Cornelius (1996). Estimated marginal means follow Searle, Speed, and
+Milliken (1980). Full citations and DOI links are included in the
+package help and vignettes.
 
 # Package index
 
@@ -139,6 +337,29 @@ tolerances.
 - [`summary(`*`<lmm>`*`)`](summary.lmm.md) :
 
   Summarize an `lmm` fit
+
+## Model methods
+
+- [`print(`*`<lmm>`*`)`](lmm-methods.md)
+  [`coef(`*`<lmm>`*`)`](lmm-methods.md)
+  [`vcov(`*`<lmm>`*`)`](lmm-methods.md)
+  [`logLik(`*`<lmm>`*`)`](lmm-methods.md)
+  [`AIC(`*`<lmm>`*`)`](lmm-methods.md)
+  [`BIC(`*`<lmm>`*`)`](lmm-methods.md)
+  [`deviance(`*`<lmm>`*`)`](lmm-methods.md)
+  [`nobs(`*`<lmm>`*`)`](lmm-methods.md)
+  [`fitted(`*`<lmm>`*`)`](lmm-methods.md)
+  [`residuals(`*`<lmm>`*`)`](lmm-methods.md)
+  [`sigma(`*`<lmm>`*`)`](lmm-methods.md)
+  [`predict(`*`<lmm>`*`)`](lmm-methods.md)
+  [`model.matrix(`*`<lmm>`*`)`](lmm-methods.md)
+  [`model.frame(`*`<lmm>`*`)`](lmm-methods.md)
+  [`formula(`*`<lmm>`*`)`](lmm-methods.md)
+  [`terms(`*`<lmm>`*`)`](lmm-methods.md)
+  [`anova(`*`<lmm>`*`)`](lmm-methods.md)
+  [`confint(`*`<lmm>`*`)`](lmm-methods.md) :
+
+  Standard methods for `lmm` fits
 
 ## Extractors
 
@@ -175,6 +396,6 @@ tolerances.
 
 ### Guides
 
-- [Getting started with lmmix](lmmix.md):
-- [ML, REML, and Satterthwaite inference](theory-reml.md):
-- [Multi-site PROC MIXED validation workflow](reproducing-sas.md):
+- [Using lmmix](lmmix.md):
+- [Estimation and inference in lmmix](theory-reml.md):
+- [Validation strategy and numerical benchmarks](validation.md):

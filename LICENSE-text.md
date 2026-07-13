@@ -1,4 +1,4 @@
 # License
 
     YEAR: 2026
-    COPYRIGHT HOLDER: lmmix authors
+    COPYRIGHT HOLDER: Aurélien Nicosia

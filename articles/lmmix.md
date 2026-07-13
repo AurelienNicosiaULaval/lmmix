@@ -1,36 +1,74 @@
-# Getting started with lmmix
+# Using lmmix
 
-`lmmix` fits the Gaussian model
+## Model scope
+
+`lmmix` fits the Gaussian linear mixed model
 
 ``` math
 Y = X\beta + Zu + \varepsilon,
 \qquad
-V = ZGZ^\mathsf{T} + R,
+u \sim N(0, G),
+\qquad
+\varepsilon \sim N(0, R),
 ```
 
-by directly optimizing a profiled ML or REML objective. The model
-formulation and covariance decomposition follow standard mixed-model
-theory ([Harville 1977](#ref-harville1977); [Pinheiro and Bates
-2000](#ref-pinheiro2000)).
+so the marginal covariance is
+
+``` math
+V = ZGZ^\mathsf{T} + R.
+```
+
+The package directly optimizes a profiled ML or REML objective. It does
+not delegate estimation to another mixed-model package. The formulation
+follows the Gaussian mixed-model framework of Harville
+([1977](#ref-harville1977)) and Pinheiro and Bates
+([2000](#ref-pinheiro2000)).
 
 ``` r
 
 library(lmmix)
 ```
 
-## A model with two covariance sources
+## Prepare the data
 
-The example data contain a random center effect and repeated
-observations within subjects.
+The included `multicentre` data have three treatments, three measurement
+occasions, three centers and subjects nested within center and
+treatment.
+
+``` r
+
+str(multicentre)
+#> 'data.frame':    153 obs. of  5 variables:
+#>  $ Center : Factor w/ 3 levels "R","S","T": 1 1 1 1 1 1 1 1 1 1 ...
+#>  $ Drug   : Factor w/ 3 levels "1","2","3": 1 1 1 1 1 1 1 1 1 1 ...
+#>  $ Subject: Factor w/ 8 levels "1","2","3","4",..: 1 1 1 2 2 2 3 3 3 4 ...
+#>  $ Time   : Factor w/ 3 levels "1","2","3": 1 2 3 1 2 3 1 2 3 1 ...
+#>  $ Y      : num  17 NA NA 12 14 15 12 11 14 13 ...
+colSums(is.na(multicentre))
+#>  Center    Drug Subject    Time       Y 
+#>       0       0       0       0      28
+```
+
+The fixed, random and repeated formulas jointly determine the variables
+used by the analysis. [`lmm()`](../reference/lmm.md) removes rows that
+are incomplete for any of those variables and stores the retained data
+in the fitted object.
+
+## Fit a combined covariance model
+
+This model contains a random center intercept and an AR(1) residual
+covariance within subject.
 
 ``` r
 
 fit <- lmm(
-  multicentre,
-  Y ~ Drug * Time,
+  data = multicentre,
+  formula = Y ~ Drug * Time,
   random = ~ 1 | Center,
   repeated = ~ Time | Center:Drug:Subject,
-  structure = "ar1"
+  structure = "ar1",
+  method = "REML",
+  ddf = "satterthwaite"
 )
 
 fit
@@ -42,8 +80,56 @@ fit
 #> Convergence code: 0
 ```
 
-The summary contains coefficient-level tests, type III tests, covariance
-parameters, and information criteria.
+The three formulas have distinct roles:
+
+| Argument | Role in the fitted model |
+|:---|:---|
+| `formula` | Defines the response and fixed-effects matrix `X` |
+| `random` | Defines the random-effects matrix `Z` and grouping factor for `G` |
+| `repeated` | Defines the ordering variable and independent blocks for `R` |
+
+For the residual structures other than `id`, each repeated-measures
+group must have at most one observation per ordering value.
+
+## Inspect convergence before inference
+
+The optimizer code and Hessian diagnostic are part of the fitted object.
+
+``` r
+
+fit$convergence[c(
+  "code",
+  "message",
+  "optimizer",
+  "iterations",
+  "hessian_positive_definite"
+)]
+#> $code
+#> [1] 0
+#> 
+#> $message
+#> [1] "relative convergence (4)"
+#> 
+#> $optimizer
+#> [1] "nlminb"
+#> 
+#> $iterations
+#> [1] 13
+#> 
+#> $hessian_positive_definite
+#> [1] TRUE
+```
+
+A nonzero convergence code or a non-positive-definite likelihood Hessian
+requires investigation before interpreting standard errors or
+denominator degrees of freedom. The fitting function emits a warning in
+either case.
+
+## Fixed effects and type III tests
+
+[`summary()`](https://rdrr.io/r/base/summary.html) combines
+coefficient-level inference, type III tests, covariance parameters and
+information criteria.
 
 ``` r
 
@@ -87,12 +173,96 @@ summary(fit)
 #> -245.3129  514.6257  548.5655  490.6257
 ```
 
+Individual components are also available through standard methods.
+
+``` r
+
+fixef(fit)
+#> (Intercept)       Drug2       Drug3       Time2       Time3 Drug2:Time2 
+#>  12.0523813   4.7647059   3.9411765   0.9210921   2.3922321  -0.1427492 
+#> Drug3:Time2 Drug2:Time3 Drug3:Time3 
+#>  -0.4735142   0.8233159   0.3342516
+vcov(fit)
+#>             (Intercept)       Drug2       Drug3       Time2       Time3
+#> (Intercept)  2.36770789 -0.62765704 -0.62765704 -0.04061944 -0.07860349
+#> Drug2       -0.62765704  1.25531407  0.62765704  0.04072244  0.07880281
+#> Drug3       -0.62765704  0.62765704  1.25531407  0.04072244  0.07880281
+#> Time2       -0.04061944  0.04072244  0.04072244  0.08637707  0.08342200
+#> Time3       -0.07860349  0.07880281  0.07880281  0.08342200  0.19477318
+#> Drug2:Time2  0.03995755 -0.08144488 -0.04072244 -0.08637954 -0.08342678
+#> Drug3:Time2  0.04056091 -0.04072244 -0.08144488 -0.08639642 -0.08345945
+#> Drug2:Time3  0.07663525 -0.15760561 -0.07880281 -0.08341364 -0.19475700
+#> Drug3:Time3  0.07849022 -0.07880281 -0.15760561 -0.08345945 -0.19484566
+#>             Drug2:Time2 Drug3:Time2 Drug2:Time3 Drug3:Time3
+#> (Intercept)  0.03995755  0.04056091  0.07663525  0.07849022
+#> Drug2       -0.08144488 -0.04072244 -0.15760561 -0.07880281
+#> Drug3       -0.04072244 -0.08144488 -0.07880281 -0.15760561
+#> Time2       -0.08637954 -0.08639642 -0.08341364 -0.08345945
+#> Time3       -0.08342678 -0.08345945 -0.19475700 -0.19484566
+#> Drug2:Time2  0.19210287  0.08639556  0.18498607  0.08345780
+#> Drug3:Time2  0.08639556  0.20075228  0.08339410  0.19311444
+#> Drug2:Time3  0.18498607  0.08339410  0.44392008  0.19471919
+#> Drug3:Time3  0.08345780  0.19311444  0.19471919  0.41428424
+anova(fit)
+#> Type III tests with satterthwaite degrees of freedom
+#> # A tibble: 3 × 5
+#>   term      num.df den.df statistic  p.value
+#>   <chr>      <dbl>  <dbl>     <dbl>    <dbl>
+#> 1 Drug           2   46.4     11.4  9.23e- 5
+#> 2 Time           2   68.5     59.3  1.16e-15
+#> 3 Drug:Time      4   68.4      1.35 2.60e- 1
+confint(fit)
+#>                   2.5%      97.5%
+#> (Intercept)  7.2059109 16.8988517
+#> Drug2        2.5140873  7.0153244
+#> Drug3        1.6905579  6.1917950
+#> Time2        0.3345435  1.5076408
+#> Time3        1.5124810  3.2719833
+#> Drug2:Time2 -1.0173805  0.7318821
+#> Drug3:Time2 -1.3675896  0.4205612
+#> Drug2:Time3 -0.5046493  2.1512811
+#> Drug3:Time3 -0.9485017  1.6170050
+```
+
+[`anova()`](https://rdrr.io/r/stats/anova.html) currently performs type
+III fixed-effect tests for one model. It does not compare nested models.
+Satterthwaite and residual denominator degrees of freedom are
+implemented. Kenward-Roger inference is not implemented.
+
+## Covariance parameters and random effects
+
+[`VarCorr()`](../reference/VarCorr.md) returns the estimated covariance
+components on their natural scale. [`ranef()`](../reference/ranef.md)
+returns empirical BLUPs as a tibble.
+
+``` r
+
+VarCorr(fit)
+#> # A tibble: 3 × 5
+#>   group    term        component estimate std.error
+#>   <chr>    <chr>       <chr>        <dbl>     <dbl>
+#> 1 Center   (Intercept) var          5.17     5.73  
+#> 2 Residual ar1         var         10.7      2.14  
+#> 3 Residual ar1         cor          0.935    0.0169
+ranef(fit)
+#> # A tibble: 3 × 2
+#>   Center `(Intercept)`
+#>   <chr>          <dbl>
+#> 1 R              0.901
+#> 2 S              1.55 
+#> 3 T             -2.45
+```
+
+For a random-slope model, the random-effect covariance is unstructured.
+Its variances and correlations appear as separate rows in
+[`VarCorr()`](../reference/VarCorr.md).
+
 ## Estimated marginal means
 
-Nuisance-factor levels receive equal weights. Numeric covariates not
-requested in `specs` are held at their observed means. This construction
-targets population marginal means in the sense of Searle et al.
-([1980](#ref-searle1980)).
+Marginal means use equal weights over nuisance-factor levels. Numeric
+covariates not requested in `specs` are held at their observed means.
+This construction targets population marginal means in the sense of
+Searle et al. ([1980](#ref-searle1980)).
 
 ``` r
 
@@ -103,7 +273,25 @@ lsmeans(fit, ~Drug)
 #> 1 1         13.2      1.53  2.98      8.60 0.00339     8.27      18.0
 #> 2 2         18.1      1.53  3.01     11.8  0.00128    13.3       23.0
 #> 3 3         17.1      1.53  3.01     11.1  0.00154    12.2       21.9
-lsmeans(fit, pairwise ~ Drug)
+lsmeans(fit, ~Time)
+#> # A tibble: 3 × 8
+#>   Time  estimate std.error    df statistic p.value conf.low conf.high
+#>   <fct>    <dbl>     <dbl> <dbl>     <dbl>   <dbl>    <dbl>     <dbl>
+#> 1 1         15.0      1.40  2.08      10.7 0.00753     9.16      20.8
+#> 2 2         15.7      1.40  2.09      11.2 0.00670     9.90      21.4
+#> 3 3         17.7      1.40  2.12      12.6 0.00495    12.0       23.5
+```
+
+Pairwise contrast matrices are generated automatically. The `adjust`
+argument is passed to
+[`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) and
+therefore adjusts pairwise p-values. The confidence intervals remain
+pointwise.
+
+``` r
+
+lsmeans(fit, pairwise ~ Drug, adjust = "holm")
+#> 
 #> ── Estimated marginal means ──
 #> 
 #> # A tibble: 3 × 8
@@ -114,14 +302,60 @@ lsmeans(fit, pairwise ~ Drug)
 #> 3 3         17.1      1.53  3.01     11.1  0.00154    12.2       21.9
 #> ── Pairwise contrasts ──
 #> # A tibble: 3 × 8
-#>   contrast estimate std.error    df statistic   p.value conf.low conf.high
-#>   <chr>       <dbl>     <dbl> <dbl>     <dbl>     <dbl>    <dbl>     <dbl>
-#> 1 1 - 2       -4.99      1.10  46.1    -4.54  0.0000400    -7.20     -2.78
-#> 2 1 - 3       -3.89      1.10  46.1    -3.54  0.000914     -6.11     -1.68
-#> 3 2 - 3        1.10      1.10  46.9     0.993 0.326        -1.12      3.32
+#>   contrast estimate std.error    df statistic  p.value conf.low conf.high
+#>   <chr>       <dbl>     <dbl> <dbl>     <dbl>    <dbl>    <dbl>     <dbl>
+#> 1 1 - 2       -4.99      1.10  46.1    -4.54  0.000120    -7.20     -2.78
+#> 2 1 - 3       -3.89      1.10  46.1    -3.54  0.00183     -6.11     -1.68
+#> 3 2 - 3        1.10      1.10  46.9     0.993 0.326       -1.12      3.32
 ```
 
-## Tidy output
+Reference values for numeric covariates can be overridden with `at`:
+
+``` r
+
+lsmeans(fit, ~Drug, at = list(Time = "2"))
+```
+
+When `emmeans` is installed, `lmmix` supplies the required fixed-effects
+basis and model-specific denominator degrees of freedom.
+
+``` r
+
+emmeans::emmeans(fit, ~Drug)
+#> NOTE: Results may be misleading due to involvement in interactions
+#>  Drug emmean   SE   df lower.CL upper.CL
+#>  1      13.2 1.53 2.98     8.27     18.0
+#>  2      18.1 1.53 3.01    13.28     23.0
+#>  3      17.1 1.53 3.01    12.18     21.9
+#> 
+#> Results are averaged over the levels of: Time 
+#> Confidence level used: 0.95
+```
+
+## Predictions, residuals and tidy output
+
+Conditional fitted values include empirical random effects. Marginal
+fitted values use fixed effects only.
+
+``` r
+
+head(fitted(fit, type = "conditional"))
+#>        1        4        5        6        7        8 
+#> 12.95368 12.95368 13.87477 15.34591 12.95368 13.87477
+head(fitted(fit, type = "marginal"))
+#>        1        4        5        6        7        8 
+#> 12.05238 12.05238 12.97347 14.44461 12.05238 12.97347
+head(residuals(fit, type = "pearson"))
+#>           1           4           5           6           7           8 
+#>  1.23872457 -0.29195520  0.03833728 -0.10589561 -0.29195520 -0.88007058
+```
+
+For `predict(fit, newdata)`, known grouping levels receive their fitted
+random effect. New groups receive a random contribution of zero. Set
+`re.form` to a non-`NULL` value to request fixed-effects-only
+predictions.
+
+The `generics` methods return tibbles.
 
 ``` r
 
@@ -155,21 +389,47 @@ head(generics::augment(fit))
 #> 6 R      1     3       2        11    13.9 -2.87     -0.880
 ```
 
-When `emmeans` is installed, the package supplies the required basis and
-uses the model’s Satterthwaite degrees of freedom.
+## Alternative model specifications
+
+The same interface covers marginal, random-effects and combined models.
 
 ``` r
 
-emmeans::emmeans(fit, ~Drug)
-#> NOTE: Results may be misleading due to involvement in interactions
-#>  Drug emmean   SE   df lower.CL upper.CL
-#>  1      13.2 1.53 2.98     8.27     18.0
-#>  2      18.1 1.53 3.01    13.28     23.0
-#>  3      17.1 1.53 3.01    12.18     21.9
-#> 
-#> Results are averaged over the levels of: Time 
-#> Confidence level used: 0.95
+# Marginal model with unstructured repeated-measures covariance
+fit_marginal <- lmm(
+  data,
+  response ~ treatment * time,
+  repeated = ~ time | subject,
+  structure = "un"
+)
+
+# Random intercept and slope with independent residuals
+fit_random <- lmm(
+  data,
+  response ~ treatment + time,
+  random = ~ 1 + time | subject,
+  structure = "id"
+)
+
+# Combined random intercept and Toeplitz residual covariance
+fit_combined <- lmm(
+  data,
+  response ~ treatment * time,
+  random = ~ 1 | center,
+  repeated = ~ time | center:subject,
+  structure = "toep"
+)
 ```
+
+## Practical limits
+
+The current implementation constructs the full dense matrix `V` during
+optimization. It is appropriate for small and moderate data sets. It is
+not a large-scale sparse mixed-model engine. The interface accepts one
+random-effects formula and one repeated-measures structure. Generalized
+responses, multiple random-effect terms, Kenward-Roger inference and
+likelihood-ratio model comparison are outside the current `0.1.0`
+implementation.
 
 Harville, David A. 1977. “Maximum Likelihood Approaches to Variance
 Component Estimation and to Related Problems.” *Journal of the American

@@ -2,6 +2,6 @@
 
 ### Guides
 
-- [Getting started with lmmix](lmmix.md):
-- [ML, REML, and Satterthwaite inference](theory-reml.md):
-- [Multi-site PROC MIXED validation workflow](reproducing-sas.md):
+- [Using lmmix](lmmix.md):
+- [Estimation and inference in lmmix](theory-reml.md):
+- [Validation strategy and numerical benchmarks](validation.md):

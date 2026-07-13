@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>ML, REML, and Satterthwaite inference • lmmix</title>
+<title>Estimation and inference in lmmix • lmmix</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="ML, REML, and Satterthwaite inference">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Estimation and inference in lmmix">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -36,8 +36,8 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
-    <li><a class="dropdown-item" href="../articles/theory-reml.html">ML, REML, and Satterthwaite inference</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-sas.html">Multi-site PROC MIXED validation workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/validation.html">Validation strategy and numerical benchmarks</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -59,7 +59,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>ML, REML, and Satterthwaite inference</h1>
+      <h1>Estimation and inference in lmmix</h1>
             
       
 
@@ -69,86 +69,210 @@
     
     
 <div class="section level2">
-<h2 id="covariance-model">Covariance model<a class="anchor" aria-label="anchor" href="#covariance-model"></a>
+<h2 id="gaussian-mixed-model-representation">Gaussian mixed-model representation<a class="anchor" aria-label="anchor" href="#gaussian-mixed-model-representation"></a>
 </h2>
-<p>For covariance parameters
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>η</mi><annotation encoding="application/x-tex">\eta</annotation></semantics></math>,
-<code>lmmix</code> constructs</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>Z</mi><mi>G</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><msup><mi>Z</mi><mi>𝖳</mi></msup><mo>+</mo><mi>R</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
-V(\eta) = ZG(\eta)Z^\mathsf{T} + R(\eta).
+<p>For a response vector (Y), <code>lmmix</code> uses</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mi>X</mi><mi>β</mi><mo>+</mo><mi>Z</mi><mi>u</mi><mo>+</mo><mi>ε</mi><mo>,</mo><mspace width="2.0em"></mspace><mi>u</mi><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>G</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><mi>ε</mi><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>R</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><mi>u</mi><mo>⟂</mo><mi>ε</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">
+Y = X\beta + Zu + \varepsilon,
+\qquad
+u \sim N(0, G),
+\qquad
+\varepsilon \sim N(0, R),
+\qquad
+u \perp \varepsilon.
 </annotation></semantics></math></p>
-<p>This decomposition and the use of structured residual covariance
-matrices follow the general Gaussian mixed-model framework described by
-<span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span> and <span class="citation">Pinheiro and Bates (<a href="#ref-pinheiro2000">2000</a>)</span>.</p>
-<p>Variances and Cholesky diagonal elements are represented on a log
-scale. AR(1) correlations use the hyperbolic tangent. Compound symmetry
-uses a scaled logistic transformation that respects its
-dimension-dependent lower bound. Toeplitz correlations are obtained from
-partial autocorrelations, and unstructured matrices use a Cholesky
-factor.</p>
+<p>The marginal model is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mi>X</mi><mi>β</mi><mo>,</mo><mi>V</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><mi>V</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>Z</mi><mi>G</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><msup><mi>Z</mi><mi>𝖳</mi></msup><mo>+</mo><mi>R</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
+Y \sim N(X\beta, V),
+\qquad
+V(\eta) = ZG(\eta)Z^\mathsf{T} + R(\eta),
+</annotation></semantics></math></p>
+<p>where (eta) is an unconstrained numerical parameter vector. This is
+the standard Gaussian mixed-model decomposition described by <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span>
+and <span class="citation">Pinheiro and Bates (<a href="#ref-pinheiro2000">2000</a>)</span>.</p>
 </div>
 <div class="section level2">
-<h2 id="profiled-likelihoods">Profiled likelihoods<a class="anchor" aria-label="anchor" href="#profiled-likelihoods"></a>
+<h2 id="covariance-parameterization">Covariance parameterization<a class="anchor" aria-label="anchor" href="#covariance-parameterization"></a>
 </h2>
-<p>For a given
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>V</mi><annotation encoding="application/x-tex">V</annotation></semantics></math>,
-the generalized least-squares estimator is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>X</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mn>1</mn></mrow></msup><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>Y</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\widehat\beta =
+<p>The optimizer works on an unconstrained scale. The package maps those
+values to admissible covariance matrices as follows.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Component</th>
+<th align="left">Parameterization</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Random-effect covariance <code>G</code>
+</td>
+<td align="left">Lower-triangular Cholesky factor with log diagonal</td>
+</tr>
+<tr class="even">
+<td align="left">Independent residuals <code>id</code>
+</td>
+<td align="left">One variance on the log scale</td>
+</tr>
+<tr class="odd">
+<td align="left">Compound symmetry <code>cs</code>
+</td>
+<td align="left">Log variance and logistic correlation constrained to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mn>1</mn><mi>/</mi><mo stretchy="false" form="prefix">(</mo><mi>q</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(-1/(q-1), 1)</annotation></semantics></math>
+</td>
+</tr>
+<tr class="even">
+<td align="left">Autoregressive <code>ar1</code>
+</td>
+<td align="left">Log variance and <code>tanh</code> correlation in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mn>1</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(-1, 1)</annotation></semantics></math>
+</td>
+</tr>
+<tr class="odd">
+<td align="left">Toeplitz <code>toep</code>
+</td>
+<td align="left">Log variance and partial autocorrelations mapped to a
+stationary Toeplitz correlation</td>
+</tr>
+<tr class="even">
+<td align="left">Unstructured <code>un</code>
+</td>
+<td align="left">Lower-triangular Cholesky factor with log diagonal</td>
+</tr>
+</tbody>
+</table>
+<p>Here (q) is the number of distinct repeated-measurement occasions.
+Cholesky parameterizations guarantee positive definiteness for
+<code>G</code> and <code>un</code>. The partial-autocorrelation
+construction guarantees a positive-definite stationary Toeplitz
+correlation matrix.</p>
+</div>
+<div class="section level2">
+<h2 id="profiled-ml-and-reml-criteria">Profiled ML and REML criteria<a class="anchor" aria-label="anchor" href="#profiled-ml-and-reml-criteria"></a>
+</h2>
+<p>For a fixed covariance matrix (V), the generalized least-squares
+estimator is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>X</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mn>1</mn></mrow></msup><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>Y</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\widehat\beta(\eta) =
 (X^\mathsf{T}V^{-1}X)^{-1}X^\mathsf{T}V^{-1}Y.
 </annotation></semantics></math></p>
-<p>The profiled negative ML log-likelihood is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mrow><mo stretchy="true" form="prefix">{</mo><mi>n</mi><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">(</mo><mn>2</mn><mi>π</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">|</mo><mi>V</mi><mo stretchy="false" form="prefix">|</mo><mi>+</mi><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>−</mo><mi>X</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover><msup><mo stretchy="false" form="postfix">)</mo><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>−</mo><mi>X</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">}</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\frac{1}{2}\left\{
-n\log(2\pi) + \log|V| +
-(Y-X\widehat\beta)^\mathsf{T}V^{-1}(Y-X\widehat\beta)
-\right\}.
+<p>Let (r = Y-X). The profiled negative ML log-likelihood is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>ℓ</mi><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">L</mi></mrow><mo>−</mo></msubsup><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mrow><mo stretchy="true" form="prefix">[</mo><mi>n</mi><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">(</mo><mn>2</mn><mi>π</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">|</mo><mi>V</mi><mo stretchy="false" form="prefix">|</mo><mi>+</mi><msup><mi>r</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>r</mi><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\ell_{\mathrm{ML}}^-(\eta)
+= \frac{1}{2}\left[
+n\log(2\pi) + \log|V| + r^\mathsf{T}V^{-1}r
+\right].
 </annotation></semantics></math></p>
-<p>The REML criterion adds
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">|</mo><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>X</mi><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">\log|X^\mathsf{T}V^{-1}X|</annotation></semantics></math>
-and replaces
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-by
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">n-p</annotation></semantics></math>
-in the normalizing constant. REML originates with <span class="citation">Patterson and Thompson (<a href="#ref-patterson1971">1971</a>)</span>; direct likelihood
-derivations are given by <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span> and <span class="citation">LaMotte (<a href="#ref-lamotte2007">2007</a>)</span>.
-Cholesky solves are used instead of explicit matrix inverses.</p>
+<p>The profiled negative REML log-likelihood is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>ℓ</mi><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">E</mi><mi mathvariant="normal">M</mi><mi mathvariant="normal">L</mi></mrow><mo>−</mo></msubsup><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mrow><mo stretchy="true" form="prefix">[</mo><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>−</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">(</mo><mn>2</mn><mi>π</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">|</mo><mi>V</mi><mo stretchy="false" form="prefix">|</mo><mi>+</mi><mi mathvariant="normal">log</mi><mo stretchy="false" form="prefix">|</mo><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>X</mi><mo stretchy="false" form="prefix">|</mo><mi>+</mi><msup><mi>r</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>r</mi><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\ell_{\mathrm{REML}}^-(\eta)
+= \frac{1}{2}\left[
+(n-p)\log(2\pi)
++ \log|V|
++ \log|X^\mathsf{T}V^{-1}X|
++ r^\mathsf{T}V^{-1}r
+\right].
+</annotation></semantics></math></p>
+<p>REML originates with <span class="citation">Patterson and Thompson
+(<a href="#ref-patterson1971">1971</a>)</span>. General derivations are
+given by <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span> and <span class="citation">LaMotte (<a href="#ref-lamotte2007">2007</a>)</span>.</p>
+<p>The implementation uses Cholesky solves for (V^{-1}X), (V^{-1}Y), log
+determinants and the GLS normal equations. It does not form an explicit
+matrix inverse in the likelihood calculation.</p>
 </div>
 <div class="section level2">
-<h2 id="satterthwaite-degrees-of-freedom">Satterthwaite degrees of freedom<a class="anchor" aria-label="anchor" href="#satterthwaite-degrees-of-freedom"></a>
+<h2 id="optimization-and-covariance-parameter-uncertainty">Optimization and covariance-parameter uncertainty<a class="anchor" aria-label="anchor" href="#optimization-and-covariance-parameter-uncertainty"></a>
 </h2>
-<p>For a contrast row
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>,
-define</p>
+<p><code><a href="../reference/lmm_control.html">lmm_control()</a></code> selects <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb()</a></code> or
+<code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim()</a></code> and controls iteration limits, tolerances,
+parameter bounds and the numerical differentiation method. After
+optimization, <code>numDeriv</code> computes the observed likelihood
+Hessian on the unconstrained (eta) scale.</p>
+<p>The inverse Hessian estimates</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><mo>=</mo><mrow><mi mathvariant="normal">Var</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mover><mi>η</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\widehat\Sigma_\eta =
+\operatorname{Var}(\widehat\eta).
+</annotation></semantics></math></p>
+<p>The package checks the Hessian eigenvalues. A non-positive-definite
+Hessian triggers a warning because covariance-parameter standard errors
+and Satterthwaite calculations may then be unavailable. Natural-scale
+covariance standard errors are obtained by applying the delta method to
+the transformation from (eta) to variances and correlations.</p>
+</div>
+<div class="section level2">
+<h2 id="satterthwaite-denominator-degrees-of-freedom">Satterthwaite denominator degrees of freedom<a class="anchor" aria-label="anchor" href="#satterthwaite-denominator-degrees-of-freedom"></a>
+</h2>
+<p>For a one-row contrast (L), define</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>L</mi><mrow><mi mathvariant="normal">Var</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><msup><mi>L</mi><mi>𝖳</mi></msup><mi>.</mi></mrow><annotation encoding="application/x-tex">
 q(\eta) = L\operatorname{Var}(\widehat\beta)L^\mathsf{T}.
 </annotation></semantics></math></p>
-<p>If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo>=</mo><mi>∂</mi><mi>q</mi><mi>/</mi><mi>∂</mi><mi>η</mi></mrow><annotation encoding="application/x-tex">g = \partial q/\partial\eta</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><annotation encoding="application/x-tex">\widehat\Sigma_\eta</annotation></semantics></math>
-is the inverse observed-information matrix, the implemented
-approximation is the Satterthwaite approximation <span class="citation">(<a href="#ref-satterthwaite1946">Satterthwaite
-1946</a>)</span>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>=</mo><mfrac><mrow><mn>2</mn><msup><mi>q</mi><mn>2</mn></msup></mrow><mrow><msup><mi>g</mi><mi>𝖳</mi></msup><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><mi>g</mi></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\nu = \frac{2q^2}{g^\mathsf{T}\widehat\Sigma_\eta g}.
+<p>If</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo>=</mo><mfrac><mrow><mi>∂</mi><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mi>∂</mi><mi>η</mi></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
+g = \frac{\partial q(\eta)}{\partial\eta},
 </annotation></semantics></math></p>
-<p>The gradient and likelihood Hessian are calculated with
-<code>numDeriv</code>. For a multi-row hypothesis, the covariance of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover></mrow><annotation encoding="application/x-tex">L\widehat\beta</annotation></semantics></math>
-is decomposed into orthogonal one-dimensional contrasts and combined
-with the Fai-Cornelius moment-matching formula <span class="citation">(<a href="#ref-fai1996">Fai and Cornelius
-1996</a>)</span>.</p>
+<p>the implemented Satterthwaite approximation is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>=</mo><mfrac><mrow><mn>2</mn><mi>q</mi><mo stretchy="false" form="prefix">(</mo><mover><mi>η</mi><mo accent="true">̂</mo></mover><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup></mrow><mrow><msup><mi>g</mi><mi>𝖳</mi></msup><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><mi>g</mi></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\nu =
+\frac{2q(\widehat\eta)^2}
+{g^\mathsf{T}\widehat\Sigma_\eta g}.
+</annotation></semantics></math></p>
+<p>This follows <span class="citation">Satterthwaite (<a href="#ref-satterthwaite1946">1946</a>)</span>. The gradient of (q) is
+evaluated numerically on the same unconstrained covariance scale used by
+the optimizer.</p>
+<p>With <code>ddf = "residual"</code>, the package instead uses (n-p). A
+request for <code>ddf = "kenward-roger"</code> is rejected. No
+Kenward-Roger covariance adjustment is implemented.</p>
 </div>
 <div class="section level2">
-<h2 id="random-effects">Random effects<a class="anchor" aria-label="anchor" href="#random-effects"></a>
+<h2 id="type-iii-tests">Type III tests<a class="anchor" aria-label="anchor" href="#type-iii-tests"></a>
+</h2>
+<p>Type III hypotheses are constructed with sum contrasts, then
+transformed back to the fitted coefficient parameterization. For a
+multi-row hypothesis matrix (L), the covariance of (L) is
+eigendecomposed into orthogonal one-dimensional components. Their
+Satterthwaite degrees of freedom are combined with the Fai-Cornelius
+moment-matching formula <span class="citation">(<a href="#ref-fai1996">Fai and Cornelius 1996</a>)</span>.</p>
+<p>Only type III tests are implemented. <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> does not
+perform likelihood-ratio comparisons between fitted models.</p>
+</div>
+<div class="section level2">
+<h2 id="estimated-marginal-means">Estimated marginal means<a class="anchor" aria-label="anchor" href="#estimated-marginal-means"></a>
+</h2>
+<p><code><a href="../reference/lsmeans.html">lsmeans()</a></code> constructs a fixed-effects reference grid from
+the model terms. Requested factors vary over their levels, nuisance
+factors receive equal weights, and unrequested numeric covariates are
+held at their observed means. The corresponding rows of the
+fixed-effects model matrix are averaged to form the contrast matrix.
+This targets population marginal means as described by <span class="citation">Searle et al. (<a href="#ref-searle1980">1980</a>)</span>.</p>
+<p>Pairwise contrasts are differences between automatically generated
+marginal mean rows. Multiplicity correction is applied to pairwise
+p-values with <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code>. Confidence intervals are
+pointwise and are not adjusted.</p>
+</div>
+<div class="section level2">
+<h2 id="empirical-blups-and-prediction">Empirical BLUPs and prediction<a class="anchor" aria-label="anchor" href="#empirical-blups-and-prediction"></a>
 </h2>
 <p>After covariance estimation, the empirical BLUP is</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>u</mi><mo accent="true">̂</mo></mover><mo>=</mo><mi>G</mi><msup><mi>Z</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>−</mo><mi>X</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 </annotation></semantics></math></p>
-<p>This empirical best linear unbiased predictor follows the mixed-model
-derivation in <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span>.</p>
+<p>Conditional fitted values use (X+ Zu); marginal fitted values use
+(X). For new data, known grouping levels use their empirical random
+effects and new grouping levels receive a random contribution of
+zero.</p>
+</div>
+<div class="section level2">
+<h2 id="computational-scope">Computational scope<a class="anchor" aria-label="anchor" href="#computational-scope"></a>
+</h2>
+<p>The current implementation builds a dense (n n) marginal covariance
+matrix at each objective evaluation. Although the random-effects design
+matrix is initially sparse, covariance assembly and factorization are
+dense. The package is therefore intended for small and moderate data
+sets. Large-scale sparse algorithms, multiple random-effect terms,
+generalized responses and automatic optimizer restarts are not
+implemented in version <code>0.1.0</code>.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-fai1996" class="csl-entry">
 Fai, Alex Hrong-Tai, and Paul L. Cornelius. 1996. <span>“Approximate
@@ -181,6 +305,11 @@ Satterthwaite, F. E. 1946. <span>“An Approximate Distribution of
 Estimates of Variance Components.”</span> <em>Biometrics Bulletin</em> 2
 (6): 110–14. <a href="https://doi.org/10.2307/3002019" class="external-link">https://doi.org/10.2307/3002019</a>.
 </div>
+<div id="ref-searle1980" class="csl-entry">
+Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. <span>“Population
+Marginal Means in the Linear Model: An Alternative to Least Squares
+Means.”</span> <em>The American Statistician</em> 34 (4): 216–21. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link">https://doi.org/10.1080/00031305.1980.10483031</a>.
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -190,7 +319,7 @@ Estimates of Variance Components.”</span> <em>Biometrics Bulletin</em> 2
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Package Maintainer.</p>
+  <p>Developed by Aurélien Nicosia.</p>
 </div>
 
 <div class="pkgdown-footer-right">

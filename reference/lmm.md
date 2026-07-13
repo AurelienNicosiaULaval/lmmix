@@ -3,7 +3,8 @@
 `lmm()` explicitly evaluates a profiled ML or REML criterion for
 `V = Z G Z' + R`. It can combine random effects with an independent,
 compound-symmetric, AR(1), Toeplitz, or unstructured residual
-covariance.
+covariance. Rows that are incomplete for any variable used by the fixed,
+random, or repeated formula are removed before fitting.
 
 ## Usage
 
@@ -63,21 +64,30 @@ lmm(
 
 ## Value
 
-An object of class `lmm`.
+An object of class `lmm`. The object stores fixed and random-effect
+estimates, covariance components, fitted values, residuals, optimization
+diagnostics, the analysis data, and the model matrices.
+
+## Details
+
+The `random` argument accepts one grouping formula. The `repeated`
+argument accepts one ordering variable and one grouping expression. Each
+repeated group may have at most one observation per ordering value. The
+current likelihood assembles a dense marginal covariance matrix.
 
 ## References
 
 Harville, D. A. (1977). Maximum likelihood approaches to variance
 component estimation and to related problems. *Journal of the American
 Statistical Association*, 72(358), 320-338.
-<https://doi.org/10.1080/01621459.1977.10480998>
+[doi:10.1080/01621459.1977.10480998](https://doi.org/10.1080/01621459.1977.10480998)
 
 LaMotte, L. R. (2007). A direct derivation of the REML likelihood
 function. *Statistical Papers*, 48(2), 321-327.
-<https://doi.org/10.1007/s00362-006-0335-6>
+[doi:10.1007/s00362-006-0335-6](https://doi.org/10.1007/s00362-006-0335-6)
 
 Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S and
-S-PLUS*. Springer. <https://doi.org/10.1007/b98882>
+S-PLUS*. Springer. [doi:10.1007/b98882](https://doi.org/10.1007/b98882)
 
 ## Examples
 

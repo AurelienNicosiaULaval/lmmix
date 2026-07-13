@@ -40,8 +40,8 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
-    <li><a class="dropdown-item" href="articles/theory-reml.html">ML, REML, and Satterthwaite inference</a></li>
-    <li><a class="dropdown-item" href="articles/reproducing-sas.html">Multi-site PROC MIXED validation workflow</a></li>
+    <li><a class="dropdown-item" href="articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="articles/validation.html">Validation strategy and numerical benchmarks</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -60,24 +60,93 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="lmmix">lmmix<a class="anchor" aria-label="anchor" href="#lmmix"></a>
 </h1></div>
-<p><code>lmmix</code> fits Gaussian linear mixed models by explicitly optimizing the ML or REML criterion for</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mi>Z</mi><mi>G</mi><msup><mi>Z</mi><mi>𝖳</mi></msup><mo>+</mo><mi>R</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<p><code>lmmix</code> fits Gaussian linear mixed models by explicitly optimizing the ML or REML criterion. Its main use case is a model that contains both random effects and a structured residual covariance:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mi>X</mi><mi>β</mi><mo>+</mo><mi>Z</mi><mi>u</mi><mo>+</mo><mi>ε</mi><mo>,</mo><mspace width="2.0em"></mspace><mi>V</mi><mo>=</mo><mi>Z</mi><mi>G</mi><msup><mi>Z</mi><mi>𝖳</mi></msup><mo>+</mo><mi>R</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">
+Y = X\beta + Zu + \varepsilon,
+\qquad
 V = ZGZ^\mathsf{T} + R.
 </annotation></semantics></math></p>
-<p>The package is designed for models that combine random effects with correlated residuals. It provides Satterthwaite denominator degrees of freedom, type III tests, estimated marginal means, pairwise contrasts, broom methods, and <code>emmeans</code> interoperability.</p>
-<p>The package name is <code>lmmix</code>; the main fitting function is <code><a href="reference/lmm.html">lmm()</a></code>.</p>
+<p>The package estimates the covariance parameters, fixed effects and empirical BLUPs in one fitted object. It also provides Satterthwaite inference, type III tests, estimated marginal means, pairwise contrasts, standard model methods, <code>broom</code> methods and <code>emmeans</code> interoperability.</p>
+<p>The package is under active development. The table below distinguishes current functionality from features that are not implemented.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install the package from a local checkout:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"path/to/lmmix"</span><span class="op">)</span></span></code></pre></div>
+<p>The repository is private. Clone it with the configured GitHub SSH key, then install the local checkout:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:AurelienNicosiaULaval/lmmix.git</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">R</span> CMD INSTALL lmmix</span></code></pre></div>
+<p>From an existing checkout, installation from R is also possible:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_local</span><span class="op">(</span><span class="st">"/path/to/lmmix"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="combined-random-effect-and-residual-correlation-model">Combined random-effect and residual-correlation model<a class="anchor" aria-label="anchor" href="#combined-random-effect-and-residual-correlation-model"></a>
+<h2 id="current-capability-matrix">Current capability matrix<a class="anchor" aria-label="anchor" href="#current-capability-matrix"></a>
 </h2>
-<p>The included <code>multicentre</code> data reproduce the multilocation repeated-measures example of Milliken and Johnson (2009, Section 28.3). They contain 153 rows, including 28 missing responses.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th align="left">Component</th>
+<th align="left">Current behavior</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">Response</td>
+<td align="left">Univariate continuous Gaussian response</td>
+</tr>
+<tr>
+<td align="left">Estimation</td>
+<td align="left">Explicit profiled ML and REML optimization</td>
+</tr>
+<tr>
+<td align="left">Random effects</td>
+<td align="left">No random effect, random intercept, or correlated random slopes for one grouping formula</td>
+</tr>
+<tr>
+<td align="left">Residual covariance</td>
+<td align="left">
+<code>id</code>, <code>cs</code>, <code>ar1</code>, <code>toep</code>, and <code>un</code>
+</td>
+</tr>
+<tr>
+<td align="left">Combined covariance</td>
+<td align="left">Random effects and any supported residual structure in the same model</td>
+</tr>
+<tr>
+<td align="left">Denominator degrees of freedom</td>
+<td align="left">Satterthwaite or residual</td>
+</tr>
+<tr>
+<td align="left">Fixed-effect tests</td>
+<td align="left">Coefficient tests and type III tests</td>
+</tr>
+<tr>
+<td align="left">Marginal means</td>
+<td align="left">Equal-weight estimated marginal means and automatic pairwise contrasts</td>
+</tr>
+<tr>
+<td align="left">Multiplicity</td>
+<td align="left">Any method accepted by <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code> for pairwise p-values</td>
+</tr>
+<tr>
+<td align="left">Interoperability</td>
+<td align="left">
+<code>emmeans</code>, <code>tidy()</code>, <code>glance()</code>, and <code>augment()</code>
+</td>
+</tr>
+<tr>
+<td align="left">Not implemented</td>
+<td align="left">Kenward-Roger inference, likelihood-ratio model comparison, multiple random-effect terms, generalized responses</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="quick-start-random-center-effect-and-ar1-residuals">Quick start: random center effect and AR(1) residuals<a class="anchor" aria-label="anchor" href="#quick-start-random-center-effect-and-ar1-residuals"></a>
+</h2>
+<p>The included <code>multicentre</code> data are a three-center repeated-measures example with three treatments and three measurement occasions. The data contain 153 rows, including 28 missing responses. Their source is Milliken and Johnson (2009, Section 28.3).</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">lmmix</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
@@ -90,64 +159,235 @@ V = ZGZ^\mathsf{T} + R.
 <span>  ddf <span class="op">=</span> <span class="st">"satterthwaite"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="va">fit</span></span>
+<span><span class="co">#&gt; Linear mixed model fit by REML</span></span>
+<span><span class="co">#&gt; Formula: `Y ~ Drug * Time`</span></span>
+<span><span class="co">#&gt; Random: `~1 | Center`</span></span>
+<span><span class="co">#&gt; Repeated: `~Time | Center:Drug:Subject` (AR1)</span></span>
+<span><span class="co">#&gt; Log-likelihood: -245.313</span></span>
+<span><span class="co">#&gt; Convergence code: 0</span></span></code></pre></div>
+<p><code><a href="reference/lmm.html">lmm()</a></code> uses complete cases across every variable required by the fixed, random and repeated formulas. The fitted object therefore records 125 observations for this example.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 125</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">pairwise</span> <span class="op">~</span> <span class="va">Drug</span><span class="op">)</span></span></code></pre></div>
-<p>The data-first interface also works with the base R pipe:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">multicentre</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
-<span>    formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">Drug</span> <span class="op">*</span> <span class="va">Time</span>,</span>
-<span>    random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">Center</span>,</span>
-<span>    repeated <span class="op">=</span> <span class="op">~</span> <span class="va">Time</span> <span class="op">|</span> <span class="va">Center</span><span class="op">:</span><span class="va">Drug</span><span class="op">:</span><span class="va">Subject</span>,</span>
-<span>    structure <span class="op">=</span> <span class="st">"ar1"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; Type III tests with satterthwaite degrees of freedom</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 5</span></span>
+<span><span class="co">#&gt;   term      num.df den.df statistic  p.value</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Drug           2   46.4     11.4  9.23e- 5</span></span>
+<span><span class="co">#&gt; 2 Time           2   68.5     59.3  1.16e-15</span></span>
+<span><span class="co">#&gt; 3 Drug:Time      4   68.4      1.35 2.60e- 1</span></span>
+<span><span class="fu"><a href="reference/VarCorr.html">VarCorr</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 5</span></span>
+<span><span class="co">#&gt;   group    term        component estimate std.error</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;       &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Center   (Intercept) var          5.17     5.73</span></span>
+<span><span class="co">#&gt; 2 Residual ar1         var         10.7      2.14</span></span>
+<span><span class="co">#&gt; 3 Residual ar1         cor          0.935    0.0169</span></span></code></pre></div>
+<p>Estimated marginal means and their pairwise differences are generated from the fixed-effects reference grid. No contrast rows need to be written by hand.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 8</span></span>
+<span><span class="co">#&gt;   Drug  estimate std.error    df statistic p.value conf.low conf.high</span></span>
+<span><span class="co">#&gt;   &lt;fct&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 1         13.2      1.53  2.98      8.60 0.00339     8.27      18.0</span></span>
+<span><span class="co">#&gt; 2 2         18.1      1.53  3.01     11.8  0.00128    13.3       23.0</span></span>
+<span><span class="co">#&gt; 3 3         17.1      1.53  3.01     11.1  0.00154    12.2       21.9</span></span>
+<span><span class="fu"><a href="reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">pairwise</span> <span class="op">~</span> <span class="va">Drug</span>, adjust <span class="op">=</span> <span class="st">"holm"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; ── Estimated marginal means ──</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 8</span></span>
+<span><span class="co">#&gt;   Drug  estimate std.error    df statistic p.value conf.low conf.high</span></span>
+<span><span class="co">#&gt;   &lt;fct&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 1         13.2      1.53  2.98      8.60 0.00339     8.27      18.0</span></span>
+<span><span class="co">#&gt; 2 2         18.1      1.53  3.01     11.8  0.00128    13.3       23.0</span></span>
+<span><span class="co">#&gt; 3 3         17.1      1.53  3.01     11.1  0.00154    12.2       21.9</span></span>
+<span><span class="co">#&gt; ── Pairwise contrasts ──</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 8</span></span>
+<span><span class="co">#&gt;   contrast estimate std.error    df statistic  p.value conf.low conf.high</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 1 - 2       -4.99      1.10  46.1    -4.54  0.000120    -7.20     -2.78</span></span>
+<span><span class="co">#&gt; 2 1 - 3       -3.89      1.10  46.1    -3.54  0.00183     -6.11     -1.68</span></span>
+<span><span class="co">#&gt; 3 2 - 3        1.10      1.10  46.9     0.993 0.326       -1.12      3.32</span></span></code></pre></div>
+<p>The convergence code and Hessian diagnostic should be checked before interpreting inference.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">convergence</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"code"</span>,</span>
+<span>  <span class="st">"optimizer"</span>,</span>
+<span>  <span class="st">"hessian_positive_definite"</span></span>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; $code</span></span>
+<span><span class="co">#&gt; [1] 0</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; $optimizer</span></span>
+<span><span class="co">#&gt; [1] "nlminb"</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; $hessian_positive_definite</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="supported-covariance-structures">Supported covariance structures<a class="anchor" aria-label="anchor" href="#supported-covariance-structures"></a>
+<h2 id="three-supported-model-families">Three supported model families<a class="anchor" aria-label="anchor" href="#three-supported-model-families"></a>
 </h2>
-<p>The residual structures are:</p>
+<p>The same function covers three model families.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Marginal repeated-measures model</span></span>
+<span><span class="va">marginal_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">*</span> <span class="va">time</span>,</span>
+<span>  repeated <span class="op">=</span> <span class="op">~</span> <span class="va">time</span> <span class="op">|</span> <span class="va">subject</span>,</span>
+<span>  structure <span class="op">=</span> <span class="st">"un"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Random-effects model with independent residuals</span></span>
+<span><span class="va">random_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">+</span> <span class="va">time</span>,</span>
+<span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">time</span> <span class="op">|</span> <span class="va">subject</span>,</span>
+<span>  structure <span class="op">=</span> <span class="st">"id"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Combined random-effect and correlated-residual model</span></span>
+<span><span class="va">combined_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">*</span> <span class="va">time</span>,</span>
+<span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">center</span>,</span>
+<span>  repeated <span class="op">=</span> <span class="op">~</span> <span class="va">time</span> <span class="op">|</span> <span class="va">center</span><span class="op">:</span><span class="va">subject</span>,</span>
+<span>  structure <span class="op">=</span> <span class="st">"ar1"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>For <code>cs</code>, <code>ar1</code>, <code>toep</code>, or <code>un</code>, <code>repeated</code> must identify one ordering variable and one grouping expression. Each repeated-measures group may contain at most one observation at a given ordering value.</p>
+</div>
+<div class="section level2">
+<h2 id="working-with-a-fitted-model">Working with a fitted model<a class="anchor" aria-label="anchor" href="#working-with-a-fitted-model"></a>
+</h2>
+<p>Standard methods return fixed effects, random effects, covariance components, predictions, residuals and information criteria.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/fixef.html">fixef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; (Intercept)       Drug2       Drug3       Time2       Time3 Drug2:Time2</span></span>
+<span><span class="co">#&gt;  12.0523806   4.7647059   3.9411765   0.9210922   2.3922323  -0.1427492</span></span>
+<span><span class="co">#&gt; Drug3:Time2 Drug2:Time3 Drug3:Time3</span></span>
+<span><span class="co">#&gt;  -0.4735144   0.8233159   0.3342512</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 2</span></span>
+<span><span class="co">#&gt;   Center `(Intercept)`</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;          &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 R              0.901</span></span>
+<span><span class="co">#&gt; 2 S              1.55</span></span>
+<span><span class="co">#&gt; 3 T             -2.45</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;          1          4          5          6          7          8</span></span>
+<span><span class="co">#&gt;  4.0463233 -0.9536767  0.1252311 -0.3459090 -0.9536767 -2.8747689</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        1        4        5        6        7        8</span></span>
+<span><span class="co">#&gt; 12.95368 12.95368 13.87477 15.34591 12.95368 13.87477</span></span></code></pre></div>
+<p>The <code>generics</code> methods return tibbles suitable for downstream analysis.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 9 × 7</span></span>
+<span><span class="co">#&gt;   effect term        estimate std.error statistic    df     p.value</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 fixed  (Intercept)   12.1       1.54      7.83   3.06 0.00405</span></span>
+<span><span class="co">#&gt; 2 fixed  Drug2          4.76      1.12      4.25  49.8  0.0000928</span></span>
+<span><span class="co">#&gt; 3 fixed  Drug3          3.94      1.12      3.52  49.8  0.000939</span></span>
+<span><span class="co">#&gt; 4 fixed  Time2          0.921     0.294     3.13  67.5  0.00255</span></span>
+<span><span class="co">#&gt; 5 fixed  Time3          2.39      0.441     5.42  72.1  0.000000750</span></span>
+<span><span class="co">#&gt; 6 fixed  Drug2:Time2   -0.143     0.438    -0.326 67.9  0.746</span></span>
+<span><span class="co">#&gt; 7 fixed  Drug3:Time2   -0.474     0.448    -1.06  68.0  0.294</span></span>
+<span><span class="co">#&gt; 8 fixed  Drug2:Time3    0.823     0.666     1.24  72.7  0.221</span></span>
+<span><span class="co">#&gt; 9 fixed  Drug3:Time3    0.334     0.644     0.519 73.1  0.605</span></span>
+<span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 1 × 8</span></span>
+<span><span class="co">#&gt;   logLik   AIC   BIC deviance    df  nobs convergence method</span></span>
+<span><span class="co">#&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt; &lt;int&gt;       &lt;int&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt; 1  -245.  515.  549.     491.    12   125           0 REML</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 6 × 8</span></span>
+<span><span class="co">#&gt;   Center Drug  Subject Time      Y .fitted .resid .std.resid</span></span>
+<span><span class="co">#&gt;   &lt;fct&gt;  &lt;fct&gt; &lt;fct&gt;   &lt;fct&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 R      1     1       1        17    13.0  4.05      1.24</span></span>
+<span><span class="co">#&gt; 2 R      1     2       1        12    13.0 -0.954    -0.292</span></span>
+<span><span class="co">#&gt; 3 R      1     2       2        14    13.9  0.125     0.0383</span></span>
+<span><span class="co">#&gt; 4 R      1     2       3        15    15.3 -0.346    -0.106</span></span>
+<span><span class="co">#&gt; 5 R      1     3       1        12    13.0 -0.954    -0.292</span></span>
+<span><span class="co">#&gt; 6 R      1     3       2        11    13.9 -2.87     -0.880</span></span></code></pre></div>
+<p>When <code>emmeans</code> is installed, the package supplies the fixed-effects basis and model-specific denominator degrees of freedom.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">emmeans</span><span class="fu">::</span><span class="fu"><a href="https://rvlenth.github.io/emmeans/reference/emmeans.html" class="external-link">emmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
+<span><span class="co">#&gt; NOTE: Results may be misleading due to involvement in interactions</span></span>
+<span><span class="co">#&gt;  Drug emmean   SE   df lower.CL upper.CL</span></span>
+<span><span class="co">#&gt;  1      13.2 1.53 2.98     8.27     18.0</span></span>
+<span><span class="co">#&gt;  2      18.1 1.53 3.01    13.28     23.0</span></span>
+<span><span class="co">#&gt;  3      17.1 1.53 3.01    12.18     21.9</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; Results are averaged over the levels of: Time</span></span>
+<span><span class="co">#&gt; Confidence level used: 0.95</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="validation">Validation<a class="anchor" aria-label="anchor" href="#validation"></a>
+</h2>
+<p>The test suite separates numerical agreement from general software tests.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th align="left">Model component</th>
+<th align="left">External comparison</th>
+<th align="left">Quantities checked</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">Random intercept and random slope</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/lme.html" class="external-link">nlme::lme()</a></code></td>
+<td align="left">Fixed effects, covariance parameters, log-likelihood</td>
+</tr>
+<tr>
+<td align="left">Marginal CS and AR(1)</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/nlme/man/gls.html" class="external-link">nlme::gls()</a></code></td>
+<td align="left">Fixed effects, covariance parameters, log-likelihood</td>
+</tr>
+<tr>
+<td align="left">Marginal AR(1)</td>
+<td align="left"><code><a href="https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html" class="external-link">mmrm::mmrm()</a></code></td>
+<td align="left">Fixed effects, residual covariance, log-likelihood</td>
+</tr>
+<tr>
+<td align="left">Satterthwaite inference</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/lmerTest/man/lmer.html" class="external-link">lmerTest::lmer()</a></code></td>
+<td align="left">Coefficient degrees of freedom and type III tests</td>
+</tr>
+<tr>
+<td align="left">Combined random center and AR(1)</td>
+<td align="left">Stored PROC MIXED targets</td>
+<td align="left">Covariance parameters, fixed effects, type III tests and marginal means</td>
+</tr>
+</tbody>
+</table>
+<p>The package also tests positive definiteness and convergence for every supported residual structure in a combined model. See <code>VALIDATION.md</code> and the validation vignette for model specifications, tolerances and limitations.</p>
+</div>
+<div class="section level2">
+<h2 id="current-limitations">Current limitations<a class="anchor" aria-label="anchor" href="#current-limitations"></a>
+</h2>
+<p>The following limitations are part of the current <code>0.1.0</code> interface:</p>
 <ul>
 <li>
-<code>id</code>: homogeneous independent residuals;</li>
+<code>ddf = "kenward-roger"</code> is rejected because Kenward-Roger inference is not implemented.</li>
 <li>
-<code>cs</code>: compound symmetry;</li>
-<li>
-<code>ar1</code>: first-order autoregression, including negative correlation;</li>
-<li>
-<code>toep</code>: positive-definite Toeplitz covariance parameterized through partial autocorrelations;</li>
-<li>
-<code>un</code>: unstructured covariance parameterized through a Cholesky factor.</li>
+<code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> provides type III tests for one fitted model. It does not compare nested fitted models.</li>
+<li>Only one random-effects formula is accepted. Multiple crossed random-effect terms are not implemented.</li>
+<li>The implementation constructs a dense marginal covariance matrix. It is intended for small and moderate data sets, not large-scale sparse problems.</li>
+<li>Missing observations are removed by complete-case analysis over all model variables.</li>
+<li>Pairwise multiplicity adjustments modify p-values. The reported confidence intervals remain pointwise intervals.</li>
+<li>New random-effect groups receive a random contribution of zero in conditional prediction.</li>
 </ul>
-<p>Random intercepts and random slopes use an unstructured Cholesky-parameterized <code>G</code> matrix.</p>
 </div>
 <div class="section level2">
-<h2 id="validation-status">Validation status<a class="anchor" aria-label="anchor" href="#validation-status"></a>
+<h2 id="theoretical-sources">Theoretical sources<a class="anchor" aria-label="anchor" href="#theoretical-sources"></a>
 </h2>
-<p>Executable tests compare the package with <code>nlme</code> for ML, REML, random intercepts, random slopes, compound symmetry, and AR(1). A marginal AR(1) model is also compared with <code>mmrm</code>. Satterthwaite tests are compared with <code>lmerTest</code> where the models overlap.</p>
-<p>The multilocation validation tests compare fitted covariance parameters, fixed effects, type III tests, LS-means, pairwise differences, and Satterthwaite degrees of freedom with stored SAS PROC MIXED benchmarks for the same model specification. The <a href="VALIDATION.html">validation note</a> documents the theoretical sources, model specification, and numerical tolerances.</p>
-</div>
-<div class="section level2">
-<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h2>
-<ul>
-<li>Patterson, H. D., and Thompson, R. (1971). Recovery of inter-block information when block sizes are unequal. <em>Biometrika</em>, 58(3), 545-554. <a href="https://doi.org/10.1093/biomet/58.3.545" class="external-link uri">https://doi.org/10.1093/biomet/58.3.545</a>
-</li>
-<li>Harville, D. A. (1977). Maximum likelihood approaches to variance component estimation and to related problems. <em>Journal of the American Statistical Association</em>, 72(358), 320-338. <a href="https://doi.org/10.1080/01621459.1977.10480998" class="external-link uri">https://doi.org/10.1080/01621459.1977.10480998</a>
-</li>
-<li>LaMotte, L. R. (2007). A direct derivation of the REML likelihood function. <em>Statistical Papers</em>, 48(2), 321-327. <a href="https://doi.org/10.1007/s00362-006-0335-6" class="external-link uri">https://doi.org/10.1007/s00362-006-0335-6</a>
-</li>
-<li>Satterthwaite, F. E. (1946). An approximate distribution of estimates of variance components. <em>Biometrics Bulletin</em>, 2(6), 110-114. <a href="https://doi.org/10.2307/3002019" class="external-link uri">https://doi.org/10.2307/3002019</a>
-</li>
-<li>Fai, A. H.-T., and Cornelius, P. L. (1996). Approximate F-tests of multiple degree of freedom hypotheses in generalized least squares analyses of unbalanced split-plot experiments. <em>Journal of Statistical Computation and Simulation</em>, 54(4), 363-378. <a href="https://doi.org/10.1080/00949659608811740" class="external-link uri">https://doi.org/10.1080/00949659608811740</a>
-</li>
-<li>Searle, S. R., Speed, F. M., and Milliken, G. A. (1980). Population marginal means in the linear model: An alternative to least squares means. <em>The American Statistician</em>, 34(4), 216-221. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link uri">https://doi.org/10.1080/00031305.1980.10483031</a>
-</li>
-<li>Pinheiro, J. C., and Bates, D. M. (2000). <em>Mixed-Effects Models in S and S-PLUS</em>. Springer. <a href="https://doi.org/10.1007/b98882" class="external-link uri">https://doi.org/10.1007/b98882</a>
-</li>
-<li>Milliken, G. A., and Johnson, D. E. (2009). <em>Analysis of Messy Data, Volume 1: Designed Experiments</em> (2nd ed.), Section 28.3. Chapman and Hall/CRC. <a href="https://doi.org/10.1201/EBK1584883340" class="external-link uri">https://doi.org/10.1201/EBK1584883340</a>
-</li>
-</ul>
+<p>The REML implementation follows Patterson and Thompson (1971), Harville (1977), and LaMotte (2007). Satterthwaite inference follows Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai and Cornelius (1996). Estimated marginal means follow Searle, Speed, and Milliken (1980). Full citations and DOI links are included in the package help and vignettes.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
@@ -170,7 +410,7 @@ V = ZGZ^\mathsf{T} + R.
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Package Maintainer <br><small class="roles"> Author, maintainer </small>   </li>
+<li>Aurélien Nicosia <br><small class="roles"> Author, maintainer </small>   </li>
 </ul>
 </div>
 
@@ -181,7 +421,7 @@ V = ZGZ^\mathsf{T} + R.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Package Maintainer.</p>
+  <p>Developed by Aurélien Nicosia.</p>
 </div>
 
 <div class="pkgdown-footer-right">
