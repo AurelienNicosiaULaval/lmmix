@@ -23,6 +23,9 @@ reference:
     contents:
       - lsmeans
       - summary.lmm
+  - title: Model methods
+    contents:
+      - lmm-methods
   - title: Extractors
     contents:
       - fixef
@@ -46,4 +49,4 @@ articles:
     contents:
       - lmmix
       - theory-reml
-      - reproducing-sas
+      - validation

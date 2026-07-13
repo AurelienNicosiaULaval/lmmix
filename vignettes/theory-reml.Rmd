@@ -1,10 +1,10 @@
 ---
-title: "ML, REML, and Satterthwaite inference"
+title: "Estimation and inference in lmmix"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{ML, REML, and Satterthwaite inference}
+  %\VignetteIndexEntry{Estimation and inference in lmmix}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,69 +13,163 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-## Covariance model
+## Gaussian mixed-model representation
 
-For covariance parameters \(\eta\), `lmmix` constructs
+For a response vector (Y), `lmmix` uses
 
 \[
-V(\eta) = ZG(\eta)Z^\mathsf{T} + R(\eta).
+Y = X\beta + Zu + \varepsilon,
+\qquad
+u \sim N(0, G),
+\qquad
+\varepsilon \sim N(0, R),
+\qquad
+u \perp \varepsilon.
 \]
 
-This decomposition and the use of structured residual covariance matrices
-follow the general Gaussian mixed-model framework described by @harville1977
-and @pinheiro2000.
-
-Variances and Cholesky diagonal elements are represented on a log scale.
-AR(1) correlations use the hyperbolic tangent. Compound symmetry uses a
-scaled logistic transformation that respects its dimension-dependent lower
-bound. Toeplitz correlations are obtained from partial autocorrelations, and
-unstructured matrices use a Cholesky factor.
-
-## Profiled likelihoods
-
-For a given \(V\), the generalized least-squares estimator is
+The marginal model is
 
 \[
-\widehat\beta =
+Y \sim N(X\beta, V),
+\qquad
+V(\eta) = ZG(\eta)Z^\mathsf{T} + R(\eta),
+\]
+
+where (eta) is an unconstrained numerical parameter vector. This is the
+standard Gaussian mixed-model decomposition described by @harville1977 and
+@pinheiro2000.
+
+## Covariance parameterization
+
+The optimizer works on an unconstrained scale. The package maps those values
+to admissible covariance matrices as follows.
+
+| Component | Parameterization |
+|:--|:--|
+| Random-effect covariance `G` | Lower-triangular Cholesky factor with log diagonal |
+| Independent residuals `id` | One variance on the log scale |
+| Compound symmetry `cs` | Log variance and logistic correlation constrained to \((-1/(q-1), 1)\) |
+| Autoregressive `ar1` | Log variance and `tanh` correlation in \((-1, 1)\) |
+| Toeplitz `toep` | Log variance and partial autocorrelations mapped to a stationary Toeplitz correlation |
+| Unstructured `un` | Lower-triangular Cholesky factor with log diagonal |
+
+Here (q) is the number of distinct repeated-measurement occasions. Cholesky
+parameterizations guarantee positive definiteness for `G` and `un`. The
+partial-autocorrelation construction guarantees a positive-definite stationary
+Toeplitz correlation matrix.
+
+## Profiled ML and REML criteria
+
+For a fixed covariance matrix (V), the generalized least-squares estimator
+is
+
+\[
+\widehat\beta(\eta) =
 (X^\mathsf{T}V^{-1}X)^{-1}X^\mathsf{T}V^{-1}Y.
 \]
 
-The profiled negative ML log-likelihood is
+Let (r = Y-X\widehat\beta). The profiled negative ML log-likelihood is
 
 \[
-\frac{1}{2}\left\{
-n\log(2\pi) + \log|V| +
-(Y-X\widehat\beta)^\mathsf{T}V^{-1}(Y-X\widehat\beta)
-\right\}.
+\ell_{\mathrm{ML}}^-(\eta)
+= \frac{1}{2}\left[
+n\log(2\pi) + \log|V| + r^\mathsf{T}V^{-1}r
+\right].
 \]
 
-The REML criterion adds \(\log|X^\mathsf{T}V^{-1}X|\) and replaces \(n\) by
-\(n-p\) in the normalizing constant. REML originates with @patterson1971;
-direct likelihood derivations are given by @harville1977 and @lamotte2007.
-Cholesky solves are used instead of explicit matrix inverses.
+The profiled negative REML log-likelihood is
 
-## Satterthwaite degrees of freedom
+\[
+\ell_{\mathrm{REML}}^-(\eta)
+= \frac{1}{2}\left[
+(n-p)\log(2\pi)
++ \log|V|
++ \log|X^\mathsf{T}V^{-1}X|
++ r^\mathsf{T}V^{-1}r
+\right].
+\]
 
-For a contrast row \(L\), define
+REML originates with @patterson1971. General derivations are given by
+@harville1977 and @lamotte2007.
+
+The implementation uses Cholesky solves for (V^{-1}X), (V^{-1}Y), log
+determinants and the GLS normal equations. It does not form an explicit matrix
+inverse in the likelihood calculation.
+
+## Optimization and covariance-parameter uncertainty
+
+`lmm_control()` selects `nlminb()` or `optim()` and controls iteration limits,
+tolerances, parameter bounds and the numerical differentiation method. After
+optimization, `numDeriv` computes the observed likelihood Hessian on the
+unconstrained (eta) scale.
+
+The inverse Hessian estimates
+
+\[
+\widehat\Sigma_\eta =
+\operatorname{Var}(\widehat\eta).
+\]
+
+The package checks the Hessian eigenvalues. A non-positive-definite Hessian
+triggers a warning because covariance-parameter standard errors and
+Satterthwaite calculations may then be unavailable. Natural-scale covariance
+standard errors are obtained by applying the delta method to the transformation
+from (eta) to variances and correlations.
+
+## Satterthwaite denominator degrees of freedom
+
+For a one-row contrast (L), define
 
 \[
 q(\eta) = L\operatorname{Var}(\widehat\beta)L^\mathsf{T}.
 \]
 
-If \(g = \partial q/\partial\eta\) and \(\widehat\Sigma_\eta\) is the inverse
-observed-information matrix, the implemented approximation is the
-Satterthwaite approximation [@satterthwaite1946]:
+If
 
 \[
-\nu = \frac{2q^2}{g^\mathsf{T}\widehat\Sigma_\eta g}.
+g = \frac{\partial q(\eta)}{\partial\eta},
 \]
 
-The gradient and likelihood Hessian are calculated with `numDeriv`. For a
-multi-row hypothesis, the covariance of \(L\widehat\beta\) is decomposed into
-orthogonal one-dimensional contrasts and combined with the Fai-Cornelius
-moment-matching formula [@fai1996].
+the implemented Satterthwaite approximation is
 
-## Random effects
+\[
+\nu =
+\frac{2q(\widehat\eta)^2}
+{g^\mathsf{T}\widehat\Sigma_\eta g}.
+\]
+
+This follows @satterthwaite1946. The gradient of (q) is evaluated numerically
+on the same unconstrained covariance scale used by the optimizer.
+
+With `ddf = "residual"`, the package instead uses (n-p). A request for
+`ddf = "kenward-roger"` is rejected. No Kenward-Roger covariance adjustment is
+implemented.
+
+## Type III tests
+
+Type III hypotheses are constructed with sum contrasts, then transformed back
+to the fitted coefficient parameterization. For a multi-row hypothesis matrix
+(L), the covariance of (L\widehat\beta) is eigendecomposed into orthogonal
+one-dimensional components. Their Satterthwaite degrees of freedom are
+combined with the Fai-Cornelius moment-matching formula [@fai1996].
+
+Only type III tests are implemented. `anova()` does not perform likelihood-ratio
+comparisons between fitted models.
+
+## Estimated marginal means
+
+`lsmeans()` constructs a fixed-effects reference grid from the model terms.
+Requested factors vary over their levels, nuisance factors receive equal
+weights, and unrequested numeric covariates are held at their observed means.
+The corresponding rows of the fixed-effects model matrix are averaged to form
+the contrast matrix. This targets population marginal means as described by
+@searle1980.
+
+Pairwise contrasts are differences between automatically generated marginal
+mean rows. Multiplicity correction is applied to pairwise p-values with
+`stats::p.adjust()`. Confidence intervals are pointwise and are not adjusted.
+
+## Empirical BLUPs and prediction
 
 After covariance estimation, the empirical BLUP is
 
@@ -83,5 +177,16 @@ After covariance estimation, the empirical BLUP is
 \widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 \]
 
-This empirical best linear unbiased predictor follows the mixed-model
-derivation in @harville1977.
+Conditional fitted values use (X\widehat\beta + Z\widehat u); marginal fitted
+values use (X\widehat\beta). For new data, known grouping levels use their
+empirical random effects and new grouping levels receive a random contribution
+of zero.
+
+## Computational scope
+
+The current implementation builds a dense (n \times n) marginal covariance
+matrix at each objective evaluation. Although the random-effects design matrix
+is initially sparse, covariance assembly and factorization are dense. The
+package is therefore intended for small and moderate data sets. Large-scale
+sparse algorithms, multiple random-effect terms, generalized responses and
+automatic optimizer restarts are not implemented in version `0.1.0`.

@@ -40,12 +40,22 @@ implementation.}
 \item{control}{An object returned by \code{lmm_control()}.}
 }
 \value{
-An object of class \code{lmm}.
+An object of class \code{lmm}. The object stores fixed and random-effect
+estimates, covariance components, fitted values, residuals, optimization
+diagnostics, the analysis data, and the model matrices.
 }
 \description{
 \code{lmm()} explicitly evaluates a profiled ML or REML criterion for
 \verb{V = Z G Z' + R}. It can combine random effects with an independent,
 compound-symmetric, AR(1), Toeplitz, or unstructured residual covariance.
+Rows that are incomplete for any variable used by the fixed, random, or
+repeated formula are removed before fitting.
+}
+\details{
+The \code{random} argument accepts one grouping formula. The \code{repeated} argument
+accepts one ordering variable and one grouping expression. Each repeated
+group may have at most one observation per ordering value. The current
+likelihood assembles a dense marginal covariance matrix.
 }
 \examples{
 fit <- lmm(
@@ -59,12 +69,12 @@ summary(fit)
 Harville, D. A. (1977). Maximum likelihood approaches to variance component
 estimation and to related problems. \emph{Journal of the American Statistical
 Association}, 72(358), 320-338.
-\url{https://doi.org/10.1080/01621459.1977.10480998}
+\doi{10.1080/01621459.1977.10480998}
 
 LaMotte, L. R. (2007). A direct derivation of the REML likelihood function.
 \emph{Statistical Papers}, 48(2), 321-327.
-\url{https://doi.org/10.1007/s00362-006-0335-6}
+\doi{10.1007/s00362-006-0335-6}
 
 Pinheiro, J. C., and Bates, D. M. (2000). \emph{Mixed-Effects Models in S and
-S-PLUS}. Springer. \url{https://doi.org/10.1007/b98882}
+S-PLUS}. Springer. \doi{10.1007/b98882}
 }

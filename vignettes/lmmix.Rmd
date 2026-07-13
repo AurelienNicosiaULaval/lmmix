@@ -1,10 +1,10 @@
 ---
-title: "Getting started with lmmix"
+title: "Using lmmix"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Getting started with lmmix}
+  %\VignetteIndexEntry{Using lmmix}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,68 +13,220 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-`lmmix` fits the Gaussian model
+## Model scope
+
+`lmmix` fits the Gaussian linear mixed model
 
 \[
 Y = X\beta + Zu + \varepsilon,
 \qquad
-V = ZGZ^\mathsf{T} + R,
+u \sim N(0, G),
+\qquad
+\varepsilon \sim N(0, R),
 \]
 
-by directly optimizing a profiled ML or REML objective. The model formulation
-and covariance decomposition follow standard mixed-model theory
-[@harville1977; @pinheiro2000].
+so the marginal covariance is
+
+\[
+V = ZGZ^\mathsf{T} + R.
+\]
+
+The package directly optimizes a profiled ML or REML objective. It does not
+delegate estimation to another mixed-model package. The formulation follows
+the Gaussian mixed-model framework of @harville1977 and @pinheiro2000.
 
 ```{r}
 library(lmmix)
 ```
 
-## A model with two covariance sources
+## Prepare the data
 
-The example data contain a random center effect and repeated observations
-within subjects.
+The included `multicentre` data have three treatments, three measurement
+occasions, three centers and subjects nested within center and treatment.
 
-```{r}
+```{r data-summary}
+str(multicentre)
+colSums(is.na(multicentre))
+```
+
+The fixed, random and repeated formulas jointly determine the variables used
+by the analysis. `lmm()` removes rows that are incomplete for any of those
+variables and stores the retained data in the fitted object.
+
+## Fit a combined covariance model
+
+This model contains a random center intercept and an AR(1) residual covariance
+within subject.
+
+```{r combined-fit}
 fit <- lmm(
-  multicentre,
-  Y ~ Drug * Time,
+  data = multicentre,
+  formula = Y ~ Drug * Time,
   random = ~ 1 | Center,
   repeated = ~ Time | Center:Drug:Subject,
-  structure = "ar1"
+  structure = "ar1",
+  method = "REML",
+  ddf = "satterthwaite"
 )
 
 fit
 ```
 
-The summary contains coefficient-level tests, type III tests, covariance
-parameters, and information criteria.
+The three formulas have distinct roles:
 
-```{r}
+| Argument | Role in the fitted model |
+|:--|:--|
+| `formula` | Defines the response and fixed-effects matrix `X` |
+| `random` | Defines the random-effects matrix `Z` and grouping factor for `G` |
+| `repeated` | Defines the ordering variable and independent blocks for `R` |
+
+For the residual structures other than `id`, each repeated-measures group must
+have at most one observation per ordering value.
+
+## Inspect convergence before inference
+
+The optimizer code and Hessian diagnostic are part of the fitted object.
+
+```{r convergence}
+fit$convergence[c(
+  "code",
+  "message",
+  "optimizer",
+  "iterations",
+  "hessian_positive_definite"
+)]
+```
+
+A nonzero convergence code or a non-positive-definite likelihood Hessian
+requires investigation before interpreting standard errors or denominator
+degrees of freedom. The fitting function emits a warning in either case.
+
+## Fixed effects and type III tests
+
+`summary()` combines coefficient-level inference, type III tests, covariance
+parameters and information criteria.
+
+```{r summary}
 summary(fit)
 ```
 
-## Estimated marginal means
+Individual components are also available through standard methods.
 
-Nuisance-factor levels receive equal weights. Numeric covariates not requested
-in `specs` are held at their observed means. This construction targets
-population marginal means in the sense of @searle1980.
-
-```{r}
-lsmeans(fit, ~Drug)
-lsmeans(fit, pairwise ~ Drug)
+```{r inference}
+fixef(fit)
+vcov(fit)
+anova(fit)
+confint(fit)
 ```
 
-## Tidy output
+`anova()` currently performs type III fixed-effect tests for one model. It does
+not compare nested models. Satterthwaite and residual denominator degrees of
+freedom are implemented. Kenward-Roger inference is not implemented.
 
-```{r}
+## Covariance parameters and random effects
+
+`VarCorr()` returns the estimated covariance components on their natural
+scale. `ranef()` returns empirical BLUPs as a tibble.
+
+```{r covariance}
+VarCorr(fit)
+ranef(fit)
+```
+
+For a random-slope model, the random-effect covariance is unstructured. Its
+variances and correlations appear as separate rows in `VarCorr()`.
+
+## Estimated marginal means
+
+Marginal means use equal weights over nuisance-factor levels. Numeric
+covariates not requested in `specs` are held at their observed means. This
+construction targets population marginal means in the sense of @searle1980.
+
+```{r lsmeans}
+lsmeans(fit, ~Drug)
+lsmeans(fit, ~Time)
+```
+
+Pairwise contrast matrices are generated automatically. The `adjust` argument
+is passed to `stats::p.adjust()` and therefore adjusts pairwise p-values. The
+confidence intervals remain pointwise.
+
+```{r pairwise}
+lsmeans(fit, pairwise ~ Drug, adjust = "holm")
+```
+
+Reference values for numeric covariates can be overridden with `at`:
+
+```{r at-example, eval=FALSE}
+lsmeans(fit, ~Drug, at = list(Time = "2"))
+```
+
+When `emmeans` is installed, `lmmix` supplies the required fixed-effects basis
+and model-specific denominator degrees of freedom.
+
+```{r emmeans, eval=requireNamespace("emmeans", quietly = TRUE)}
+emmeans::emmeans(fit, ~Drug)
+```
+
+## Predictions, residuals and tidy output
+
+Conditional fitted values include empirical random effects. Marginal fitted
+values use fixed effects only.
+
+```{r predictions}
+head(fitted(fit, type = "conditional"))
+head(fitted(fit, type = "marginal"))
+head(residuals(fit, type = "pearson"))
+```
+
+For `predict(fit, newdata)`, known grouping levels receive their fitted random
+effect. New groups receive a random contribution of zero. Set `re.form` to a
+non-`NULL` value to request fixed-effects-only predictions.
+
+The `generics` methods return tibbles.
+
+```{r broom}
 generics::tidy(fit)
 generics::glance(fit)
 head(generics::augment(fit))
 ```
 
-When `emmeans` is installed, the package supplies the required basis and uses
-the model's Satterthwaite degrees of freedom.
+## Alternative model specifications
 
-```{r, eval=requireNamespace("emmeans", quietly = TRUE)}
-emmeans::emmeans(fit, ~Drug)
+The same interface covers marginal, random-effects and combined models.
+
+```{r alternatives, eval=FALSE}
+# Marginal model with unstructured repeated-measures covariance
+fit_marginal <- lmm(
+  data,
+  response ~ treatment * time,
+  repeated = ~ time | subject,
+  structure = "un"
+)
+
+# Random intercept and slope with independent residuals
+fit_random <- lmm(
+  data,
+  response ~ treatment + time,
+  random = ~ 1 + time | subject,
+  structure = "id"
+)
+
+# Combined random intercept and Toeplitz residual covariance
+fit_combined <- lmm(
+  data,
+  response ~ treatment * time,
+  random = ~ 1 | center,
+  repeated = ~ time | center:subject,
+  structure = "toep"
+)
 ```
+
+## Practical limits
+
+The current implementation constructs the full dense matrix `V` during
+optimization. It is appropriate for small and moderate data sets. It is not a
+large-scale sparse mixed-model engine. The interface accepts one random-effects
+formula and one repeated-measures structure. Generalized responses, multiple
+random-effect terms, Kenward-Roger inference and likelihood-ratio model
+comparison are outside the current `0.1.0` implementation.

@@ -17,7 +17,7 @@ A data frame with 153 rows and 5 variables:
 \source{
 Milliken, G. A., and Johnson, D. E. (2009). \emph{Analysis of Messy Data,
 Volume 1: Designed Experiments} (2nd ed.), Section 28.3. Chapman and
-Hall/CRC. \url{https://doi.org/10.1201/EBK1584883340}
+Hall/CRC. \doi{10.1201/EBK1584883340}
 }
 \usage{
 multicentre

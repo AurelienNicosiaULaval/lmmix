@@ -38,4 +38,6 @@ pairwise comparisons are requested.
 \description{
 Marginal means use equal weights over nuisance-factor levels. Numeric
 covariates not listed in \code{specs} are held at their observed means.
+Multiplicity adjustment applies to pairwise p-values; confidence intervals
+remain pointwise.
 }

@@ -5,6 +5,9 @@ test_that("core S3 methods return documented shapes", {
   model_summary <- summary(fit)
   expect_s3_class(model_summary, "summary.lmm")
   expect_message(print(model_summary), "Fixed effects")
+  uncertain_summary <- model_summary
+  uncertain_summary$convergence$hessian_positive_definite <- FALSE
+  expect_message(print(uncertain_summary), "Hessian")
   expect_equal(coef(fit), fixef(fit))
   expect_named(fixef(fit), c("(Intercept)", "age", "SexFemale"))
   expect_s3_class(VarCorr(fit), "tbl_df")

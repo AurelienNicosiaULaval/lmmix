@@ -63,6 +63,11 @@ test_that("residual degrees of freedom are available", {
   expect_equal(unique(result$df), nobs(fit) - length(fixef(fit)))
 })
 
+test_that("the ANOVA print method reports its denominator df method", {
+  fit <- fit_orthodont_intercept()
+  expect_message(print(anova(fit)), "satterthwaite")
+})
+
 test_that("Kenward-Roger is rejected rather than silently approximated", {
   expect_error(
     fit_orthodont_intercept(ddf = "kenward-roger"),

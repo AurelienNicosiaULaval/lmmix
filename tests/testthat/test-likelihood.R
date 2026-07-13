@@ -162,3 +162,28 @@ test_that("the combined random-effect and AR1 model converges", {
   expect_true(all(eigen(fit$covariance$v, symmetric = TRUE)$values > 0))
   expect_equal(nobs(fit), sum(!is.na(multicentre$Y)))
 })
+
+test_that("every residual structure fits in a combined model", {
+  for (structure in c("id", "cs", "ar1", "toep", "un")) {
+    expect_no_warning(
+      fit <- lmm(
+        multicentre,
+        Y ~ Drug * Time,
+        random = ~ 1 | Center,
+        repeated = ~ Time | Center:Drug:Subject,
+        structure = structure
+      )
+    )
+
+    expect_identical(fit$convergence$code, 0L)
+    expect_true(fit$convergence$hessian_positive_definite)
+    expect_gt(
+      min(eigen(
+        fit$covariance$v,
+        symmetric = TRUE,
+        only.values = TRUE
+      )$values),
+      0
+    )
+  }
+})

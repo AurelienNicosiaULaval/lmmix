@@ -192,6 +192,8 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
 #'
 #' Marginal means use equal weights over nuisance-factor levels. Numeric
 #' covariates not listed in `specs` are held at their observed means.
+#' Multiplicity adjustment applies to pairwise p-values; confidence intervals
+#' remain pointwise.
 #'
 #' @param object An `lmm` object.
 #' @param specs Variables defining the marginal means, supplied as a character

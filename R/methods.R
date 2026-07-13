@@ -23,6 +23,44 @@ VarCorr <- function(object, ...) {
   UseMethod("VarCorr")
 }
 
+#' Standard methods for `lmm` fits
+#'
+#' Methods are provided for extracting likelihood quantities, fitted values,
+#' residuals, model matrices and formulas, as well as for prediction, type III
+#' testing and fixed-effect confidence intervals.
+#'
+#' Conditional fitted values and predictions include empirical random effects.
+#' Marginal values use fixed effects only. In prediction from new data, known
+#' grouping levels use their fitted random effect and new levels receive a
+#' random contribution of zero.
+#'
+#' @param x,object,formula An `lmm` object. The `formula` name follows the
+#'   argument name of the `model.frame()` generic.
+#' @param ... Additional arguments. Supplying another model to `anova()` is not
+#'   supported.
+#' @param k Penalty per parameter used by `AIC()`.
+#' @param type For `fitted()`, either `"conditional"` or `"marginal"`. For
+#'   `residuals()`, one of `"response"`, `"pearson"`, or `"marginal"`. For
+#'   `anova()`, only type `3` is implemented.
+#' @param newdata Optional data frame used for prediction.
+#' @param re.form `NULL` includes empirical random effects. Any non-`NULL`
+#'   value requests a fixed-effects-only prediction.
+#' @param na.action Missing-value action retained for prediction-method
+#'   compatibility.
+#' @param data Optional data frame used to construct a fixed-effects model
+#'   matrix.
+#' @param fixed.only Whether `formula()` returns only the fixed formula. If
+#'   `FALSE`, it returns fixed, random, and repeated formulas in a list.
+#' @param parm Fixed-effect parameters requested from `confint()`, supplied by
+#'   name or position.
+#' @param level Confidence level for fixed-effect intervals.
+#'
+#' @return The return value follows the corresponding base R generic.
+#'
+#' @name lmm-methods
+NULL
+
+#' @rdname lmm-methods
 #' @export
 print.lmm <- function(x, ...) {
   cli::cli_text("Linear mixed model fit by {x$method}")
@@ -91,9 +129,13 @@ print.summary.lmm <- function(x, ...) {
   if (x$convergence$code != 0L) {
     cli::cli_alert_warning("Optimizer convergence code: {x$convergence$code}")
   }
+  if (!isTRUE(x$convergence$hessian_positive_definite)) {
+    cli::cli_alert_warning("The likelihood Hessian is not positive definite.")
+  }
   invisible(x)
 }
 
+#' @rdname lmm-methods
 #' @export
 coef.lmm <- function(object, ...) {
   fixef(object)
@@ -125,11 +167,13 @@ VarCorr.lmm <- function(object, ...) {
   object$covariance_components
 }
 
+#' @rdname lmm-methods
 #' @export
 vcov.lmm <- function(object, ...) {
   object$beta_vcov
 }
 
+#' @rdname lmm-methods
 #' @export
 logLik.lmm <- function(object, ...) {
   structure(
@@ -140,33 +184,39 @@ logLik.lmm <- function(object, ...) {
   )
 }
 
+#' @rdname lmm-methods
 #' @export
 AIC.lmm <- function(object, ..., k = 2) {
   -2 * as.numeric(logLik(object)) + k * attr(logLik(object), "df")
 }
 
+#' @rdname lmm-methods
 #' @export
 BIC.lmm <- function(object, ...) {
   -2 * as.numeric(logLik(object)) +
     log(nobs(object)) * attr(logLik(object), "df")
 }
 
+#' @rdname lmm-methods
 #' @export
 deviance.lmm <- function(object, ...) {
   -2 * as.numeric(logLik(object))
 }
 
+#' @rdname lmm-methods
 #' @export
 nobs.lmm <- function(object, ...) {
   nrow(object$design$x)
 }
 
+#' @rdname lmm-methods
 #' @export
 fitted.lmm <- function(object, type = c("conditional", "marginal"), ...) {
   type <- match.arg(type)
   if (type == "conditional") object$fitted else object$marginal_fitted
 }
 
+#' @rdname lmm-methods
 #' @export
 residuals.lmm <- function(
   object,
@@ -183,6 +233,7 @@ residuals.lmm <- function(
   object$residuals
 }
 
+#' @rdname lmm-methods
 #' @export
 sigma.lmm <- function(object, ...) {
   sqrt(mean(diag(object$covariance$r)))
@@ -209,6 +260,7 @@ random_prediction <- function(object, newdata) {
   rowSums(z_base * effects)
 }
 
+#' @rdname lmm-methods
 #' @export
 predict.lmm <- function(
   object,
@@ -230,16 +282,19 @@ predict.lmm <- function(
   }
 }
 
+#' @rdname lmm-methods
 #' @export
 model.matrix.lmm <- function(object, data = NULL, ...) {
   if (is.null(data)) object$design$x else model_matrix_newdata(object, data)
 }
 
+#' @rdname lmm-methods
 #' @export
 model.frame.lmm <- function(formula, ...) {
   formula$model_frame
 }
 
+#' @rdname lmm-methods
 #' @export
 formula.lmm <- function(x, fixed.only = TRUE, ...) {
   if (isTRUE(fixed.only)) {
@@ -253,11 +308,13 @@ formula.lmm <- function(x, fixed.only = TRUE, ...) {
   }
 }
 
+#' @rdname lmm-methods
 #' @export
 terms.lmm <- function(x, ...) {
   x$terms
 }
 
+#' @rdname lmm-methods
 #' @export
 anova.lmm <- function(object, ..., type = 3) {
   dots <- list(...)
@@ -268,6 +325,7 @@ anova.lmm <- function(object, ..., type = 3) {
     cli::cli_abort("Only type III fixed-effect tests are implemented.")
   }
   out <- type3_table(object)
+  attr(out, "ddf") <- object$ddf
   class(out) <- c("anova.lmm", class(out))
   out
 }
@@ -280,6 +338,7 @@ print.anova.lmm <- function(x, ...) {
   invisible(x)
 }
 
+#' @rdname lmm-methods
 #' @export
 confint.lmm <- function(
   object,

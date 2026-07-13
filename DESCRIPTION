@@ -2,7 +2,8 @@ Package: lmmix
 Title: Linear Mixed Models with Correlated Residuals
 Version: 0.1.0
 Authors@R: 
-    person("Package", "Maintainer", , "maintainer@example.org",
+    person("Aurélien", "Nicosia", ,
+           "116816597+AurelienNicosiaULaval@users.noreply.github.com",
            role = c("aut", "cre"))
 Description: Fits Gaussian linear mixed models by explicitly optimizing the
     maximum likelihood or restricted maximum likelihood criterion. Random
