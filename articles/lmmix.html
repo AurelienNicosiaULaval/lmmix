@@ -71,22 +71,14 @@
 <div class="section level2">
 <h2 id="model-scope">Model scope<a class="anchor" aria-label="anchor" href="#model-scope"></a>
 </h2>
-<p><code>lmmix</code> fits the Gaussian linear mixed model</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mi>X</mi><mi>β</mi><mo>+</mo><mi>Z</mi><mi>u</mi><mo>+</mo><mi>ε</mi><mo>,</mo><mspace width="2.0em"></mspace><mi>u</mi><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>G</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo><mspace width="2.0em"></mspace><mi>ε</mi><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>R</mi><mo stretchy="false" form="postfix">)</mo><mo>,</mo></mrow><annotation encoding="application/x-tex">
-Y = X\beta + Zu + \varepsilon,
-\qquad
-u \sim N(0, G),
-\qquad
-\varepsilon \sim N(0, R),
-</annotation></semantics></math></p>
-<p>so the marginal covariance is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mi>Z</mi><mi>G</mi><msup><mi>Z</mi><mi>𝖳</mi></msup><mo>+</mo><mi>R</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">
-V = ZGZ^\mathsf{T} + R.
-</annotation></semantics></math></p>
-<p>The package directly optimizes a profiled ML or REML objective. It
-does not delegate estimation to another mixed-model package. The
-formulation follows the Gaussian mixed-model framework of <span class="citation">Harville (<a href="#ref-harville1977">1977</a>)</span>
-and <span class="citation">Pinheiro and Bates (<a href="#ref-pinheiro2000">2000</a>)</span>.</p>
+<p><code>lmmix</code> fits Gaussian linear mixed models with random
+effects, structured residual covariance, or both components in the same
+model. The package directly optimizes a profiled ML or REML objective
+and does not delegate estimation to another mixed-model package.</p>
+<p>This vignette focuses on practical use. The mathematical formulation,
+covariance parameterizations, likelihood criteria, and inference
+derivations are presented separately in the vignette <em>Estimation and
+inference in lmmix</em>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">lmmix</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -479,16 +471,6 @@ random-effect terms, Kenward-Roger inference and likelihood-ratio model
 comparison are outside the current <code>0.1.0</code>
 implementation.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-harville1977" class="csl-entry">
-Harville, David A. 1977. <span>“Maximum Likelihood Approaches to
-Variance Component Estimation and to Related Problems.”</span>
-<em>Journal of the American Statistical Association</em> 72 (358):
-320–38. <a href="https://doi.org/10.1080/01621459.1977.10480998" class="external-link">https://doi.org/10.1080/01621459.1977.10480998</a>.
-</div>
-<div id="ref-pinheiro2000" class="csl-entry">
-Pinheiro, José C., and Douglas M. Bates. 2000. <em>Mixed-Effects Models
-in s and s-PLUS</em>. Springer. <a href="https://doi.org/10.1007/b98882" class="external-link">https://doi.org/10.1007/b98882</a>.
-</div>
 <div id="ref-searle1980" class="csl-entry">
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. <span>“Population
 Marginal Means in the Linear Model: An Alternative to Least Squares

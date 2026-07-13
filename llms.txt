@@ -2,13 +2,7 @@
 
 `lmmix` fits Gaussian linear mixed models by explicitly optimizing the
 ML or REML criterion. Its main use case is a model that contains both
-random effects and a structured residual covariance:
-
-``` math
-Y = X\beta + Zu + \varepsilon,
-\qquad
-V = ZGZ^\mathsf{T} + R.
-```
+random effects and a structured residual covariance.
 
 The package estimates the covariance parameters, fixed effects and
 empirical BLUPs in one fitted object. It also provides Satterthwaite
@@ -33,6 +27,31 @@ From an existing checkout, installation from R is also possible:
 ``` r
 
 devtools::install_local("/path/to/lmmix")
+```
+
+## Vignettes
+
+The package contains three complementary vignettes:
+
+- [Using lmmix](articles/lmmix.md)
+  ([source](https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/lmmix.Rmd))
+  presents the fitting workflow and the main methods;
+- [Estimation and inference in lmmix](articles/theory-reml.md)
+  ([source](https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/theory-reml.Rmd))
+  gives the mathematical formulation, covariance parameterizations, ML
+  and REML criteria, and Satterthwaite inference;
+- [Validation strategy and numerical benchmarks](articles/validation.md)
+  ([source](https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/validation.Rmd))
+  documents the independent comparisons, numerical tolerances, and
+  validation boundaries.
+
+They are also available from an installed package:
+
+``` r
+
+vignette("lmmix", package = "lmmix")
+vignette("theory-reml", package = "lmmix")
+vignette("validation", package = "lmmix")
 ```
 
 ## Current capability matrix
@@ -316,7 +335,7 @@ The REML implementation follows Patterson and Thompson (1971), Harville
 Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai
 and Cornelius (1996). Estimated marginal means follow Searle, Speed, and
 Milliken (1980). Full citations and DOI links are included in the
-package help and vignettes.
+package help and the [theory vignette](articles/theory-reml.md).
 
 # Package index
 

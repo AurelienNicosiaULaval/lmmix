@@ -2,27 +2,15 @@
 
 ## Model scope
 
-`lmmix` fits the Gaussian linear mixed model
+`lmmix` fits Gaussian linear mixed models with random effects,
+structured residual covariance, or both components in the same model.
+The package directly optimizes a profiled ML or REML objective and does
+not delegate estimation to another mixed-model package.
 
-``` math
-Y = X\beta + Zu + \varepsilon,
-\qquad
-u \sim N(0, G),
-\qquad
-\varepsilon \sim N(0, R),
-```
-
-so the marginal covariance is
-
-``` math
-V = ZGZ^\mathsf{T} + R.
-```
-
-The package directly optimizes a profiled ML or REML objective. It does
-not delegate estimation to another mixed-model package. The formulation
-follows the Gaussian mixed-model framework of Harville
-([1977](#ref-harville1977)) and Pinheiro and Bates
-([2000](#ref-pinheiro2000)).
+This vignette focuses on practical use. The mathematical formulation,
+covariance parameterizations, likelihood criteria, and inference
+derivations are presented separately in the vignette *Estimation and
+inference in lmmix*.
 
 ``` r
 
@@ -430,14 +418,6 @@ random-effects formula and one repeated-measures structure. Generalized
 responses, multiple random-effect terms, Kenward-Roger inference and
 likelihood-ratio model comparison are outside the current `0.1.0`
 implementation.
-
-Harville, David A. 1977. “Maximum Likelihood Approaches to Variance
-Component Estimation and to Related Problems.” *Journal of the American
-Statistical Association* 72 (358): 320–38.
-<https://doi.org/10.1080/01621459.1977.10480998>.
-
-Pinheiro, José C., and Douglas M. Bates. 2000. *Mixed-Effects Models in
-s and s-PLUS*. Springer. <https://doi.org/10.1007/b98882>.
 
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. “Population
 Marginal Means in the Linear Model: An Alternative to Least Squares
