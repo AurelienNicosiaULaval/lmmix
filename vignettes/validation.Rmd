@@ -1,81 +1,500 @@
 ---
-title: "Validation strategy and numerical benchmarks"
+title: "Validation against independent R implementations and PROC MIXED"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Validation strategy and numerical benchmarks}
+  %\VignetteIndexEntry{Validation against independent R implementations and PROC MIXED}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5
+)
+
+has_nlme <- requireNamespace("nlme", quietly = TRUE)
+has_lmer_test <- requireNamespace("lmerTest", quietly = TRUE)
+has_mmrm <- requireNamespace("mmrm", quietly = TRUE)
+
+comparison_table <- function(term, lmmix, reference) {
+  tibble::tibble(
+    term = term,
+    lmmix = as.numeric(lmmix),
+    reference = as.numeric(reference),
+    abs.diff = abs(as.numeric(lmmix) - as.numeric(reference))
+  )
+}
+
+show_table <- function(x, digits = 6) {
+  knitr::kable(x, digits = digits, row.names = FALSE)
+}
 ```
 
-## Validation principles
+## Purpose and evidentiary standard
 
-Validation is divided into three layers:
+This vignette reports the numerical comparisons used to validate `lmmix`.
+Every comparison is restricted to a model class for which the two
+implementations use the same fixed-effects specification, covariance model,
+and estimation criterion. A small difference is meaningful only after those
+definitions have been aligned.
 
-1. structural tests verify positive definiteness, dimensions, parameter
-   transformations and input validation;
-2. overlapping model classes are compared with independent R implementations;
-3. the combined random-effect and correlated-residual model is checked against
-   stored numerical targets for a fully specified PROC MIXED analysis.
+Validation is organized in three layers:
 
-This separation matters because no single external R implementation covers
-every model and inference component supported by `lmmix`.
+1. comparisons with independent R implementations for overlapping models;
+2. structural checks for combined random-effect and residual-correlation
+   models that no single reference R function covers;
+3. regression comparisons with stored PROC MIXED targets for one fully
+   specified combined model.
 
-## Cross-implementation comparisons
+The numerical tables below are produced by executable R code when the
+vignette is built. The PROC MIXED values are stored targets. The repository
+does not contain a SAS execution transcript, so the SAS section is not
+presented as a new independent SAS run.
 
-The executable test suite includes the following comparisons.
+## Comparison map
 
-| `lmmix` model | Reference implementation | Quantities compared | Main tolerance |
+| lmmix.model | reference.function | quantities.compared | tolerance |
 |:--|:--|:--|:--|
-| Random-intercept REML | `nlme::lme()` | Fixed effects, covariance parameters, log-likelihood | `1e-5` or smaller |
-| Random-slope REML | `nlme::lme()` | Fixed effects, random covariance, log-likelihood | `1e-4` or smaller |
-| Random-intercept ML | `nlme::lme()` | Fixed effects and log-likelihood | `1e-6` |
-| Marginal CS and AR(1) | `nlme::gls()` | Fixed effects, residual parameters, log-likelihood | `1e-5` |
-| Marginal AR(1) | `mmrm::mmrm()` | Fixed effects, full residual covariance, log-likelihood | `1e-5` |
-| Random-intercept Satterthwaite inference | `lmerTest::lmer()` | Estimates, standard errors and coefficient degrees of freedom | `1e-3` or smaller |
-| Type III Satterthwaite tests | `lmerTest::lmer()` | Numerator df, denominator df and F statistics | `1e-3` or smaller |
+| Random-intercept REML | `nlme::lme()` | fixed effects and log-likelihood: `1e-6`; variance components: `1e-4` | absolute |
+| Random-slope REML | `nlme::lme()` | fixed effects and log-likelihood: `1e-5`; covariance parameters: `1e-4` | absolute |
+| Random-intercept ML | `nlme::lme()` | fixed effects, log-likelihood | `1e-6` |
+| Marginal CS and AR(1) REML | `nlme::gls()` | fixed effects, residual variance, correlation, log-likelihood | `1e-5` |
+| Marginal AR(1) REML | `mmrm::mmrm()` | fixed effects and log-likelihood: `1e-5`; residual covariance matrix: `1e-4` | absolute |
+| Random-intercept REML | `lmerTest::lmer()` | estimates and standard errors: `1e-5`; coefficient df: `5e-3` | absolute |
+| Type III Satterthwaite tests | `lmerTest::lmer()` | numerator df: `1e-6`; denominator df and F statistics: `5e-3` | absolute |
+| Random center plus AR(1) residual | PROC MIXED stored targets | covariance parameters, fixed effects, type III tests, LS-means, differences | target-specific precision |
 
-These comparisons are restricted to cases where the covariance and inference
-definitions overlap. Agreement in one model class is not presented as evidence
-for an unsupported feature.
+`nlme` provides independent likelihood comparisons for random-effects and
+structured marginal models [@pinheiro2000; @nlme2025]. `lmerTest` provides an
+independent Satterthwaite implementation for models fitted by `lme4`
+[@kuznetsova2017]. `mmrm` provides a second independent comparison for the
+marginal repeated-measures model [@mmrm2026].
+
+## Shared longitudinal data
+
+The R comparisons use the `Orthodont` data distributed with `nlme`. `Occasion`
+is created explicitly so that AR(1) visits have a declared order.
+
+```{r orthodont-data, eval=has_nlme}
+library(lmmix)
+
+orthodont <- as.data.frame(nlme::Orthodont)
+orthodont$Occasion <- factor(ave(
+  seq_len(nrow(orthodont)),
+  orthodont$Subject,
+  FUN = seq_along
+))
+
+tibble::tibble(
+  n.obs = nrow(orthodont),
+  n.subjects = nlevels(orthodont$Subject),
+  n.occasions = nlevels(orthodont$Occasion)
+) |>
+  show_table(digits = 0)
+```
+
+## Random-intercept REML comparison with `nlme::lme()`
+
+The first comparison uses the same fixed formula, random intercept, and REML
+criterion in both implementations.
+
+```{r random-intercept-reml, eval=has_nlme}
+fit.ri <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  random = ~ 1 | Subject,
+  method = "REML"
+)
+
+ref.ri <- nlme::lme(
+  distance ~ age + Sex,
+  random = ~ 1 | Subject,
+  data = orthodont,
+  method = "REML"
+)
+
+comparison_table(
+  term = names(fixef(fit.ri)),
+  lmmix = fixef(fit.ri),
+  reference = nlme::fixef(ref.ri)
+) |>
+  show_table()
+```
+
+```{r random-intercept-reml-covariance, eval=has_nlme}
+ref.ri.cov <- as.matrix(nlme::getVarCov(
+  ref.ri,
+  type = "random.effects"
+))
+ref.ri.variance <- c(
+  ref.ri.cov[1L, 1L],
+  ref.ri$sigma^2
+)
+
+comparison_table(
+  term = c("random.intercept.var", "residual.var"),
+  lmmix = VarCorr(fit.ri)$estimate,
+  reference = ref.ri.variance
+) |>
+  show_table()
+
+comparison_table(
+  term = "logLik",
+  lmmix = logLik(fit.ri),
+  reference = logLik(ref.ri)
+) |>
+  show_table()
+```
+
+## Random-slope REML comparison with `nlme::lme()`
+
+This comparison adds a correlated random slope for age. It checks two random
+variances, their correlation, the residual variance, the fixed effects, and
+the REML log-likelihood.
+
+```{r random-slope-reml, eval=has_nlme}
+fit.rs <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  random = ~ 1 + age | Subject,
+  method = "REML"
+)
+
+ref.rs <- nlme::lme(
+  distance ~ age + Sex,
+  random = ~ age | Subject,
+  data = orthodont,
+  method = "REML"
+)
+
+comparison_table(
+  term = names(fixef(fit.rs)),
+  lmmix = fixef(fit.rs),
+  reference = nlme::fixef(ref.rs)
+) |>
+  show_table()
+```
+
+```{r random-slope-reml-covariance, eval=has_nlme}
+ref.rs.cov <- as.matrix(nlme::getVarCov(
+  ref.rs,
+  type = "random.effects"
+))
+ref.rs.parameters <- c(
+  ref.rs.cov[1L, 1L],
+  ref.rs.cov[2L, 2L],
+  ref.rs.cov[1L, 2L] / sqrt(ref.rs.cov[1L, 1L] * ref.rs.cov[2L, 2L]),
+  ref.rs$sigma^2
+)
+
+comparison_table(
+  term = c(
+    "random.intercept.var",
+    "random.age.var",
+    "random.intercept.age.cor",
+    "residual.var"
+  ),
+  lmmix = VarCorr(fit.rs)$estimate,
+  reference = ref.rs.parameters
+) |>
+  show_table()
+
+comparison_table(
+  term = "logLik",
+  lmmix = logLik(fit.rs),
+  reference = logLik(ref.rs)
+) |>
+  show_table()
+```
+
+## Maximum-likelihood comparison with `nlme::lme()`
+
+The ML comparison verifies that agreement is not specific to the REML
+criterion.
+
+```{r random-intercept-ml, eval=has_nlme}
+fit.ml <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  random = ~ 1 | Subject,
+  method = "ML"
+)
+
+ref.ml <- nlme::lme(
+  distance ~ age + Sex,
+  random = ~ 1 | Subject,
+  data = orthodont,
+  method = "ML"
+)
+
+rbind(
+  comparison_table(
+    term = names(fixef(fit.ml)),
+    lmmix = fixef(fit.ml),
+    reference = nlme::fixef(ref.ml)
+  ),
+  comparison_table(
+    term = "logLik",
+    lmmix = logLik(fit.ml),
+    reference = logLik(ref.ml)
+  )
+) |>
+  show_table()
+```
+
+## Marginal CS and AR(1) comparisons with `nlme::gls()`
+
+These models contain no random effect. The repeated-measures covariance is
+compound symmetric or AR(1), and both implementations optimize a REML
+criterion.
+
+```{r marginal-nlme-fits, eval=has_nlme}
+marginal.fits <- list()
+marginal.refs <- list()
+
+for (structure in c("cs", "ar1")) {
+  marginal.fits[[structure]] <- lmm(
+    orthodont,
+    distance ~ age + Sex,
+    repeated = ~ Occasion | Subject,
+    structure = structure,
+    method = "REML"
+  )
+
+  correlation <- if (structure == "cs") {
+    nlme::corCompSymm(form = ~ 1 | Subject)
+  } else {
+    nlme::corAR1(form = ~ 1 | Subject)
+  }
+
+  marginal.refs[[structure]] <- nlme::gls(
+    distance ~ age + Sex,
+    data = orthodont,
+    correlation = correlation,
+    method = "REML"
+  )
+}
+```
+
+```{r marginal-nlme-fixed, eval=has_nlme}
+marginal.fixed <- do.call(rbind, lapply(c("cs", "ar1"), function(structure) {
+  fit <- marginal.fits[[structure]]
+  ref <- marginal.refs[[structure]]
+  table <- comparison_table(
+    term = names(fixef(fit)),
+    lmmix = fixef(fit),
+    reference = stats::coef(ref)
+  )
+  tibble::add_column(table, structure = structure, .before = 1)
+}))
+
+show_table(marginal.fixed)
+```
+
+```{r marginal-nlme-covariance, eval=has_nlme}
+marginal.covariance <- do.call(
+  rbind,
+  lapply(c("cs", "ar1"), function(structure) {
+    fit <- marginal.fits[[structure]]
+    ref <- marginal.refs[[structure]]
+    reference.parameters <- c(
+      ref$sigma^2,
+      as.numeric(stats::coef(
+        ref$modelStruct$corStruct,
+        unconstrained = FALSE
+      ))
+    )
+    table <- comparison_table(
+      term = c("residual.var", "residual.cor"),
+      lmmix = VarCorr(fit)$estimate,
+      reference = reference.parameters
+    )
+    tibble::add_column(table, structure = structure, .before = 1)
+  })
+)
+
+show_table(marginal.covariance)
+
+tibble::tibble(
+  structure = c("cs", "ar1"),
+  lmmix = vapply(
+    marginal.fits,
+    function(x) as.numeric(logLik(x)),
+    numeric(1)
+  ),
+  reference = vapply(
+    marginal.refs,
+    function(x) as.numeric(logLik(x)),
+    numeric(1)
+  )
+) |>
+  transform(abs.diff = abs(lmmix - reference)) |>
+  show_table()
+```
+
+## Marginal AR(1) comparison with `mmrm::mmrm()`
+
+The `mmrm` comparison provides a second independent implementation of the
+marginal AR(1) model. It checks the complete residual covariance matrix rather
+than only the variance and correlation parameters.
+
+```{r marginal-mmrm, eval=has_nlme && has_mmrm}
+ref.mmrm <- mmrm::mmrm(
+  distance ~ age + Sex,
+  data = orthodont,
+  covariance = mmrm::cov_struct(
+    type = "ar1",
+    visits = "Occasion",
+    subject = "Subject"
+  ),
+  reml = TRUE
+)
+
+fit.mmrm <- marginal.fits[["ar1"]]
+
+comparison_table(
+  term = names(fixef(fit.mmrm)),
+  lmmix = fixef(fit.mmrm),
+  reference = stats::coef(ref.mmrm)
+) |>
+  show_table()
+
+tibble::tibble(
+  quantity = c("logLik", "residual.covariance.max.abs.diff"),
+  lmmix = c(as.numeric(logLik(fit.mmrm)), NA_real_),
+  reference = c(as.numeric(logLik(ref.mmrm)), NA_real_),
+  abs.diff = c(
+    abs(as.numeric(logLik(fit.mmrm)) - as.numeric(logLik(ref.mmrm))),
+    max(abs(
+      unname(fit.mmrm$covariance$residual_base) -
+        unname(mmrm::component(ref.mmrm, "varcor"))
+    ))
+  )
+) |>
+  show_table()
+```
+
+## Satterthwaite comparison with `lmerTest::lmer()`
+
+The covariance model in this section is a random intercept with independent
+residuals, which is supported by both packages. The coefficient comparison
+checks estimates, standard errors, and one-dimensional Satterthwaite degrees
+of freedom.
+
+```{r lmer-test-coefficients, eval=has_nlme && has_lmer_test}
+ref.lmer <- lmerTest::lmer(
+  distance ~ age + Sex + (1 | Subject),
+  data = orthodont,
+  REML = TRUE
+)
+
+lmmix.coef <- generics::tidy(fit.ri)
+lmer.coef <- summary(ref.lmer)$coefficients
+
+tibble::tibble(
+  term = lmmix.coef$term,
+  lmmix.estimate = lmmix.coef$estimate,
+  lmerTest.estimate = lmer.coef[, "Estimate"],
+  estimate.abs.diff = abs(lmmix.estimate - lmerTest.estimate),
+  lmmix.std.error = lmmix.coef$std.error,
+  lmerTest.std.error = lmer.coef[, "Std. Error"],
+  std.error.abs.diff = abs(lmmix.std.error - lmerTest.std.error),
+  lmmix.df = lmmix.coef$df,
+  lmerTest.df = lmer.coef[, "df"],
+  df.abs.diff = abs(lmmix.df - lmerTest.df)
+) |>
+  show_table()
+```
+
+The type III comparison uses the same fixed-effect terms and the same
+Satterthwaite denominator-df method.
+
+```{r lmer-test-type3, eval=has_nlme && has_lmer_test}
+lmmix.type3 <- anova(fit.ri)
+lmer.type3 <- anova(ref.lmer, type = 3)
+
+tibble::tibble(
+  term = lmmix.type3$term,
+  lmmix.num.df = lmmix.type3$num.df,
+  lmerTest.num.df = lmer.type3[, "NumDF"],
+  num.df.abs.diff = abs(lmmix.num.df - lmerTest.num.df),
+  lmmix.den.df = lmmix.type3$den.df,
+  lmerTest.den.df = lmer.type3[, "DenDF"],
+  den.df.abs.diff = abs(lmmix.den.df - lmerTest.den.df),
+  lmmix.statistic = lmmix.type3$statistic,
+  lmerTest.statistic = lmer.type3[, "F value"],
+  statistic.abs.diff = abs(lmmix.statistic - lmerTest.statistic)
+) |>
+  show_table()
+```
 
 ## Combined covariance structures
 
-The included multilocation data are used to fit random center effects together
-with each supported residual structure: `id`, `cs`, `ar1`, `toep`, and `un`.
-For every fit, tests require optimizer convergence, a positive-definite
-likelihood Hessian and a positive-definite marginal covariance matrix.
+The included `multicentre` data reproduce the multilocation repeated-measures
+example in Section 28.3 of @milliken2009. They contain 153 rows, including 28
+missing responses. The complete-case models therefore use 125 observations.
 
-The data reproduce the repeated-measures example in Section 28.3 of
-@milliken2009. They contain 153 rows, including 28 missing responses. The
-complete-case model therefore uses 125 observations.
+No single external R function used above fits all of the following components
+in one object: a random center effect, a structured within-subject residual
+covariance, and the `lmmix` Satterthwaite inference layer. For this combined
+case, all five residual structures are checked for optimizer convergence, a
+positive-definite likelihood Hessian, and a positive-definite marginal
+covariance matrix.
 
-```{r combined-model}
-library(lmmix)
-
-fit <- lmm(
-  data = multicentre,
-  formula = Y ~ Drug * Time,
-  random = ~ 1 | Center,
-  repeated = ~ Time | Center:Drug:Subject,
-  structure = "ar1",
-  method = "REML",
-  ddf = "satterthwaite"
+```{r combined-structures}
+combined.fits <- lapply(
+  c("id", "cs", "ar1", "toep", "un"),
+  function(structure) {
+    lmm(
+      multicentre,
+      Y ~ Drug * Time,
+      random = ~ 1 | Center,
+      repeated = ~ Time | Center:Drug:Subject,
+      structure = structure,
+      method = "REML",
+      ddf = "satterthwaite"
+    )
+  }
 )
+names(combined.fits) <- c("id", "cs", "ar1", "toep", "un")
 
-fit$convergence[c("code", "hessian_positive_definite")]
+tibble::tibble(
+  structure = names(combined.fits),
+  convergence = vapply(
+    combined.fits,
+    function(x) x$convergence$code,
+    integer(1)
+  ),
+  hessian.positive.definite = vapply(
+    combined.fits,
+    function(x) x$convergence$hessian_positive_definite,
+    logical(1)
+  ),
+  min.marginal.eigenvalue = vapply(
+    combined.fits,
+    function(x) {
+      min(eigen(
+        x$covariance$v,
+        symmetric = TRUE,
+        only.values = TRUE
+      )$values)
+    },
+    numeric(1)
+  )
+) |>
+  show_table()
 ```
 
-## Stored PROC MIXED regression targets
+## Stored PROC MIXED comparison
 
-The combined AR(1) regression targets correspond to the following program.
-The RANDOM and REPEATED statements represent the two covariance sources, and
-`DDFM=SATTERTHWAITE` requests row-specific denominator degrees of freedom as
+The stored targets correspond to the following specification. The RANDOM and
+REPEATED statements represent distinct covariance sources, and
+`DDFM=SATTERTHWAITE` requests approximate denominator degrees of freedom as
 documented by @sas2015.
 
 ```sas
@@ -88,39 +507,235 @@ proc mixed data=multicentre method=reml;
 run;
 ```
 
-The repository stores numerical targets for this specification. It does not
-include a SAS execution transcript. The program above is provided so the
-benchmark can be rerun in a licensed SAS environment.
+The exact `lmmix` fit used in the comparison is:
 
-| Quantity | Level or contrast | Estimate | Standard error | df |
-|:--|:--|--:|--:|--:|
-| Drug marginal mean | 1 | 13.1568 | 1.5290 | 2.98 |
-| Drug marginal mean | 2 | 18.1484 | 1.5324 | 3.01 |
-| Drug marginal mean | 3 | 17.0516 | 1.5327 | 3.01 |
-| Time marginal mean | 1 | 14.9543 | 1.3961 | 2.08 |
-| Time marginal mean | 2 | 15.6700 | 1.3985 | 2.09 |
-| Time marginal mean | 3 | 17.7324 | 1.4032 | 2.12 |
-| Drug difference | 1 minus 2 | -4.9916 | 1.0990 | 46.1 |
+```{r sas-fit}
+sas.fit <- combined.fits[["ar1"]]
+sas.fit
+```
 
-The remaining stored pairwise targets are:
+### Covariance parameters and likelihood criterion
 
-| Factor | Contrast | Estimate | Standard error | df | p-value |
-|:--|:--|--:|--:|--:|--:|
-| Drug | 1 minus 3 | -3.8948 | 1.0987 | 46.1 | 0.0009 |
-| Drug | 2 minus 3 | 1.0968 | 1.1043 | 46.9 | 0.3257 |
-| Time | 1 minus 2 | -0.7157 | 0.1845 | 68.1 | 0.0002 |
-| Time | 1 minus 3 | -2.7781 | 0.2714 | 73.2 | below 0.0001 |
-| Time | 2 minus 3 | -2.0624 | 0.2056 | 68.6 | below 0.0001 |
+```{r sas-covariance}
+sas.covariance.target <- c(5.1737, 10.6702, 0.9351)
+lmmix.covariance <- VarCorr(sas.fit)
 
-Estimates and standard errors are compared with absolute tolerance `1e-3`.
-Degrees of freedom are compared at the decimal precision stored with each
-target.
+tibble::tibble(
+  parameter = paste(
+    lmmix.covariance$group,
+    lmmix.covariance$term,
+    lmmix.covariance$component,
+    sep = "."
+  ),
+  lmmix = lmmix.covariance$estimate,
+  SAS.target = sas.covariance.target,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
 
-## What the validation does not establish
+tibble::tibble(
+  quantity = "deviance",
+  lmmix = deviance(sas.fit),
+  SAS.target = 490.62570532,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
 
-The test suite does not validate Kenward-Roger inference because that method is
-not implemented. It does not establish large-sample scalability because the
-current likelihood uses dense covariance matrices. The stored PROC MIXED
-targets are regression tests, not a substitute for a new independent SAS run.
-These boundaries are stated explicitly so the validation claims do not exceed
-the available evidence.
+### Fixed effects
+
+```{r sas-fixed-effects}
+sas.fixed.target <- c(
+  12.0524590,
+  4.7647059,
+  3.9411765,
+  0.9210892,
+  2.3922237,
+  -0.1427475,
+  -0.4735052,
+  0.8233152,
+  0.3342713
+)
+
+sas.fixed.table <- comparison_table(
+  term = names(fixef(sas.fit)),
+  lmmix = fixef(sas.fit),
+  reference = sas.fixed.target
+)
+names(sas.fixed.table) <- c("term", "lmmix", "SAS.target", "abs.diff")
+show_table(sas.fixed.table)
+```
+
+### Type III tests
+
+The stored type III targets contain F statistics rounded to two decimal places
+and the interaction p-value. The other two SAS p-values were not available in
+the stored target set and are therefore reported as `not.stored` rather than
+reconstructed.
+
+```{r sas-type3}
+lmmix.sas.type3 <- anova(sas.fit)
+
+tibble::tibble(
+  term = lmmix.sas.type3$term,
+  lmmix.num.df = lmmix.sas.type3$num.df,
+  lmmix.den.df = lmmix.sas.type3$den.df,
+  lmmix.statistic = lmmix.sas.type3$statistic,
+  SAS.statistic = c(11.43, 59.27, 1.35),
+  statistic.abs.diff = abs(lmmix.statistic - SAS.statistic),
+  lmmix.p.value = lmmix.sas.type3$p.value,
+  SAS.p.value = c("not.stored", "not.stored", "0.2597")
+) |>
+  show_table()
+```
+
+### LS-means
+
+The following table compares every stored Drug and Time marginal mean,
+standard error, and denominator df.
+
+```{r sas-lsmeans}
+drug.means <- lsmeans(sas.fit, ~Drug)
+time.means <- lsmeans(sas.fit, ~Time)
+
+lmmix.means <- rbind(
+  tibble::tibble(
+    factor = "Drug",
+    level = as.character(drug.means$Drug),
+    estimate = drug.means$estimate,
+    std.error = drug.means$std.error,
+    df = drug.means$df
+  ),
+  tibble::tibble(
+    factor = "Time",
+    level = as.character(time.means$Time),
+    estimate = time.means$estimate,
+    std.error = time.means$std.error,
+    df = time.means$df
+  )
+)
+
+sas.mean.estimate <- c(
+  13.1568, 18.1484, 17.0516,
+  14.9543, 15.6700, 17.7324
+)
+sas.mean.std.error <- c(
+  1.5290, 1.5324, 1.5327,
+  1.3961, 1.3985, 1.4032
+)
+sas.mean.df <- c(2.98, 3.01, 3.01, 2.08, 2.09, 2.12)
+
+tibble::tibble(
+  factor = lmmix.means$factor,
+  level = lmmix.means$level,
+  lmmix.estimate = lmmix.means$estimate,
+  SAS.estimate = sas.mean.estimate,
+  estimate.abs.diff = abs(lmmix.estimate - SAS.estimate),
+  lmmix.std.error = lmmix.means$std.error,
+  SAS.std.error = sas.mean.std.error,
+  std.error.abs.diff = abs(lmmix.std.error - SAS.std.error),
+  lmmix.df = lmmix.means$df,
+  SAS.df = sas.mean.df
+) |>
+  show_table()
+```
+
+### Pairwise LS-mean differences
+
+```{r sas-lsmeans-pairs}
+drug.pairs <- lsmeans(sas.fit, pairwise ~ Drug)$contrasts
+time.pairs <- lsmeans(sas.fit, pairwise ~ Time)$contrasts
+
+lmmix.pairs <- rbind(
+  tibble::add_column(drug.pairs, factor = "Drug", .before = 1),
+  tibble::add_column(time.pairs, factor = "Time", .before = 1)
+)
+
+sas.pair.estimate <- c(
+  -4.9916, -3.8948, 1.0968,
+  -0.7157, -2.7781, -2.0624
+)
+sas.pair.std.error <- c(
+  1.0990, 1.0987, 1.1043,
+  0.1845, 0.2714, 0.2056
+)
+sas.pair.df <- c(46.1, 46.1, 46.9, 68.1, 73.2, 68.6)
+sas.pair.p.value <- c(
+  "0.00004", "0.0009", "0.3257",
+  "0.0002", "<0.0001", "<0.0001"
+)
+
+tibble::tibble(
+  factor = lmmix.pairs$factor,
+  contrast = lmmix.pairs$contrast,
+  lmmix.estimate = lmmix.pairs$estimate,
+  SAS.estimate = sas.pair.estimate,
+  estimate.abs.diff = abs(lmmix.estimate - SAS.estimate),
+  lmmix.std.error = lmmix.pairs$std.error,
+  SAS.std.error = sas.pair.std.error,
+  std.error.abs.diff = abs(lmmix.std.error - SAS.std.error),
+  lmmix.df = lmmix.pairs$df,
+  SAS.df = sas.pair.df,
+  lmmix.p.value = lmmix.pairs$p.value,
+  SAS.p.value = sas.pair.p.value
+) |>
+  show_table()
+```
+
+Estimates, covariance parameters, and standard errors are tested with absolute
+tolerance `1e-3`. Degrees of freedom are compared at the precision stored in
+the targets. Type III F statistics are compared after rounding to two decimal
+places. Inequalities such as `<0.0001` are checked as inequalities, not as
+invented exact p-values.
+
+## Automated regression tests
+
+The numerical claims in this vignette are enforced in the package test suite.
+
+| test.file | enforced.comparison |
+|:--|:--|
+| `test-likelihood.R` | `nlme::lme()`, `nlme::gls()`, and `mmrm::mmrm()` likelihood and covariance comparisons |
+| `test-inference.R` | `lmerTest::lmer()` coefficient df and type III Satterthwaite comparisons |
+| `test-validation-sas.R` | every stored PROC MIXED covariance, fixed-effect, LS-mean, and difference target |
+| `test-covariance.R` | positive definiteness and structure-specific covariance checks |
+| `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and dot-separated table names |
+
+## Reproducibility information
+
+The versions used to build this vignette are reported rather than assumed.
+
+```{r validation-versions}
+validation.packages <- c("lmmix", "nlme", "lmerTest", "mmrm")
+
+tibble::tibble(
+  package = validation.packages,
+  version = vapply(
+    validation.packages,
+    function(package) {
+      if (requireNamespace(package, quietly = TRUE)) {
+        as.character(utils::packageVersion(package))
+      } else {
+        "not.installed"
+      }
+    },
+    character(1)
+  )
+) |>
+  show_table()
+
+tibble::tibble(
+  R.version.string = R.version.string,
+  platform = R.version$platform
+) |>
+  show_table()
+```
+
+## Boundaries of the evidence
+
+The validation does not cover Kenward-Roger inference because it is not
+implemented. It does not validate generalized responses, multiple independent
+random-effect terms, likelihood-ratio model comparison, or large-scale sparse
+performance. The current combined-model evidence consists of structural tests
+and stored PROC MIXED regression targets. A fresh SAS execution with an
+archived log and output would be required to upgrade the SAS evidence to a new
+independent run.

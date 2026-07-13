@@ -2,6 +2,14 @@
   if (is.null(x)) y else x
 }
 
+dot_names <- function(x) {
+  if (is.null(names(x))) {
+    return(x)
+  }
+  names(x) <- make.names(names(x), unique = TRUE)
+  x
+}
+
 check_formula <- function(x, arg) {
   if (!inherits(x, "formula")) {
     cli::cli_abort("{.arg {arg}} must be a formula.")

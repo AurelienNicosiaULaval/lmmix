@@ -20,12 +20,17 @@ tested in each overlapping case.
 
 | Model | Reference | Quantities checked | Tolerance |
 |:--|:--|:--|:--|
-| Random-intercept REML | `nlme::lme()` | Fixed effects, covariance parameters, log-likelihood | `1e-5` or smaller |
-| Random-slope REML | `nlme::lme()` | Fixed effects, random covariance, log-likelihood | `1e-4` or smaller |
+| Random-intercept REML | `nlme::lme()` | Fixed effects and log-likelihood | absolute `1e-6` |
+| Random-intercept REML | `nlme::lme()` | Covariance parameters | absolute `1e-4` |
+| Random-slope REML | `nlme::lme()` | Fixed effects and log-likelihood | absolute `1e-5` |
+| Random-slope REML | `nlme::lme()` | Random covariance and residual variance | absolute `1e-4` |
 | Random-intercept ML | `nlme::lme()` | Fixed effects and log-likelihood | `1e-6` |
 | Marginal CS and AR(1) | `nlme::gls()` | Fixed effects, residual parameters, log-likelihood | `1e-5` |
-| Marginal AR(1) | `mmrm::mmrm()` | Fixed effects, residual covariance, log-likelihood | `1e-5` |
-| Satterthwaite inference | `lmerTest::lmer()` | Coefficient df and type III tests | `1e-3` or smaller |
+| Marginal AR(1) | `mmrm::mmrm()` | Fixed effects and log-likelihood | absolute `1e-5` |
+| Marginal AR(1) | `mmrm::mmrm()` | Residual covariance matrix | absolute `1e-4` |
+| Satterthwaite coefficients | `lmerTest::lmer()` | Estimates and standard errors | absolute `1e-5` |
+| Satterthwaite coefficients | `lmerTest::lmer()` | Denominator df | absolute `5e-3` |
+| Type III Satterthwaite tests | `lmerTest::lmer()` | Numerator df, denominator df, F statistics | absolute `1e-6`, `5e-3`, and `5e-3` |
 
 The combined-model tests fit `id`, `cs`, `ar1`, `toep`, and `un` residual
 structures together with a random center intercept. Every fit must converge
@@ -55,8 +60,9 @@ fit <- lmm(
 ```
 
 The stored PROC MIXED targets correspond to this model specification. The
-exact PROC MIXED program and numerical tables are included in the validation
-vignette. The repository does not contain a SAS execution transcript, so these
+validation vignette includes the executable R comparisons, their observed
+absolute differences, the exact PROC MIXED program, and every stored numerical
+target. The repository does not contain a SAS execution transcript, so these
 targets are described as regression benchmarks rather than a new independent
 SAS run. Estimates and standard errors use absolute tolerance `1e-3`;
 denominator degrees of freedom are compared at their stored decimal precision.

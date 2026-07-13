@@ -24,7 +24,8 @@ the residual covariance.
 
 Fitted objects provide coefficient tests, type III tests, estimated
 marginal means, pairwise contrasts, empirical BLUPs, predictions, standard
-model methods, \code{broom} methods, and \code{emmeans} interoperability.
+model methods, \code{ggplot2} diagnostic plots, \code{broom} methods, and \code{emmeans}
+interoperability.
 }
 
 \section{Current limits}{

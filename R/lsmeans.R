@@ -152,6 +152,7 @@ lsmeans_estimates <- function(object, information, level) {
   out$p.value <- statistics[, "p.value"]
   out$conf.low <- statistics[, "conf.low"]
   out$conf.high <- statistics[, "conf.high"]
+  out <- dot_names(out)
   class(out) <- c("lmm_lsmeans", class(out))
   attr(out, "contrast_matrix") <- information$contrast
   out
@@ -174,7 +175,7 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
   labels <- vapply(seq_len(nrow(information$combinations)), function(index) {
     format_lsmean_label(information$combinations[index, , drop = FALSE], specs)
   }, character(1L))
-  out <- tibble::tibble(
+  out <- dot_names(tibble::tibble(
     contrast = paste0(labels[pairs[1L, ]], " - ", labels[pairs[2L, ]]),
     estimate = statistics[, "estimate"],
     std.error = statistics[, "std.error"],
@@ -183,7 +184,7 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
     p.value = stats::p.adjust(statistics[, "p.value"], method = adjust),
     conf.low = statistics[, "conf.low"],
     conf.high = statistics[, "conf.high"]
-  )
+  ))
   class(out) <- c("lmm_lsmeans_contrasts", class(out))
   out
 }

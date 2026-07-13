@@ -12,3 +12,5 @@ lmmix_*.tar.gz
 * [0-9]*.bib
 * [0-9]*.yml
 * [0-9]*.yaml
+/doc/
+/Meta/

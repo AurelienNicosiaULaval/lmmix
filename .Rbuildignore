@@ -12,3 +12,5 @@
 ^lmmix\.Rcheck$
 ^docs$
 ^.* [0-9]+\.(R|Rmd|md|Rd|bib|yml|yaml)$
+^doc$
+^Meta$

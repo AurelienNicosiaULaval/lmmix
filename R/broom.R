@@ -26,7 +26,7 @@ tidy.lmm <- function(
   fixed$effect <- "fixed"
   fixed <- fixed[c("effect", setdiff(names(fixed), "effect"))]
   if (effects == "fixed") {
-    return(fixed)
+    return(dot_names(fixed))
   }
 
   covariance <- x$covariance_components
@@ -44,9 +44,9 @@ tidy.lmm <- function(
   covariance <- covariance[names(fixed)]
 
   if (effects == "ran_pars") {
-    return(covariance)
+    return(dot_names(covariance))
   }
-  tibble::as_tibble(rbind(fixed, covariance))
+  dot_names(tibble::as_tibble(rbind(fixed, covariance)))
 }
 
 #' One-row model summary for an `lmm` model
@@ -58,7 +58,7 @@ tidy.lmm <- function(
 #' @importFrom generics glance
 #' @exportS3Method generics::glance
 glance.lmm <- function(x, ...) {
-  tibble::tibble(
+  dot_names(tibble::tibble(
     logLik = as.numeric(logLik(x)),
     AIC = AIC(x),
     BIC = BIC(x),
@@ -67,7 +67,7 @@ glance.lmm <- function(x, ...) {
     nobs = nobs(x),
     convergence = x$convergence$code,
     method = x$method
-  )
+  ))
 }
 
 #' Augment data with fitted values and residuals
@@ -105,5 +105,5 @@ augment.lmm <- function(x, data = x$data, newdata = NULL, ...) {
   out$.fitted <- fitted_values
   out$.resid <- residual_values
   out$.std.resid <- residual_values / scale
-  out
+  dot_names(out)
 }

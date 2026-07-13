@@ -26,3 +26,10 @@ fit_multicentre_ar1 <- function() {
     structure = "ar1"
   )
 }
+
+expect_absolute_error_below <- function(actual, expected, tolerance) {
+  testthat::expect_lt(
+    max(abs(as.numeric(actual) - as.numeric(expected))),
+    tolerance
+  )
+}

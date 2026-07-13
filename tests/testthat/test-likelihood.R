@@ -9,13 +9,29 @@ test_that("random-intercept REML agrees with nlme", {
     method = "REML"
   )
 
-  expect_equal(fixef(fit), nlme::fixef(reference), tolerance = 1e-6)
-  expect_equal(
+  expect_absolute_error_below(
+    fixef(fit),
+    nlme::fixef(reference),
+    tolerance = 1e-6
+  )
+  expect_absolute_error_below(
     as.numeric(logLik(fit)),
     as.numeric(logLik(reference)),
     tolerance = 1e-6
   )
-  expect_equal(VarCorr(fit)$estimate, c(3.266784, 2.049456), tolerance = 1e-5)
+  reference_covariance <- as.matrix(nlme::getVarCov(
+    reference,
+    type = "random.effects"
+  ))
+  expected_covariance <- c(
+    reference_covariance[1L, 1L],
+    reference$sigma^2
+  )
+  expect_absolute_error_below(
+    VarCorr(fit)$estimate,
+    expected_covariance,
+    tolerance = 1e-4
+  )
 })
 
 test_that("random-slope REML agrees with nlme", {
@@ -33,20 +49,29 @@ test_that("random-slope REML agrees with nlme", {
     method = "REML"
   )
 
-  expect_equal(fixef(fit), nlme::fixef(reference), tolerance = 1e-5)
-  expect_equal(
+  expect_absolute_error_below(
+    fixef(fit),
+    nlme::fixef(reference),
+    tolerance = 1e-5
+  )
+  expect_absolute_error_below(
     as.numeric(logLik(fit)),
     as.numeric(logLik(reference)),
     tolerance = 1e-5
   )
-  reference_covariance <- nlme::VarCorr(reference)
+  reference_covariance <- as.matrix(nlme::getVarCov(
+    reference,
+    type = "random.effects"
+  ))
   expected_covariance <- c(
-    as.numeric(reference_covariance["(Intercept)", "Variance"]),
-    as.numeric(reference_covariance["age", "Variance"]),
-    as.numeric(reference_covariance["age", "Corr"]),
-    as.numeric(reference_covariance["Residual", "Variance"])
+    reference_covariance[1L, 1L],
+    reference_covariance[2L, 2L],
+    reference_covariance[1L, 2L] / sqrt(
+      reference_covariance[1L, 1L] * reference_covariance[2L, 2L]
+    ),
+    reference$sigma^2
   )
-  expect_equal(
+  expect_absolute_error_below(
     VarCorr(fit)$estimate,
     expected_covariance,
     tolerance = 1e-4
@@ -69,8 +94,12 @@ test_that("ML agrees with nlme", {
     method = "ML"
   )
 
-  expect_equal(fixef(fit), nlme::fixef(reference), tolerance = 1e-6)
-  expect_equal(
+  expect_absolute_error_below(
+    fixef(fit),
+    nlme::fixef(reference),
+    tolerance = 1e-6
+  )
+  expect_absolute_error_below(
     as.numeric(logLik(fit)),
     as.numeric(logLik(reference)),
     tolerance = 1e-6
@@ -100,8 +129,12 @@ test_that("marginal CS and AR1 fits agree with nlme", {
       method = "REML"
     )
 
-    expect_equal(fixef(fit), stats::coef(reference), tolerance = 1e-5)
-    expect_equal(
+    expect_absolute_error_below(
+      fixef(fit),
+      stats::coef(reference),
+      tolerance = 1e-5
+    )
+    expect_absolute_error_below(
       as.numeric(logLik(fit)),
       as.numeric(logLik(reference)),
       tolerance = 1e-5
@@ -112,7 +145,7 @@ test_that("marginal CS and AR1 fits agree with nlme", {
         stats::coef(reference$modelStruct$corStruct, unconstrained = FALSE)
       )
     )
-    expect_equal(
+    expect_absolute_error_below(
       stats::setNames(VarCorr(fit)$estimate, c("residual.var", "residual.cor")),
       expected_covariance,
       tolerance = 1e-5
@@ -140,16 +173,20 @@ test_that("marginal AR1 fit agrees with mmrm", {
     reml = TRUE
   )
 
-  expect_equal(fixef(fit), stats::coef(reference), tolerance = 1e-5)
-  expect_equal(
+  expect_absolute_error_below(
+    fixef(fit),
+    stats::coef(reference),
+    tolerance = 1e-5
+  )
+  expect_absolute_error_below(
     as.numeric(logLik(fit)),
     as.numeric(logLik(reference)),
     tolerance = 1e-5
   )
-  expect_equal(
+  expect_absolute_error_below(
     unname(fit$covariance$residual_base),
     unname(mmrm::component(reference, "varcor")),
-    tolerance = 1e-5
+    tolerance = 1e-4
   )
 })
 

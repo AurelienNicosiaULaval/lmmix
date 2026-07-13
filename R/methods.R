@@ -42,6 +42,8 @@ VarCorr <- function(object, ...) {
 #' @param type For `fitted()`, either `"conditional"` or `"marginal"`. For
 #'   `residuals()`, one of `"response"`, `"pearson"`, or `"marginal"`. For
 #'   `anova()`, only type `3` is implemented.
+#' @param which Diagnostic plot to draw: standardized residuals against fitted
+#'   values, a normal quantile-quantile plot, or observed against fitted values.
 #' @param newdata Optional data frame used for prediction.
 #' @param re.form `NULL` includes empirical random effects. Any non-`NULL`
 #'   value requests a fixed-effects-only prediction.
@@ -159,7 +161,7 @@ ranef.lmm <- function(object, ...) {
     check.names = FALSE
   )
   names(out)[[1L]] <- object$design$random$group_label
-  tibble::as_tibble(out)
+  dot_names(tibble::as_tibble(out))
 }
 
 #' @export
@@ -231,6 +233,76 @@ residuals.lmm <- function(
     return(object$residuals / sqrt(diag(object$covariance$r)))
   }
   object$residuals
+}
+
+#' @rdname lmm-methods
+#' @export
+plot.lmm <- function(
+  x,
+  which = c("residuals", "qq", "fitted"),
+  ...
+) {
+  which <- match.arg(which)
+  diagnostics <- tibble::tibble(
+    .fitted = fitted(x),
+    .std.resid = residuals(x, type = "pearson"),
+    .observed = x$design$y
+  )
+
+  if (which == "residuals") {
+    return(
+      ggplot2::ggplot(
+        diagnostics,
+        ggplot2::aes(x = .fitted, y = .std.resid)
+      ) +
+        ggplot2::geom_hline(
+          yintercept = 0,
+          linewidth = 0.4,
+          linetype = 2,
+          colour = "grey50"
+        ) +
+        ggplot2::geom_point(...) +
+        ggplot2::labs(
+          x = "Fitted values",
+          y = "Standardized residuals",
+          title = "Residuals versus fitted values"
+        )
+    )
+  }
+
+  if (which == "qq") {
+    return(
+      ggplot2::ggplot(
+        diagnostics,
+        ggplot2::aes(sample = .std.resid)
+      ) +
+        ggplot2::stat_qq(...) +
+        ggplot2::stat_qq_line(colour = "grey50") +
+        ggplot2::labs(
+          x = "Theoretical quantiles",
+          y = "Standardized residuals",
+          title = "Normal Q-Q plot"
+        )
+    )
+  }
+
+  ggplot2::ggplot(
+    diagnostics,
+    ggplot2::aes(x = .fitted, y = .observed)
+  ) +
+    ggplot2::geom_abline(
+      intercept = 0,
+      slope = 1,
+      linewidth = 0.4,
+      linetype = 2,
+      colour = "grey50"
+    ) +
+    ggplot2::geom_point(...) +
+    ggplot2::labs(
+      x = "Fitted values",
+      y = "Observed values",
+      title = "Observed versus fitted values"
+    )
 }
 
 #' @rdname lmm-methods
@@ -356,10 +428,7 @@ confint.lmm <- function(
   table <- fixed_effects_table(object, level = level)
   table <- table[match(parm, table$term), ]
   out <- as.matrix(table[c("conf.low", "conf.high")])
-  colnames(out) <- paste0(
-    format(c((1 - level) / 2, (1 + level) / 2) * 100, trim = TRUE),
-    "%"
-  )
+  colnames(out) <- c("conf.low", "conf.high")
   rownames(out) <- parm
   out
 }

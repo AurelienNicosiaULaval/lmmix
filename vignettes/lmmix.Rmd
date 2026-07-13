@@ -172,7 +172,35 @@ For `predict(fit, newdata)`, known grouping levels receive their fitted random
 effect. New groups receive a random contribution of zero. Set `re.form` to a
 non-`NULL` value to request fixed-effects-only predictions.
 
+## Diagnostic plots
+
+The S3 method `plot.lmm()` returns a `ggplot2` object. Three diagnostics are
+available through `which`: standardized residuals against fitted values, a
+normal Q-Q plot, and observed against fitted values.
+
+```{r diagnostic-plots, fig.show='hold', out.width='48%', fig.alt='Residual and normal Q-Q diagnostic plots'}
+plot(fit, which = "residuals")
+plot(fit, which = "qq")
+```
+
+Because the returned object is a `ggplot`, layers and themes can be added in
+the usual way.
+
+```{r customize-plot, fig.alt='Observed values plotted against fitted values'}
+plot(fit, which = "fitted") +
+  ggplot2::theme_minimal()
+```
+
+For correlated residual structures, the plotted Pearson residuals are scaled
+by their marginal residual standard deviations. They are not decorrelated
+innovations, so residual dependence should also be assessed within the
+repeated-measures groups.
+
 The `generics` methods return tibbles.
+
+All table-returning methods use syntactic dot-separated column names, such as
+`std.error`, `p.value`, `conf.low`, and `conf.high`. Names inherited from input
+data are normalized in the same way when returned by `augment()` or `ranef()`.
 
 ```{r broom}
 generics::tidy(fit)

@@ -12,6 +12,7 @@
 \alias{nobs.lmm}
 \alias{fitted.lmm}
 \alias{residuals.lmm}
+\alias{plot.lmm}
 \alias{sigma.lmm}
 \alias{predict.lmm}
 \alias{model.matrix.lmm}
@@ -41,6 +42,8 @@
 \method{fitted}{lmm}(object, type = c("conditional", "marginal"), ...)
 
 \method{residuals}{lmm}(object, type = c("response", "pearson", "marginal"), ...)
+
+\method{plot}{lmm}(x, which = c("residuals", "qq", "fitted"), ...)
 
 \method{sigma}{lmm}(object, ...)
 
@@ -76,6 +79,9 @@ supported.}
 \item{type}{For \code{fitted()}, either \code{"conditional"} or \code{"marginal"}. For
 \code{residuals()}, one of \code{"response"}, \code{"pearson"}, or \code{"marginal"}. For
 \code{anova()}, only type \code{3} is implemented.}
+
+\item{which}{Diagnostic plot to draw: standardized residuals against fitted
+values, a normal quantile-quantile plot, or observed against fitted values.}
 
 \item{newdata}{Optional data frame used for prediction.}
 

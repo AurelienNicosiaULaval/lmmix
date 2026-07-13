@@ -63,7 +63,7 @@ fixed_effects_table <- function(object, level = 0.95) {
   })
   statistics <- do.call(rbind, statistics)
 
-  tibble::tibble(
+  dot_names(tibble::tibble(
     term = names(object$coefficients),
     estimate = unname(statistics[, "estimate"]),
     std.error = unname(statistics[, "std.error"]),
@@ -72,7 +72,7 @@ fixed_effects_table <- function(object, level = 0.95) {
     p.value = unname(statistics[, "p.value"]),
     conf.low = unname(statistics[, "conf.low"]),
     conf.high = unname(statistics[, "conf.high"])
-  )
+  ))
 }
 
 sum_contrast_matrix <- function(object) {
@@ -176,11 +176,11 @@ type3_table <- function(object) {
   })
   tests <- do.call(rbind, tests)
 
-  tibble::tibble(
+  dot_names(tibble::tibble(
     term = names(contrasts),
     num.df = unname(tests[, "num.df"]),
     den.df = unname(tests[, "den.df"]),
     statistic = unname(tests[, "statistic"]),
     p.value = unname(tests[, "p.value"])
-  )
+  ))
 }

@@ -33,10 +33,26 @@ test_that("core S3 methods return documented shapes", {
   expect_s3_class(type3, "anova.lmm")
   expect_message(print(type3), "Type III")
   expect_equal(dim(confint(fit)), c(3L, 2L))
+  expect_identical(colnames(confint(fit)), c("conf.low", "conf.high"))
   expect_equal(dim(confint(fit, parm = 2)), c(1L, 2L))
   expect_error(confint(fit, parm = "unknown"), "Unknown fixed-effect")
   expect_error(anova(fit, type = 2), "Only type III")
   expect_error(anova(fit, fit), "Model-comparison")
+})
+
+test_that("plot.lmm returns ggplot2 diagnostics", {
+  fit <- fit_orthodont_intercept()
+
+  for (diagnostic in c("residuals", "qq", "fitted")) {
+    result <- plot(fit, which = diagnostic)
+    expect_s3_class(result, "ggplot")
+    expect_identical(result$labels$title, switch(diagnostic,
+      residuals = "Residuals versus fitted values",
+      qq = "Normal Q-Q plot",
+      fitted = "Observed versus fitted values"
+    ))
+  }
+  expect_error(plot(fit, which = "unknown"), "arg")
 })
 
 test_that("broom methods return tibbles", {
@@ -64,6 +80,56 @@ test_that("broom methods return tibbles", {
   all_tidy <- generics::tidy(fit, effects = "all", conf.int = TRUE)
   expect_true(all(covariance_tidy$effect == "ran_pars"))
   expect_true(all(c("conf.low", "conf.high") %in% names(all_tidy)))
+})
+
+test_that("all public tables use syntactic dot-separated names", {
+  fit <- fit_orthodont_intercept()
+  outputs <- list(
+    summary(fit)$fixed,
+    summary(fit)$type3,
+    summary(fit)$covariance,
+    anova(fit),
+    ranef(fit),
+    VarCorr(fit),
+    generics::tidy(fit),
+    generics::tidy(fit, effects = "all", conf.int = TRUE),
+    generics::glance(fit),
+    generics::augment(fit),
+    lsmeans(fit, ~Sex),
+    lsmeans(fit, pairwise ~ Sex)$contrasts
+  )
+
+  for (output in outputs) {
+    expect_identical(names(output), make.names(names(output), unique = TRUE))
+  }
+  expect_true("p.value" %in% names(generics::tidy(fit)))
+  expect_true("p.value" %in% names(anova(fit)))
+})
+
+test_that("names inherited from input data are converted to dots", {
+  data <- data.frame(
+    `subject id` = factor(rep(seq_len(6), each = 3)),
+    `time point` = rep(0:2, 6),
+    response = c(
+      1.0, 1.8, 2.7,
+      1.4, 2.1, 3.1,
+      0.7, 1.6, 2.2,
+      1.8, 2.4, 3.6,
+      1.2, 2.0, 2.5,
+      0.9, 1.9, 2.8
+    ),
+    check.names = FALSE
+  )
+  fit <- lmm(
+    data,
+    response ~ `time point`,
+    random = ~ 1 | `subject id`
+  )
+
+  expect_true(all(c("subject.id", "X.Intercept.") %in% names(ranef(fit))))
+  expect_true(
+    all(c("subject.id", "time.point") %in% names(generics::augment(fit)))
+  )
 })
 
 test_that("prediction handles known and new random-effect groups", {

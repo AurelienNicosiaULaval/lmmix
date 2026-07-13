@@ -15,7 +15,8 @@
 #' @section Inference and post-processing:
 #' Fitted objects provide coefficient tests, type III tests, estimated
 #' marginal means, pairwise contrasts, empirical BLUPs, predictions, standard
-#' model methods, `broom` methods, and `emmeans` interoperability.
+#' model methods, `ggplot2` diagnostic plots, `broom` methods, and `emmeans`
+#' interoperability.
 #'
 #' @section Current limits:
 #' Kenward-Roger inference, generalized responses, multiple random-effect
@@ -55,6 +56,6 @@
 "_PACKAGE"
 
 utils::globalVariables(c(
-  ".fitted", ".resid", ".std.resid", "component", "estimate", "group",
-  "std.error", "term"
+  ".fitted", ".observed", ".resid", ".std.resid", "component", "estimate",
+  "group", "std.error", "term"
 ))
