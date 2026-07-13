@@ -1,0 +1,27 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/VALIDATION.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/lmmix.html</loc></url>
+<url><loc>/articles/reproducing-sas.html</loc></url>
+<url><loc>/articles/theory-reml.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/VarCorr.html</loc></url>
+<url><loc>/reference/augment.lmm.html</loc></url>
+<url><loc>/reference/fixef.html</loc></url>
+<url><loc>/reference/glance.lmm.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/lmm.html</loc></url>
+<url><loc>/reference/lmm_control.html</loc></url>
+<url><loc>/reference/lmmix-package.html</loc></url>
+<url><loc>/reference/lsmeans.html</loc></url>
+<url><loc>/reference/multicentre.html</loc></url>
+<url><loc>/reference/ranef.html</loc></url>
+<url><loc>/reference/recover_data.lmm.html</loc></url>
+<url><loc>/reference/summary.lmm.html</loc></url>
+<url><loc>/reference/tidy.lmm.html</loc></url>
+</urlset>
+
