@@ -1,0 +1,49 @@
+url: ~
+
+template:
+  bootstrap: 5
+
+home:
+  title: lmmix
+  description: >
+    Explicit ML and REML estimation for linear mixed models that combine
+    random effects and correlated residuals.
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search]
+
+reference:
+  - title: Fit and control
+    contents:
+      - lmm
+      - lmm_control
+  - title: Inference and marginal means
+    contents:
+      - lsmeans
+      - summary.lmm
+  - title: Extractors
+    contents:
+      - fixef
+      - ranef
+      - VarCorr
+  - title: Tidy methods
+    contents:
+      - tidy.lmm
+      - glance.lmm
+      - augment.lmm
+  - title: Interoperability
+    contents:
+      - recover_data.lmm
+  - title: Data
+    contents:
+      - multicentre
+
+articles:
+  - title: Guides
+    navbar: Guides
+    contents:
+      - lmmix
+      - theory-reml
+      - reproducing-sas

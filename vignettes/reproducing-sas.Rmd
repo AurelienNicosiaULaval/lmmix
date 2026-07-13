@@ -1,0 +1,71 @@
+---
+title: "Multi-site PROC MIXED validation workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Multi-site PROC MIXED validation workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Scope of the available data
+
+Annex B describes a three-center, three-drug, three-time design and provides
+selected PROC MIXED outputs. It does not provide the original observation
+table. The package therefore includes `multicentre`, a simulated data set with
+the same design characteristics and several missing responses.
+
+The simulated data cannot validate the numerical SAS targets. Tests for those
+targets are present in `tests/testthat/test-validation-sas.R` and are skipped
+with this reason. They can only be activated after the original observations
+are supplied.
+
+## End-to-end model
+
+```{r}
+library(lmmix)
+
+fit <- lmm(
+  data = multicentre,
+  formula = Y ~ Drug * Time,
+  random = ~ 1 | Center,
+  repeated = ~ Time | Center:Subject,
+  structure = "ar1",
+  method = "REML",
+  ddf = "satterthwaite"
+)
+
+fit
+VarCorr(fit)
+anova(fit)
+```
+
+Treatment and time LS-means and treatment differences are generated without
+hand-written contrast rows.
+
+```{r}
+lsmeans(fit, ~Drug)
+lsmeans(fit, ~Time)
+lsmeans(fit, pairwise ~ Drug)
+```
+
+## Targets awaiting original data
+
+The following values are transcribed from Annex B and are not results from the
+simulated data.
+
+| Quantity | Level or contrast | Estimate | Standard error | df |
+|:--|:--|--:|--:|--:|
+| Drug LS-mean | 1 | 13.156900 | 1.529980 | 2.97 |
+| Drug LS-mean | 2 | 18.148460 | 1.533334 | 3.00 |
+| Drug LS-mean | 3 | 16.254250 | 1.540690 | 3.06 |
+| Time LS-mean | 1 | 14.954420 | 1.397169 | 2.07 |
+| Time LS-mean | 2 | 15.670090 | 1.399488 | 2.09 |
+| Time LS-mean | 3 | 17.732510 | 1.404265 | 2.12 |
+| Drug difference | 1 minus 2 | -4.991562 | 1.099005 | 46.10 |
+
+The Annex B two-sided p-value for the last contrast is `4.0e-05`. No tolerance
+claim is made until the original data are available.

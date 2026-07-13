@@ -1,0 +1,75 @@
+---
+title: "Getting started with lmmix"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with lmmix}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+`lmmix` fits the Gaussian model
+
+\[
+Y = X\beta + Zu + \varepsilon,
+\qquad
+V = ZGZ^\mathsf{T} + R,
+\]
+
+by directly optimizing a profiled ML or REML objective.
+
+```{r}
+library(lmmix)
+```
+
+## A model with two covariance sources
+
+The example data contain a random center effect and repeated observations
+within subjects.
+
+```{r}
+fit <- lmm(
+  multicentre,
+  Y ~ Drug * Time,
+  random = ~ 1 | Center,
+  repeated = ~ Time | Center:Subject,
+  structure = "ar1"
+)
+
+fit
+```
+
+The summary contains coefficient-level tests, type III tests, covariance
+parameters, and information criteria.
+
+```{r}
+summary(fit)
+```
+
+## Estimated marginal means
+
+Nuisance-factor levels receive equal weights. Numeric covariates not requested
+in `specs` are held at their observed means.
+
+```{r}
+lsmeans(fit, ~Drug)
+lsmeans(fit, pairwise ~ Drug)
+```
+
+## Tidy output
+
+```{r}
+generics::tidy(fit)
+generics::glance(fit)
+head(generics::augment(fit))
+```
+
+When `emmeans` is installed, the package supplies the required basis and uses
+the model's Satterthwaite degrees of freedom.
+
+```{r, eval=requireNamespace("emmeans", quietly = TRUE)}
+emmeans::emmeans(fit, ~Drug)
+```
