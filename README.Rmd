@@ -185,8 +185,9 @@ head(predict(fit))
 ```
 
 The `generics` methods return tibbles suitable for downstream analysis.
-Their generated column names are syntactic and dot-separated, including
-`std.error`, `p.value`, `conf.low`, and `conf.high`.
+Printed tables use readable headings without dots, including `Std Error`,
+`p value`, `Conf Low`, and `Conf High`. The underlying objects retain the
+standard `broom` names required for programmatic use.
 
 ```{r broom-methods}
 generics::tidy(fit)

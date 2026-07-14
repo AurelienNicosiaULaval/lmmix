@@ -31,6 +31,7 @@ comparison_table <- function(term, lmmix, reference) {
 }
 
 show_table <- function(x, digits = 6) {
+  names(x) <- trimws(gsub("\\.+", " ", names(x)))
   knitr::kable(x, digits = digits, row.names = FALSE)
 }
 ```
@@ -58,7 +59,7 @@ presented as a new independent SAS run.
 
 ## Comparison map
 
-| lmmix.model | reference.function | quantities.compared | tolerance |
+| lmmix model | reference function | quantities compared | tolerance |
 |:--|:--|:--|:--|
 | Random-intercept REML | `nlme::lme()` | fixed effects and log-likelihood: `1e-6`; variance components: `1e-4` | absolute |
 | Random-slope REML | `nlme::lme()` | fixed effects and log-likelihood: `1e-5`; covariance parameters: `1e-4` | absolute |
@@ -692,13 +693,13 @@ invented exact p-values.
 
 The numerical claims in this vignette are enforced in the package test suite.
 
-| test.file | enforced.comparison |
+| test file | enforced comparison |
 |:--|:--|
 | `test-likelihood.R` | `nlme::lme()`, `nlme::gls()`, and `mmrm::mmrm()` likelihood and covariance comparisons |
 | `test-inference.R` | `lmerTest::lmer()` coefficient df and type III Satterthwaite comparisons |
 | `test-validation-sas.R` | every stored PROC MIXED covariance, fixed-effect, LS-mean, and difference target |
 | `test-covariance.R` | positive definiteness and structure-specific covariance checks |
-| `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and dot-separated table names |
+| `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and readable printed table headings |
 
 ## Reproducibility information
 

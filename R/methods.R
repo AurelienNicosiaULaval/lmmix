@@ -137,6 +137,31 @@ print.summary.lmm <- function(x, ...) {
   invisible(x)
 }
 
+#' Print an `lmmix` result table
+#'
+#' Printed column headings use human-readable labels without dots. The
+#' underlying object retains its programmatic column names for compatibility
+#' with `broom` and downstream R code.
+#'
+#' @param x An `lmmix` result table.
+#' @param ... Additional arguments passed to the tibble print method.
+#'
+#' @return `x`, invisibly.
+#' @keywords internal
+#' @export
+print.lmm_table <- function(x, ...) {
+  out <- x
+  names(out) <- lmm_display_names(names(out))
+  table_classes <- intersect(class(out), c("tbl_df", "tbl", "data.frame"))
+  class(out) <- if (length(table_classes) > 0L) {
+    table_classes
+  } else {
+    "data.frame"
+  }
+  print(out, ...)
+  invisible(x)
+}
+
 #' @rdname lmm-methods
 #' @export
 coef.lmm <- function(object, ...) {
@@ -151,7 +176,7 @@ fixef.lmm <- function(object, ...) {
 #' @export
 ranef.lmm <- function(object, ...) {
   if (is.null(object$random_effects)) {
-    return(tibble::tibble())
+    return(as_lmm_table(tibble::tibble()))
   }
 
   out <- data.frame(
@@ -161,7 +186,7 @@ ranef.lmm <- function(object, ...) {
     check.names = FALSE
   )
   names(out)[[1L]] <- object$design$random$group_label
-  dot_names(tibble::as_tibble(out))
+  as_lmm_table(tibble::as_tibble(out))
 }
 
 #' @export
@@ -428,7 +453,7 @@ confint.lmm <- function(
   table <- fixed_effects_table(object, level = level)
   table <- table[match(parm, table$term), ]
   out <- as.matrix(table[c("conf.low", "conf.high")])
-  colnames(out) <- c("conf.low", "conf.high")
+  colnames(out) <- c("Lower", "Upper")
   rownames(out) <- parm
   out
 }

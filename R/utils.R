@@ -2,12 +2,40 @@
   if (is.null(x)) y else x
 }
 
-dot_names <- function(x) {
-  if (is.null(names(x))) {
-    return(x)
-  }
-  names(x) <- make.names(names(x), unique = TRUE)
+as_lmm_table <- function(x) {
+  class(x) <- unique(c("lmm_table", class(x)))
   x
+}
+
+lmm_display_names <- function(x) {
+  labels <- c(
+    effect = "Effect",
+    term = "Term",
+    estimate = "Estimate",
+    std.error = "Std Error",
+    statistic = "Statistic",
+    df = "DF",
+    p.value = "p value",
+    conf.low = "Conf Low",
+    conf.high = "Conf High",
+    num.df = "Num DF",
+    den.df = "Den DF",
+    group = "Group",
+    component = "Component",
+    contrast = "Contrast",
+    .fitted = "Fitted",
+    .resid = "Residual",
+    .std.resid = "Std Residual",
+    logLik = "Log Lik",
+    deviance = "Deviance",
+    nobs = "N Obs",
+    convergence = "Convergence",
+    method = "Method"
+  )
+  display <- trimws(gsub("\\.+", " ", x))
+  matched <- x %in% names(labels)
+  display[matched] <- unname(labels[x[matched]])
+  display
 }
 
 check_formula <- function(x, arg) {

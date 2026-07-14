@@ -155,7 +155,7 @@ estimate_covariance_components <- function(eta, eta_vcov, design) {
   }
 
   metadata <- covariance_metadata(names(natural), design)
-  dot_names(tibble::add_column(
+  as_lmm_table(tibble::add_column(
     metadata,
     estimate = unname(natural),
     std.error = standard_error,

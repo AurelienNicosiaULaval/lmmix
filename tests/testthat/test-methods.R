@@ -33,7 +33,7 @@ test_that("core S3 methods return documented shapes", {
   expect_s3_class(type3, "anova.lmm")
   expect_message(print(type3), "Type III")
   expect_equal(dim(confint(fit)), c(3L, 2L))
-  expect_identical(colnames(confint(fit)), c("conf.low", "conf.high"))
+  expect_identical(colnames(confint(fit)), c("Lower", "Upper"))
   expect_equal(dim(confint(fit, parm = 2)), c(1L, 2L))
   expect_error(confint(fit, parm = "unknown"), "Unknown fixed-effect")
   expect_error(anova(fit, type = 2), "Only type III")
@@ -82,7 +82,7 @@ test_that("broom methods return tibbles", {
   expect_true(all(c("conf.low", "conf.high") %in% names(all_tidy)))
 })
 
-test_that("all public tables use syntactic dot-separated names", {
+test_that("printed regression tables use readable headings without dots", {
   fit <- fit_orthodont_intercept()
   outputs <- list(
     summary(fit)$fixed,
@@ -98,38 +98,30 @@ test_that("all public tables use syntactic dot-separated names", {
     lsmeans(fit, ~Sex),
     lsmeans(fit, pairwise ~ Sex)$contrasts
   )
+  dotted_header <- paste(
+    c(
+      "std\\.error", "p\\.value", "conf\\.low", "conf\\.high",
+      "num\\.df", "den\\.df", "\\.fitted", "\\.resid"
+    ),
+    collapse = "|"
+  )
 
   for (output in outputs) {
-    expect_identical(names(output), make.names(names(output), unique = TRUE))
+    printed <- capture.output(suppressMessages(print(output)))
+    expect_false(any(grepl(dotted_header, printed)))
   }
+  tidy_print <- capture.output(print(generics::tidy(fit)))
+  expect_true(any(grepl("Std Error", tidy_print, fixed = TRUE)))
+  expect_true(any(grepl("p value", tidy_print, fixed = TRUE)))
+  anova_print <- capture.output(suppressMessages(print(anova(fit))))
+  expect_true(any(grepl("Num DF", anova_print, fixed = TRUE)))
+  augment_print <- capture.output(print(generics::augment(fit)))
+  expect_true(any(grepl("Std Residual", augment_print, fixed = TRUE)))
+
+  # Programmatic names retain the standard broom interface.
   expect_true("p.value" %in% names(generics::tidy(fit)))
   expect_true("p.value" %in% names(anova(fit)))
-})
-
-test_that("names inherited from input data are converted to dots", {
-  data <- data.frame(
-    `subject id` = factor(rep(seq_len(6), each = 3)),
-    `time point` = rep(0:2, 6),
-    response = c(
-      1.0, 1.8, 2.7,
-      1.4, 2.1, 3.1,
-      0.7, 1.6, 2.2,
-      1.8, 2.4, 3.6,
-      1.2, 2.0, 2.5,
-      0.9, 1.9, 2.8
-    ),
-    check.names = FALSE
-  )
-  fit <- lmm(
-    data,
-    response ~ `time point`,
-    random = ~ 1 | `subject id`
-  )
-
-  expect_true(all(c("subject.id", "X.Intercept.") %in% names(ranef(fit))))
-  expect_true(
-    all(c("subject.id", "time.point") %in% names(generics::augment(fit)))
-  )
+  expect_true(".fitted" %in% names(generics::augment(fit)))
 })
 
 test_that("prediction handles known and new random-effect groups", {

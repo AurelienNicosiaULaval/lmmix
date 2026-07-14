@@ -198,9 +198,10 @@ repeated-measures groups.
 
 The `generics` methods return tibbles.
 
-All table-returning methods use syntactic dot-separated column names, such as
-`std.error`, `p.value`, `conf.low`, and `conf.high`. Names inherited from input
-data are normalized in the same way when returned by `augment()` or `ranef()`.
+Printed tables use readable headings without dots, such as `Std Error`,
+`p value`, `Conf Low`, and `Conf High`. The underlying tibbles retain the
+standard `broom` column names required for programmatic use. Input column names
+are preserved by `augment()` and `ranef()`.
 
 ```{r broom}
 generics::tidy(fit)
