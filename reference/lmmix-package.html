@@ -13,7 +13,7 @@ Kenward-Roger inference."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,6 +28,7 @@ Kenward-Roger inference."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -59,7 +60,7 @@ Kenward-Roger inference.</p>
 
 
 <p>The residual covariance may be independent, compound symmetric, AR(1),
-Toeplitz, or unstructured. A model may have no random effects, a random
+full or fixed-band Toeplitz, or unstructured. A model may have no random
 intercept, correlated random slopes, or multiple independent crossed or
 nested grouping formulas. The
 repeated-measures formula defines one ordering variable and the blocks of
@@ -70,9 +71,10 @@ the residual covariance.</p>
 
 
 <p>Fitted objects provide coefficient tests, type III tests, estimated
-marginal means, pairwise contrasts, empirical BLUPs, predictions, standard
-model methods, <code>ggplot2</code> diagnostic plots, <code>broom</code> methods, and <code>emmeans</code>
-interoperability.</p>
+marginal means, pairwise contrasts, covariance-parameter intervals,
+parametric-bootstrap likelihood-ratio tests, empirical BLUPs, predictions,
+standard model methods, <code>ggplot2</code> diagnostic plots, <code>broom</code> methods, and
+<code>emmeans</code> interoperability.</p>
     </div>
     <div class="section level2">
     <h2 id="current-limits">Current limits<a class="anchor" aria-label="anchor" href="#current-limits"></a></h2>

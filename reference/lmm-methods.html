@@ -11,7 +11,7 @@ testing and fixed-effect confidence intervals."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@ testing and fixed-effect confidence intervals."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -111,7 +112,15 @@ testing and fixed-effect confidence intervals.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'lmm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, type <span class="op">=</span> <span class="fl">3</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  type <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"chisq"</span>, <span class="st">"parametric.bootstrap"</span><span class="op">)</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">199L</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'lmm'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">object</span>, parm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">object</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span>, level <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
@@ -185,13 +194,29 @@ matrix.</p></dd>
 with ML before comparison.</p></dd>
 
 
+<dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
+<dd><p>Reference test for likelihood-ratio model comparisons. The
+default <code>"chisq"</code> uses the usual asymptotic chi-squared reference. The
+<code>"parametric.bootstrap"</code> option simulates under each smaller model and is
+appropriate when covariance parameters can lie on a boundary.</p></dd>
+
+
+<dt id="arg-nsim">nsim<a class="anchor" aria-label="anchor" href="#arg-nsim"></a></dt>
+<dd><p>Number of simulations for a parametric-bootstrap comparison.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Optional integer seed for a reproducible parametric bootstrap.</p></dd>
+
+
 <dt id="arg-parm">parm<a class="anchor" aria-label="anchor" href="#arg-parm"></a></dt>
-<dd><p>Fixed-effect parameters requested from <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, supplied by
-name or position.</p></dd>
+<dd><p>Parameters requested from <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, supplied by name or fixed
+effect position. Use <code>"beta_"</code> for every fixed effect and <code>"theta_"</code> for
+every covariance parameter.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
-<dd><p>Confidence level for fixed-effect intervals.</p></dd>
+<dd><p>Confidence level for fixed-effect and covariance intervals.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -205,6 +230,15 @@ Marginal values use fixed effects only. In prediction from new data, known
 grouping levels use their fitted random effect. New levels are rejected by
 default and receive a random contribution of zero only when explicitly
 allowed.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Self, S. G., and Liang, K.-Y. (1987). Asymptotic properties of maximum
+likelihood estimators and likelihood ratio tests under nonstandard
+conditions. <em>Journal of the American Statistical Association</em>, 82(398),
+605-610. <a href="https://doi.org/10.1080/01621459.1987.10478472" class="external-link">doi:10.1080/01621459.1987.10478472</a></p>
+<p>Davison, A. C., and Hinkley, D. V. (1997). <em>Bootstrap Methods and Their
+Application</em>. Cambridge University Press. <a href="https://doi.org/10.1017/CBO9780511802843" class="external-link">doi:10.1017/CBO9780511802843</a></p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

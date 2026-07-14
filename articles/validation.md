@@ -15,7 +15,7 @@ Validation is organized in four layers:
 2.  structural checks for combined random-effect and
     residual-correlation models that no single reference R function
     covers;
-3.  comparisons with published output tables from three official PROC
+3.  comparisons with published output tables from four official PROC
     MIXED examples;
 4.  regression comparisons with stored PROC MIXED targets for one fully
     specified combined model.
@@ -44,6 +44,7 @@ comparisons, not a new independent SAS run.
 | Official split-plot example 79.1 | PROC MIXED published output | covariance parameters, REML criterion, type III tests | published precision |
 | Official repeated-measures example 79.2 | PROC MIXED published output | UN and CS covariance, ML criterion, fixed effects, type III statistics | published precision |
 | Official random-coefficients example 79.5 | PROC MIXED published output | random covariance, REML criterion, fixed effects, BLUPs, type III test | published precision |
+| Official line-source example 79.6 | PROC MIXED published output | three random variances, `TOEP(4)` residual covariance, REML criterion | published precision |
 | Random center plus AR(1) residual | PROC MIXED stored targets | covariance parameters, fixed effects, type III tests, LS-means, differences | target-specific precision |
 
 `nlme` provides independent likelihood comparisons for random-effects
@@ -736,7 +737,7 @@ tibble::tibble(
 
 The official SAS/STAT 14.3 documentation supplies complete data, model
 statements, and published output tables for several PROC MIXED examples
-([SAS Institute Inc. 2017](#ref-sas2017)). Three examples match the
+([SAS Institute Inc. 2017](#ref-sas2017)). Four examples match the
 current `lmmix` model space exactly. The package includes their data, a
 runnable SAS program, and a machine-readable CSV of the published
 numerical targets.
@@ -746,8 +747,8 @@ numerical targets.
 | 79.1 Split-Plot Design | two independent random-intercept terms, REML, type III tests | exact overlap |
 | 79.2 Repeated Measures | ML with UN and CS residual covariance | exact likelihood and covariance overlap |
 | 79.5 Random Coefficients | correlated random intercept and slope, REML, BLUPs | exact overlap |
+| 79.6 Line-Source Sprinkler | three random terms and banded `TOEP(4)` residual covariance | exact covariance and likelihood overlap |
 | 79.4 Known G and R | externally fixed multivariate G and R matrices | outside the current API |
-| 79.6 Line-Source Sprinkler | three random terms and banded `TOEP(4)` residual covariance | requires banded Toeplitz support |
 | 79.7 and 79.8 Influence | deletion diagnostics | influence diagnostics are not implemented |
 
 The source tables use SAS’s displayed precision. Comparisons therefore
@@ -1183,6 +1184,86 @@ tibble::tibble(
 | -2 restricted log likelihood | 350.32814 |   350.3281 | 0.000000 |
 | Month F statistic            |  19.41176 |    19.4100 | 0.001765 |
 
+### Example 79.6: line-source sprinkler irrigation
+
+The line-source example exercises the combined model directly. It
+contains three independent random-intercept terms and a four-band
+Toeplitz residual covariance within each block-by-cultivar series. In
+`structure = "toep(4)"`, the main diagonal and the first three
+covariance bands are estimated, while all longer-lag covariances are
+fixed to zero.
+
+``` r
+
+official.line.fit <- lmm(
+  sas_line_source,
+  Y ~ (Cult + Dir + Irrig)^2,
+  random = list(
+    Block = ~ 1 | Block,
+    Block.Dir = ~ 1 | Block:Dir,
+    Block.Irrig = ~ 1 | Block:Irrig
+  ),
+  repeated = ~ Sbplt | Block:Cult,
+  structure = "toep(4)",
+  method = "REML",
+  ddf = "residual"
+)
+
+line.target <- official_sas_target("line_source", "covariance")
+line.residual <- official.line.fit$covariance$residual_base
+line.fit <- c(
+  official.line.fit$covariance$g$Block[1, 1],
+  official.line.fit$covariance$g$Block.Dir[1, 1],
+  official.line.fit$covariance$g$Block.Irrig[1, 1],
+  line.residual[1, 2],
+  line.residual[1, 3],
+  line.residual[1, 4],
+  line.residual[1, 1]
+)
+
+tibble::tibble(
+  covariance.parameter = line.target$term,
+  lmmix = line.fit,
+  SAS.target = line.target$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| covariance parameter |     lmmix | SAS target | abs diff |
+|:---------------------|----------:|-----------:|---------:|
+| Block                |  0.219407 |   0.219400 |  7.0e-06 |
+| Block\*Dir           |  0.017679 |   0.017680 |  1.0e-06 |
+| Block\*Irrig         |  0.035393 |   0.035390 |  3.0e-06 |
+| TOEP(2)              |  0.007983 |   0.007986 |  3.0e-06 |
+| TOEP(3)              |  0.001454 |   0.001452 |  2.0e-06 |
+| TOEP(4)              | -0.092531 |  -0.092530 |  1.0e-06 |
+| Residual             |  0.285013 |   0.285000 |  1.3e-05 |
+
+``` r
+
+
+tibble::tibble(
+  quantity = "-2 restricted log likelihood",
+  lmmix = deviance(official.line.fit),
+  SAS.target = official_sas_target(
+    "line_source",
+    "deviance"
+  )$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| quantity                     |   lmmix | SAS target | abs diff |
+|:-----------------------------|--------:|-----------:|---------:|
+| -2 restricted log likelihood | 183.238 |    183.238 |        0 |
+
+The published fixed-effect tests use the containment denominator-df
+method. Because `lmmix` does not implement containment degrees of
+freedom, this comparison is deliberately restricted to the covariance
+parameters and the restricted likelihood criterion.
+
 ## Stored PROC MIXED comparison
 
 The stored targets correspond to the following specification. The RANDOM
@@ -1452,7 +1533,8 @@ suite.
 |:---|:---|
 | `test-likelihood.R` | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html), [`nlme::gls()`](https://rdrr.io/pkg/nlme/man/gls.html), and [`mmrm::mmrm()`](https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html) likelihood and covariance comparisons |
 | `test-inference.R` | [`lmerTest::lmer()`](https://rdrr.io/pkg/lmerTest/man/lmer.html) coefficient df and type III Satterthwaite comparisons |
-| `test-validation-sas-official.R` | official SAS examples 79.1, 79.2, and 79.5, including covariance, likelihood, fixed effects, BLUPs, and type III statistics |
+| `test-validation-sas-official.R` | official SAS examples 79.1, 79.2, 79.5, and 79.6, including covariance, likelihood, fixed effects, BLUPs, and supported type III statistics |
+| `test-version-030.R` | fixed-band Toeplitz, covariance confidence intervals, and parametric-bootstrap likelihood-ratio tests |
 | `test-validation-sas.R` | every stored PROC MIXED covariance, fixed-effect, LS-mean, and difference target |
 | `test-covariance.R` | positive definiteness and structure-specific covariance checks |
 | `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and readable printed table headings |
@@ -1485,7 +1567,7 @@ tibble::tibble(
 
 | package  | version |
 |:---------|:--------|
-| lmmix    | 0.2.1   |
+| lmmix    | 0.3.0   |
 | nlme     | 3.1.169 |
 | lmerTest | 3.2.1   |
 | mmrm     | 0.3.18  |
@@ -1507,14 +1589,13 @@ tibble::tibble(
 ## Boundaries of the evidence
 
 The validation covers Kenward-Roger inference for overlapping
-random-effects and marginal models, crossed random intercepts, and
-fixed-effect likelihood-ratio comparisons. It does not validate
+random-effects and marginal models, crossed random intercepts,
+fixed-effect likelihood-ratio comparisons, and one official combined
+random-effect and banded-residual model. It does not validate
 generalized responses or large-scale sparse performance because these
 are outside the model scope. For the official SAS examples, values are
 transcribed from published output rather than generated by a SAS session
-in this repository. The separate random-effect and repeated-covariance
-implementations have direct official targets, but the combined
-random-effect and correlated-residual Kenward-Roger case still has
+in this repository. Combined-model Kenward-Roger inference still has
 structural tests only. An archived SAS log and output would be required
 to upgrade that evidence.
 

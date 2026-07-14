@@ -90,3 +90,5 @@
   : Repeated-measures growth example from the SAS MIXED documentation
 - [`sas_random_coefficients`](https://aureliennicosiaulaval.github.io/lmmix/reference/sas_random_coefficients.md)
   : Random-coefficients example from the SAS MIXED documentation
+- [`sas_line_source`](https://aureliennicosiaulaval.github.io/lmmix/reference/sas_line_source.md)
+  : Line-source irrigation example from the SAS MIXED documentation

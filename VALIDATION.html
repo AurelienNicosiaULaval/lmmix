@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -43,9 +44,10 @@
 
 <div class="section level2">
 <h2 id="evidence-layers">Evidence layers<a class="anchor" aria-label="anchor" href="#evidence-layers"></a></h2>
-<p>The package uses three complementary validation layers:</p>
+<p>The package uses four complementary validation layers:</p>
 <ol style="list-style-type: decimal"><li>structural tests for covariance parameterization, positive definiteness, dimensions, missing-data handling, input validation, methods, and output classes;</li>
 <li>numerical comparisons with independent R implementations in overlapping model classes;</li>
+<li>published targets from compatible official PROC MIXED examples;</li>
 <li>stored numerical regression targets for a combined random-effect and AR(1) residual model specified in PROC MIXED.</li>
 </ol><p>No single external R package covers every covariance and inference component implemented by <code>lmmix</code>. Claims are therefore restricted to the quantities tested in each overlapping case.</p>
 </div>
@@ -127,7 +129,7 @@
 </div>
 <div class="section level2">
 <h2 id="official-proc-mixed-examples">Official PROC MIXED examples<a class="anchor" aria-label="anchor" href="#official-proc-mixed-examples"></a></h2>
-<p>Three examples from the official SAS/STAT 14.3 documentation overlap exactly with the current <code>lmmix</code> model space.</p>
+<p>Four examples from the official SAS/STAT 14.3 documentation overlap exactly with the current <code>lmmix</code> model space.</p>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">SAS example</th>
 <th align="left">lmmix model</th>
 <th align="left">Quantities checked</th>
@@ -140,6 +142,9 @@
 </tr><tr><td align="left">79.5 Random Coefficients</td>
 <td align="left">Correlated random intercept and slope, REML</td>
 <td align="left">Random covariance, residual variance, likelihood criterion, fixed effects, BLUPs, type III test</td>
+</tr><tr><td align="left">79.6 Line-Source Sprinkler</td>
+<td align="left">Three random-intercept terms and a four-band Toeplitz residual covariance, REML</td>
+<td align="left">Random variances, residual covariance bands, restricted likelihood criterion</td>
 </tr></tbody></table><p>The machine-readable targets and the runnable SAS program are installed under <code>validation/sas</code>. They come from the published output tables in SAS Institute Inc. (2017), <em>SAS/STAT 14.3 User’s Guide: The MIXED Procedure</em>: <a href="https://support.sas.com/documentation/onlinedoc/stat/" class="external-link uri">https://support.sas.com/documentation/onlinedoc/stat/</a>.</p>
 <p>These are documentation-based comparisons. No claim is made that SAS was run inside this repository. The full SAS manual is not redistributed.</p>
 </div>
@@ -176,6 +181,8 @@
 </li>
 <li>Self, S. G., and Liang, K.-Y. (1987), for likelihood-ratio tests with parameters on the boundary. <a href="https://doi.org/10.1080/01621459.1987.10478472" class="external-link uri">https://doi.org/10.1080/01621459.1987.10478472</a>
 </li>
+<li>Davison, A. C., and Hinkley, D. V. (1997), for parametric-bootstrap inference. <a href="https://doi.org/10.1017/CBO9780511802843" class="external-link uri">https://doi.org/10.1017/CBO9780511802843</a>
+</li>
 <li>Searle, S. R., Speed, F. M., and Milliken, G. A. (1980), for population marginal means. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link uri">https://doi.org/10.1080/00031305.1980.10483031</a>
 </li>
 <li>Pinheiro, J. C., and Bates, D. M. (2000), for structured covariance models. <a href="https://doi.org/10.1007/b98882" class="external-link uri">https://doi.org/10.1007/b98882</a>
@@ -183,7 +190,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="boundaries-of-the-evidence">Boundaries of the evidence<a class="anchor" aria-label="anchor" href="#boundaries-of-the-evidence"></a></h2>
-<p>The validation covers Kenward-Roger inference in overlapping random-effects and marginal models, multiple crossed random intercepts, and fixed-effect likelihood-ratio comparisons. Generalized responses and large-scale sparse performance remain outside the package scope. Combined-model Kenward-Roger inference has structural tests but no fresh independent SAS execution.</p>
+<p>The validation covers Kenward-Roger inference in overlapping random-effects and marginal models, multiple crossed random intercepts, and fixed-effect likelihood-ratio comparisons. Generalized responses and large-scale sparse performance remain outside the package scope. The line-source example supplies an official target for a combined random-effect and correlated-residual model. Combined-model Kenward-Roger inference has structural tests but no fresh independent SAS execution.</p>
 </div>
 </div>
 

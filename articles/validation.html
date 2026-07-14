@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul>
 </li>
@@ -83,7 +84,7 @@ models;</li>
 <li>structural checks for combined random-effect and
 residual-correlation models that no single reference R function
 covers;</li>
-<li>comparisons with published output tables from three official PROC
+<li>comparisons with published output tables from four official PROC
 MIXED examples;</li>
 <li>regression comparisons with stored PROC MIXED targets for one fully
 specified combined model.</li>
@@ -211,6 +212,13 @@ BLUPs, type III test</td>
 <td align="left">published precision</td>
 </tr>
 <tr class="even">
+<td align="left">Official line-source example 79.6</td>
+<td align="left">PROC MIXED published output</td>
+<td align="left">three random variances, <code>TOEP(4)</code> residual
+covariance, REML criterion</td>
+<td align="left">published precision</td>
+</tr>
+<tr class="odd">
 <td align="left">Random center plus AR(1) residual</td>
 <td align="left">PROC MIXED stored targets</td>
 <td align="left">covariance parameters, fixed effects, type III tests,
@@ -1345,7 +1353,7 @@ matrix.</p>
 <p>The official SAS/STAT 14.3 documentation supplies complete data,
 model statements, and published output tables for several PROC MIXED
 examples <span class="citation">(<a href="#ref-sas2017">SAS Institute
-Inc. 2017</a>)</span>. Three examples match the current
+Inc. 2017</a>)</span>. Four examples match the current
 <code>lmmix</code> model space exactly. The package includes their data,
 a runnable SAS program, and a machine-readable CSV of the published
 numerical targets.</p>
@@ -1379,15 +1387,15 @@ tests</td>
 <td align="left">exact overlap</td>
 </tr>
 <tr class="even">
-<td align="left">79.4 Known G and R</td>
-<td align="left">externally fixed multivariate G and R matrices</td>
-<td align="left">outside the current API</td>
-</tr>
-<tr class="odd">
 <td align="left">79.6 Line-Source Sprinkler</td>
 <td align="left">three random terms and banded <code>TOEP(4)</code>
 residual covariance</td>
-<td align="left">requires banded Toeplitz support</td>
+<td align="left">exact covariance and likelihood overlap</td>
+</tr>
+<tr class="odd">
+<td align="left">79.4 Known G and R</td>
+<td align="left">externally fixed multivariate G and R matrices</td>
+<td align="left">outside the current API</td>
 </tr>
 <tr class="even">
 <td align="left">79.7 and 79.8 Influence</td>
@@ -2200,6 +2208,132 @@ Month test.</p>
 </tbody>
 </table>
 </div>
+<div class="section level3">
+<h3 id="example-79-6-line-source-sprinkler-irrigation">Example 79.6: line-source sprinkler irrigation<a class="anchor" aria-label="anchor" href="#example-79-6-line-source-sprinkler-irrigation"></a>
+</h3>
+<p>The line-source example exercises the combined model directly. It
+contains three independent random-intercept terms and a four-band
+Toeplitz residual covariance within each block-by-cultivar series. In
+<code>structure = "toep(4)"</code>, the main diagonal and the first
+three covariance bands are estimated, while all longer-lag covariances
+are fixed to zero.</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">official.line.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">sas_line_source</span>,</span>
+<span>  <span class="va">Y</span> <span class="op">~</span> <span class="op">(</span><span class="va">Cult</span> <span class="op">+</span> <span class="va">Dir</span> <span class="op">+</span> <span class="va">Irrig</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>,</span>
+<span>  random <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    Block <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">Block</span>,</span>
+<span>    Block.Dir <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">Block</span><span class="op">:</span><span class="va">Dir</span>,</span>
+<span>    Block.Irrig <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">Block</span><span class="op">:</span><span class="va">Irrig</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  repeated <span class="op">=</span> <span class="op">~</span> <span class="va">Sbplt</span> <span class="op">|</span> <span class="va">Block</span><span class="op">:</span><span class="va">Cult</span>,</span>
+<span>  structure <span class="op">=</span> <span class="st">"toep(4)"</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"REML"</span>,</span>
+<span>  ddf <span class="op">=</span> <span class="st">"residual"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">line.target</span> <span class="op">&lt;-</span> <span class="fu">official_sas_target</span><span class="op">(</span><span class="st">"line_source"</span>, <span class="st">"covariance"</span><span class="op">)</span></span>
+<span><span class="va">line.residual</span> <span class="op">&lt;-</span> <span class="va">official.line.fit</span><span class="op">$</span><span class="va">covariance</span><span class="op">$</span><span class="va">residual_base</span></span>
+<span><span class="va">line.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="va">official.line.fit</span><span class="op">$</span><span class="va">covariance</span><span class="op">$</span><span class="va">g</span><span class="op">$</span><span class="va">Block</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span>,</span>
+<span>  <span class="va">official.line.fit</span><span class="op">$</span><span class="va">covariance</span><span class="op">$</span><span class="va">g</span><span class="op">$</span><span class="va">Block.Dir</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span>,</span>
+<span>  <span class="va">official.line.fit</span><span class="op">$</span><span class="va">covariance</span><span class="op">$</span><span class="va">g</span><span class="op">$</span><span class="va">Block.Irrig</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span>,</span>
+<span>  <span class="va">line.residual</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">]</span>,</span>
+<span>  <span class="va">line.residual</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">]</span>,</span>
+<span>  <span class="va">line.residual</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">]</span>,</span>
+<span>  <span class="va">line.residual</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  covariance.parameter <span class="op">=</span> <span class="va">line.target</span><span class="op">$</span><span class="va">term</span>,</span>
+<span>  lmmix <span class="op">=</span> <span class="va">line.fit</span>,</span>
+<span>  SAS.target <span class="op">=</span> <span class="va">line.target</span><span class="op">$</span><span class="va">estimate</span>,</span>
+<span>  abs.diff <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lmmix</span> <span class="op">-</span> <span class="va">SAS.target</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">show_table</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">covariance parameter</th>
+<th align="right">lmmix</th>
+<th align="right">SAS target</th>
+<th align="right">abs diff</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Block</td>
+<td align="right">0.219407</td>
+<td align="right">0.219400</td>
+<td align="right">7.0e-06</td>
+</tr>
+<tr class="even">
+<td align="left">Block*Dir</td>
+<td align="right">0.017679</td>
+<td align="right">0.017680</td>
+<td align="right">1.0e-06</td>
+</tr>
+<tr class="odd">
+<td align="left">Block*Irrig</td>
+<td align="right">0.035393</td>
+<td align="right">0.035390</td>
+<td align="right">3.0e-06</td>
+</tr>
+<tr class="even">
+<td align="left">TOEP(2)</td>
+<td align="right">0.007983</td>
+<td align="right">0.007986</td>
+<td align="right">3.0e-06</td>
+</tr>
+<tr class="odd">
+<td align="left">TOEP(3)</td>
+<td align="right">0.001454</td>
+<td align="right">0.001452</td>
+<td align="right">2.0e-06</td>
+</tr>
+<tr class="even">
+<td align="left">TOEP(4)</td>
+<td align="right">-0.092531</td>
+<td align="right">-0.092530</td>
+<td align="right">1.0e-06</td>
+</tr>
+<tr class="odd">
+<td align="left">Residual</td>
+<td align="right">0.285013</td>
+<td align="right">0.285000</td>
+<td align="right">1.3e-05</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  quantity <span class="op">=</span> <span class="st">"-2 restricted log likelihood"</span>,</span>
+<span>  lmmix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/deviance.html" class="external-link">deviance</a></span><span class="op">(</span><span class="va">official.line.fit</span><span class="op">)</span>,</span>
+<span>  SAS.target <span class="op">=</span> <span class="fu">official_sas_target</span><span class="op">(</span></span>
+<span>    <span class="st">"line_source"</span>,</span>
+<span>    <span class="st">"deviance"</span></span>
+<span>  <span class="op">)</span><span class="op">$</span><span class="va">estimate</span>,</span>
+<span>  abs.diff <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lmmix</span> <span class="op">-</span> <span class="va">SAS.target</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">show_table</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">quantity</th>
+<th align="right">lmmix</th>
+<th align="right">SAS target</th>
+<th align="right">abs diff</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">-2 restricted log likelihood</td>
+<td align="right">183.238</td>
+<td align="right">183.238</td>
+<td align="right">0</td>
+</tr></tbody>
+</table>
+<p>The published fixed-effect tests use the containment denominator-df
+method. Because <code>lmmix</code> does not implement containment
+degrees of freedom, this comparison is deliberately restricted to the
+covariance parameters and the restricted likelihood criterion.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="stored-proc-mixed-comparison">Stored PROC MIXED comparison<a class="anchor" aria-label="anchor" href="#stored-proc-mixed-comparison"></a>
@@ -2217,7 +2351,7 @@ Inc. (<a href="#ref-sas2017">2017</a>)</span>.</p>
   lsmeans Drug Time / diff;
 run;</code></pre>
 <p>The exact <code>lmmix</code> fit used in the comparison is:</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sas.fit</span> <span class="op">&lt;-</span> <span class="va">combined.fits</span><span class="op">[[</span><span class="st">"ar1"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">sas.fit</span></span>
 <span><span class="co">#&gt; Linear mixed model fit by REML</span></span>
@@ -2229,7 +2363,7 @@ run;</code></pre>
 <div class="section level3">
 <h3 id="covariance-parameters-and-likelihood-criterion">Covariance parameters and likelihood criterion<a class="anchor" aria-label="anchor" href="#covariance-parameters-and-likelihood-criterion"></a>
 </h3>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sas.covariance.target</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.1737</span>, <span class="fl">10.6702</span>, <span class="fl">0.9351</span><span class="op">)</span></span>
 <span><span class="va">lmmix.covariance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/VarCorr.html">VarCorr</a></span><span class="op">(</span><span class="va">sas.fit</span><span class="op">)</span></span>
 <span></span>
@@ -2273,7 +2407,7 @@ run;</code></pre>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  quantity <span class="op">=</span> <span class="st">"deviance"</span>,</span>
@@ -2300,7 +2434,7 @@ run;</code></pre>
 <div class="section level3">
 <h3 id="fixed-effects">Fixed effects<a class="anchor" aria-label="anchor" href="#fixed-effects"></a>
 </h3>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sas.fixed.target</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">12.0524590</span>,</span>
 <span>  <span class="fl">4.7647059</span>,</span>
@@ -2392,7 +2526,7 @@ run;</code></pre>
 decimal places and the interaction p-value. The other two SAS p-values
 were not available in the stored target set and are therefore reported
 as <code>not.stored</code> rather than reconstructed.</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lmmix.sas.type3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">sas.fit</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -2466,7 +2600,7 @@ as <code>not.stored</code> rather than reconstructed.</p>
 </h3>
 <p>The following table compares every stored Drug and Time marginal
 mean, standard error, and denominator df.</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">drug.means</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">sas.fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
 <span><span class="va">time.means</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">sas.fit</span>, <span class="op">~</span><span class="va">Time</span><span class="op">)</span></span>
 <span></span>
@@ -2614,7 +2748,7 @@ mean, standard error, and denominator df.</p>
 <div class="section level3">
 <h3 id="pairwise-ls-mean-differences">Pairwise LS-mean differences<a class="anchor" aria-label="anchor" href="#pairwise-ls-mean-differences"></a>
 </h3>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">drug.pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">sas.fit</span>, <span class="va">pairwise</span> <span class="op">~</span> <span class="va">Drug</span><span class="op">)</span><span class="op">$</span><span class="va">contrasts</span></span>
 <span><span class="va">time.pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">sas.fit</span>, <span class="va">pairwise</span> <span class="op">~</span> <span class="va">Time</span><span class="op">)</span><span class="op">$</span><span class="va">contrasts</span></span>
 <span></span>
@@ -2805,21 +2939,26 @@ III Satterthwaite comparisons</td>
 </tr>
 <tr class="odd">
 <td align="left"><code>test-validation-sas-official.R</code></td>
-<td align="left">official SAS examples 79.1, 79.2, and 79.5, including
-covariance, likelihood, fixed effects, BLUPs, and type III
-statistics</td>
+<td align="left">official SAS examples 79.1, 79.2, 79.5, and 79.6,
+including covariance, likelihood, fixed effects, BLUPs, and supported
+type III statistics</td>
 </tr>
 <tr class="even">
+<td align="left"><code>test-version-030.R</code></td>
+<td align="left">fixed-band Toeplitz, covariance confidence intervals,
+and parametric-bootstrap likelihood-ratio tests</td>
+</tr>
+<tr class="odd">
 <td align="left"><code>test-validation-sas.R</code></td>
 <td align="left">every stored PROC MIXED covariance, fixed-effect,
 LS-mean, and difference target</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>test-covariance.R</code></td>
 <td align="left">positive definiteness and structure-specific covariance
 checks</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>test-methods.R</code></td>
 <td align="left">S3 outputs, <code>ggplot2</code> diagnostics, and
 readable printed table headings</td>
@@ -2832,7 +2971,7 @@ readable printed table headings</td>
 </h2>
 <p>The versions used to build this vignette are reported rather than
 assumed.</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">validation.packages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lmmix"</span>, <span class="st">"nlme"</span>, <span class="st">"lmerTest"</span>, <span class="st">"mmrm"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
@@ -2858,7 +2997,7 @@ assumed.</p>
 <tbody>
 <tr class="odd">
 <td align="left">lmmix</td>
-<td align="left">0.2.1</td>
+<td align="left">0.3.0</td>
 </tr>
 <tr class="even">
 <td align="left">nlme</td>
@@ -2874,7 +3013,7 @@ assumed.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  R.version.string <span class="op">=</span> <span class="va">R.version.string</span>,</span>
@@ -2896,14 +3035,13 @@ assumed.</p>
 <h2 id="boundaries-of-the-evidence">Boundaries of the evidence<a class="anchor" aria-label="anchor" href="#boundaries-of-the-evidence"></a>
 </h2>
 <p>The validation covers Kenward-Roger inference for overlapping
-random-effects and marginal models, crossed random intercepts, and
-fixed-effect likelihood-ratio comparisons. It does not validate
+random-effects and marginal models, crossed random intercepts,
+fixed-effect likelihood-ratio comparisons, and one official combined
+random-effect and banded-residual model. It does not validate
 generalized responses or large-scale sparse performance because these
 are outside the model scope. For the official SAS examples, values are
 transcribed from published output rather than generated by a SAS session
-in this repository. The separate random-effect and repeated-covariance
-implementations have direct official targets, but the combined
-random-effect and correlated-residual Kenward-Roger case still has
+in this repository. Combined-model Kenward-Roger inference still has
 structural tests only. An archived SAS log and output would be required
 to upgrade that evidence.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">

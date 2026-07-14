@@ -2,8 +2,9 @@
 
 `lmm()` explicitly evaluates a profiled ML or REML criterion for
 `V = Z G Z' + R`. It can combine random effects with an independent,
-compound-symmetric, AR(1), Toeplitz, or unstructured residual
-covariance. Missing values are handled according to `na.action`.
+compound-symmetric, AR(1), full or fixed-band Toeplitz, or unstructured
+residual covariance. Missing values are handled according to
+`na.action`.
 
 ## Usage
 
@@ -44,8 +45,10 @@ lmm(
 
 - structure:
 
-  Residual covariance structure: `"id"`, `"cs"`, `"ar1"`, `"toep"`, or
-  `"un"`.
+  Residual covariance structure: `"id"`, `"cs"`, `"ar1"`, `"toep"`,
+  `"toep(k)"`, or `"un"`. The `"toep"` form estimates every available
+  Toeplitz band. The `"toep(k)"` form estimates `k` bands, including the
+  main diagonal, and fixes longer-lag covariances to zero.
 
 - method:
 

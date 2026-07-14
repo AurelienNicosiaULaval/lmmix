@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -39,6 +40,14 @@
       <small>Source: <a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="lmmix-030">lmmix 0.3.0<a class="anchor" aria-label="anchor" href="#lmmix-030"></a></h2>
+<ul><li>Added fixed-band Toeplitz residual covariance through specifications such as <code>structure = "toep(4)"</code>, while retaining full <code>"toep"</code> behavior.</li>
+<li>Added an exact likelihood and covariance comparison with official PROC MIXED Example 79.6, including its line-source irrigation data and runnable SAS specification.</li>
+<li>Extended <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> with <code>"beta_"</code> and <code>"theta_"</code> selectors. Covariance intervals use log and Fisher-z transformations to respect variance and correlation bounds.</li>
+<li>Added reproducible parametric-bootstrap likelihood-ratio tests for nested models through <code>anova(..., test = "parametric.bootstrap")</code>.</li>
+<li>Added a vignette on covariance intervals, boundary-aware comparisons, and inspection of the simulated null reference distribution.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="lmmix-021">lmmix 0.2.1<a class="anchor" aria-label="anchor" href="#lmmix-021"></a></h2>
 <ul><li>Added reproducible comparisons with official SAS PROC MIXED examples 79.1, 79.2, and 79.5 from the SAS/STAT 14.3 documentation.</li>

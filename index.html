@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,7 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul>
 </li>
@@ -74,12 +75,14 @@
 <div class="section level2">
 <h2 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
 </h2>
-<p>The package contains three complementary vignettes:</p>
+<p>The package contains four complementary vignettes:</p>
 <ul>
 <li>
 <a href="articles/lmmix.html">Using lmmix</a> (<a href="vignettes/lmmix.Rmd">source</a>) presents the fitting workflow and the main methods;</li>
 <li>
 <a href="articles/theory-reml.html">Estimation and inference in lmmix</a> (<a href="vignettes/theory-reml.Rmd">source</a>) gives the mathematical formulation, covariance parameterizations, ML and REML criteria, and Satterthwaite and Kenward-Roger inference;</li>
+<li>
+<a href="articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a> (<a href="vignettes/boundary-inference.Rmd">source</a>) explains bound-respecting covariance intervals and parametric-bootstrap likelihood-ratio tests;</li>
 <li>
 <a href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a> (<a href="vignettes/validation.Rmd">source</a>) documents the independent comparisons, numerical tolerances, and validation boundaries.</li>
 </ul>
@@ -87,6 +90,7 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"lmmix"</span>, package <span class="op">=</span> <span class="st">"lmmix"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"theory-reml"</span>, package <span class="op">=</span> <span class="st">"lmmix"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"boundary-inference"</span>, package <span class="op">=</span> <span class="st">"lmmix"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"validation"</span>, package <span class="op">=</span> <span class="st">"lmmix"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -117,7 +121,7 @@
 <tr>
 <td align="left">Residual covariance</td>
 <td align="left">
-<code>id</code>, <code>cs</code>, <code>ar1</code>, <code>toep</code>, and <code>un</code>
+<code>id</code>, <code>cs</code>, <code>ar1</code>, full <code>toep</code>, banded <code>toep(k)</code>, and <code>un</code>
 </td>
 </tr>
 <tr>
@@ -131,6 +135,10 @@
 <tr>
 <td align="left">Fixed-effect tests</td>
 <td align="left">Coefficient tests, type III tests, and nested-model likelihood-ratio comparisons</td>
+</tr>
+<tr>
+<td align="left">Covariance inference</td>
+<td align="left">Bound-respecting Wald intervals and parametric-bootstrap likelihood-ratio tests</td>
 </tr>
 <tr>
 <td align="left">Marginal means</td>
@@ -439,6 +447,11 @@
 <td align="left">Random covariance, REML criterion, fixed effects, BLUPs and type III test</td>
 </tr>
 <tr>
+<td align="left">Official line-source example 79.6</td>
+<td align="left">Published PROC MIXED output</td>
+<td align="left">Three random variances, banded <code>TOEP(4)</code> covariance and REML criterion</td>
+</tr>
+<tr>
 <td align="left">Combined random center and AR(1)</td>
 <td align="left">Stored PROC MIXED targets</td>
 <td align="left">Covariance parameters, fixed effects, type III tests and marginal means</td>
@@ -450,7 +463,7 @@
 <div class="section level2">
 <h2 id="model-scope-and-remaining-boundaries">Model scope and remaining boundaries<a class="anchor" aria-label="anchor" href="#model-scope-and-remaining-boundaries"></a>
 </h2>
-<p>Version <code>0.2.1</code> fits univariate Gaussian models. It is not a generalized mixed-model engine. The likelihood constructs and factors a dense marginal covariance matrix, so the package targets small and moderate data sets rather than large-scale sparse problems.</p>
+<p>Version <code>0.3.0</code> fits univariate Gaussian models. It is not a generalized mixed-model engine. The likelihood constructs and factors a dense marginal covariance matrix, so the package targets small and moderate data sets rather than large-scale sparse problems.</p>
 <p>Rows with missing responses or model covariates are handled according to <code>na.action</code>; the package does not impute missing covariates. Conditional prediction rejects unseen random-effect groups by default. Set <code>allow.new.levels = TRUE</code> to request the population-level prediction, for which the unseen random contribution is zero.</p>
 </div>
 <div class="section level2">

@@ -2,14 +2,15 @@
 
 ## Evidence layers
 
-The package uses three complementary validation layers:
+The package uses four complementary validation layers:
 
 1.  structural tests for covariance parameterization, positive
     definiteness, dimensions, missing-data handling, input validation,
     methods, and output classes;
 2.  numerical comparisons with independent R implementations in
     overlapping model classes;
-3.  stored numerical regression targets for a combined random-effect and
+3.  published targets from compatible official PROC MIXED examples;
+4.  stored numerical regression targets for a combined random-effect and
     AR(1) residual model specified in PROC MIXED.
 
 No single external R package covers every covariance and inference
@@ -42,7 +43,7 @@ covariance matrix.
 
 ## Official PROC MIXED examples
 
-Three examples from the official SAS/STAT 14.3 documentation overlap
+Four examples from the official SAS/STAT 14.3 documentation overlap
 exactly with the current `lmmix` model space.
 
 | SAS example | lmmix model | Quantities checked |
@@ -50,6 +51,7 @@ exactly with the current `lmmix` model space.
 | 79.1 Split-Plot Design | Two independent random-intercept terms, REML | Variance components, restricted likelihood criterion, type III tests |
 | 79.2 Repeated Measures | ML with UN and CS residual covariance | Covariance matrices, likelihood criterion, fixed-effect solutions, standard errors, type III statistics |
 | 79.5 Random Coefficients | Correlated random intercept and slope, REML | Random covariance, residual variance, likelihood criterion, fixed effects, BLUPs, type III test |
+| 79.6 Line-Source Sprinkler | Three random-intercept terms and a four-band Toeplitz residual covariance, REML | Random variances, residual covariance bands, restricted likelihood criterion |
 
 The machine-readable targets and the runnable SAS program are installed
 under `validation/sas`. They come from the published output tables in
@@ -113,6 +115,8 @@ The implementation is grounded in the following sources:
 - Self, S. G., and Liang, K.-Y. (1987), for likelihood-ratio tests with
   parameters on the boundary.
   <https://doi.org/10.1080/01621459.1987.10478472>
+- Davison, A. C., and Hinkley, D. V. (1997), for parametric-bootstrap
+  inference. <https://doi.org/10.1017/CBO9780511802843>
 - Searle, S. R., Speed, F. M., and Milliken, G. A. (1980), for
   population marginal means.
   <https://doi.org/10.1080/00031305.1980.10483031>
@@ -124,6 +128,8 @@ The implementation is grounded in the following sources:
 The validation covers Kenward-Roger inference in overlapping
 random-effects and marginal models, multiple crossed random intercepts,
 and fixed-effect likelihood-ratio comparisons. Generalized responses and
-large-scale sparse performance remain outside the package scope.
-Combined-model Kenward-Roger inference has structural tests but no fresh
-independent SAS execution.
+large-scale sparse performance remain outside the package scope. The
+line-source example supplies an official target for a combined
+random-effect and correlated-residual model. Combined-model
+Kenward-Roger inference has structural tests but no fresh independent
+SAS execution.

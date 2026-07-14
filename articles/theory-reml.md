@@ -39,12 +39,16 @@ values to admissible covariance matrices as follows.
 | Compound symmetry `cs` | Log variance and logistic correlation constrained to $`(-1/(q-1), 1)`$ |
 | Autoregressive `ar1` | Log variance and `tanh` correlation in $`(-1, 1)`$ |
 | Toeplitz `toep` | Log variance and partial autocorrelations mapped to a stationary Toeplitz correlation |
+| Banded Toeplitz `toep(k)` | First `k` covariance bands estimated; longer-lag covariances fixed to zero |
 | Unstructured `un` | Lower-triangular Cholesky factor with log diagonal |
 
 Here (q) is the number of distinct repeated-measurement occasions.
 Cholesky parameterizations guarantee positive definiteness for `G` and
 `un`. The partial-autocorrelation construction guarantees a
-positive-definite stationary Toeplitz correlation matrix.
+positive-definite full Toeplitz correlation matrix. For `toep(k)`,
+candidate banded blocks are checked by Cholesky factorization during
+likelihood evaluation, and non-positive- definite candidates are
+rejected.
 
 ## Profiled ML and REML criteria
 
@@ -181,7 +185,17 @@ compared under ML; REML fits are refitted automatically by default.
 Covariance-model comparisons must already use ML. Their chi-squared
 reference distribution can be approximate when the null value lies on
 the boundary of the parameter space ([Self and Liang
-1987](#ref-self1987)).
+1987](#ref-self1987)). Setting `test = "parametric.bootstrap"` simulates
+the reference distribution under each smaller fitted model, refits both
+models by ML, and uses the finite- simulation corrected tail proportion
+([Davison and Hinkley 1997](#ref-davison1997)).
+
+Covariance-parameter confidence intervals are available with
+`confint(fit, parm = "theta_")`. Variance intervals use a log-scale
+delta method and correlation intervals use a Fisher-z delta method, so
+their limits respect the natural parameter bounds. They remain local
+Wald intervals based on the observed Hessian, not profile-likelihood
+intervals.
 
 ## Estimated marginal means
 
@@ -218,13 +232,17 @@ contribution.
 
 ## Computational scope
 
-Version `0.2.0` builds a dense (n n) marginal covariance matrix at each
+Version `0.3.0` builds a dense (n n) marginal covariance matrix at each
 objective evaluation. Although the random-effects design matrix is
 initially sparse, covariance assembly and factorization are dense. The
 package is therefore intended for small and moderate data sets.
 Large-scale sparse algorithms and generalized responses are outside the
 current model scope. Independent crossed and nested random-effect terms
 are supported, with an unstructured covariance within each term.
+
+Davison, A. C., and D. V. Hinkley. 1997. *Bootstrap Methods and Their
+Application*. Cambridge University Press.
+<https://doi.org/10.1017/CBO9780511802843>.
 
 Fai, Alex Hrong-Tai, and Paul L. Cornelius. 1996. “Approximate f-Tests
 of Multiple Degree of Freedom Hypotheses in Generalized Least Squares

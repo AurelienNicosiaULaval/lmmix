@@ -216,6 +216,11 @@ confint(fit)
 #> Drug3:Time2 -1.3675896  0.4205612
 #> Drug2:Time3 -0.5046493  2.1512811
 #> Drug3:Time3 -0.9485017  1.6170050
+confint(fit, parm = "theta_")
+#>                            Lower      Upper
+#> random.var.(Intercept) 0.5898096 45.3849859
+#> residual.var           7.2045422 15.8028806
+#> residual.cor           0.8923747  0.9612359
 ```
 
 [`anova()`](https://rdrr.io/r/stats/anova.html) performs type III
@@ -244,6 +249,15 @@ fit_reduced <- lmm(
   structure = "ar1"
 )
 anova(fit_reduced, fit)
+
+# Use a simulated null reference for a covariance comparison.
+anova(
+  smaller_ml_fit,
+  larger_ml_fit,
+  test = "parametric.bootstrap",
+  nsim = 999,
+  seed = 2026
+)
 ```
 
 ## Covariance parameters and random effects
@@ -493,11 +507,20 @@ fit_combined <- lmm(
   repeated = ~ time | center:subject,
   structure = "toep"
 )
+
+# Four-band Toeplitz covariance, including the main diagonal
+fit_banded <- lmm(
+  data,
+  response ~ treatment * time,
+  random = ~ 1 | center,
+  repeated = ~ time | center:subject,
+  structure = "toep(4)"
+)
 ```
 
 ## Practical limits
 
-Version `0.2.0` constructs the full dense matrix `V` during
+Version `0.3.0` constructs the full dense matrix `V` during
 optimization. It is appropriate for small and moderate data sets. It is
 not a large-scale sparse mixed-model engine. The interface accepts
 multiple independent random-effect formulas and one repeated-measures

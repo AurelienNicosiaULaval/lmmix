@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
+    <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul>
 </li>
@@ -137,6 +138,12 @@ values to admissible covariance matrices as follows.</p>
 stationary Toeplitz correlation</td>
 </tr>
 <tr class="even">
+<td align="left">Banded Toeplitz <code>toep(k)</code>
+</td>
+<td align="left">First <code>k</code> covariance bands estimated;
+longer-lag covariances fixed to zero</td>
+</tr>
+<tr class="odd">
 <td align="left">Unstructured <code>un</code>
 </td>
 <td align="left">Lower-triangular Cholesky factor with log diagonal</td>
@@ -146,8 +153,10 @@ stationary Toeplitz correlation</td>
 <p>Here (q) is the number of distinct repeated-measurement occasions.
 Cholesky parameterizations guarantee positive definiteness for
 <code>G</code> and <code>un</code>. The partial-autocorrelation
-construction guarantees a positive-definite stationary Toeplitz
-correlation matrix.</p>
+construction guarantees a positive-definite full Toeplitz correlation
+matrix. For <code>toep(k)</code>, candidate banded blocks are checked by
+Cholesky factorization during likelihood evaluation, and non-positive-
+definite candidates are rejected.</p>
 </div>
 <div class="section level2">
 <h2 id="profiled-ml-and-reml-criteria">Profiled ML and REML criteria<a class="anchor" aria-label="anchor" href="#profiled-ml-and-reml-criteria"></a>
@@ -269,7 +278,17 @@ refitted automatically by default. Covariance-model comparisons must
 already use ML. Their chi-squared reference distribution can be
 approximate when the null value lies on the boundary of the parameter
 space <span class="citation">(<a href="#ref-self1987">Self and Liang
-1987</a>)</span>.</p>
+1987</a>)</span>. Setting <code>test = "parametric.bootstrap"</code>
+simulates the reference distribution under each smaller fitted model,
+refits both models by ML, and uses the finite- simulation corrected tail
+proportion <span class="citation">(<a href="#ref-davison1997">Davison
+and Hinkley 1997</a>)</span>.</p>
+<p>Covariance-parameter confidence intervals are available with
+<code>confint(fit, parm = "theta_")</code>. Variance intervals use a
+log-scale delta method and correlation intervals use a Fisher-z delta
+method, so their limits respect the natural parameter bounds. They
+remain local Wald intervals based on the observed Hessian, not
+profile-likelihood intervals.</p>
 </div>
 <div class="section level2">
 <h2 id="estimated-marginal-means">Estimated marginal means<a class="anchor" aria-label="anchor" href="#estimated-marginal-means"></a>
@@ -304,7 +323,7 @@ population-level prediction with a zero random contribution.</p>
 <div class="section level2">
 <h2 id="computational-scope">Computational scope<a class="anchor" aria-label="anchor" href="#computational-scope"></a>
 </h2>
-<p>Version <code>0.2.0</code> builds a dense (n n) marginal covariance
+<p>Version <code>0.3.0</code> builds a dense (n n) marginal covariance
 matrix at each objective evaluation. Although the random-effects design
 matrix is initially sparse, covariance assembly and factorization are
 dense. The package is therefore intended for small and moderate data
@@ -313,6 +332,10 @@ outside the current model scope. Independent crossed and nested
 random-effect terms are supported, with an unstructured covariance
 within each term.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-davison1997" class="csl-entry">
+Davison, A. C., and D. V. Hinkley. 1997. <em>Bootstrap Methods and Their
+Application</em>. Cambridge University Press. <a href="https://doi.org/10.1017/CBO9780511802843" class="external-link">https://doi.org/10.1017/CBO9780511802843</a>.
+</div>
 <div id="ref-fai1996" class="csl-entry">
 Fai, Alex Hrong-Tai, and Paul L. Cornelius. 1996. <span>“Approximate
 f-Tests of Multiple Degree of Freedom Hypotheses in Generalized Least

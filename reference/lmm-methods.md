@@ -66,7 +66,15 @@ formula(x, fixed.only = TRUE, ...)
 terms(x, ...)
 
 # S3 method for class 'lmm'
-anova(object, ..., type = 3, refit = TRUE)
+anova(
+  object,
+  ...,
+  type = 3,
+  refit = TRUE,
+  test = c("chisq", "parametric.bootstrap"),
+  nsim = 199L,
+  seed = NULL
+)
 
 # S3 method for class 'lmm'
 confint(object, parm = names(object$coefficients), level = 0.95, ...)
@@ -141,15 +149,31 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
   Whether REML models that differ in fixed effects are refitted with ML
   before comparison.
 
+- test:
+
+  Reference test for likelihood-ratio model comparisons. The default
+  `"chisq"` uses the usual asymptotic chi-squared reference. The
+  `"parametric.bootstrap"` option simulates under each smaller model and
+  is appropriate when covariance parameters can lie on a boundary.
+
+- nsim:
+
+  Number of simulations for a parametric-bootstrap comparison.
+
+- seed:
+
+  Optional integer seed for a reproducible parametric bootstrap.
+
 - parm:
 
-  Fixed-effect parameters requested from
+  Parameters requested from
   [`confint()`](https://rdrr.io/r/stats/confint.html), supplied by name
-  or position.
+  or fixed effect position. Use `"beta_"` for every fixed effect and
+  `"theta_"` for every covariance parameter.
 
 - level:
 
-  Confidence level for fixed-effect intervals.
+  Confidence level for fixed-effect and covariance intervals.
 
 ## Value
 
@@ -162,3 +186,15 @@ effects. Marginal values use fixed effects only. In prediction from new
 data, known grouping levels use their fitted random effect. New levels
 are rejected by default and receive a random contribution of zero only
 when explicitly allowed.
+
+## References
+
+Self, S. G., and Liang, K.-Y. (1987). Asymptotic properties of maximum
+likelihood estimators and likelihood ratio tests under nonstandard
+conditions. *Journal of the American Statistical Association*, 82(398),
+605-610.
+[doi:10.1080/01621459.1987.10478472](https://doi.org/10.1080/01621459.1987.10478472)
+
+Davison, A. C., and Hinkley, D. V. (1997). *Bootstrap Methods and Their
+Application*. Cambridge University Press.
+[doi:10.1017/CBO9780511802843](https://doi.org/10.1017/CBO9780511802843)
