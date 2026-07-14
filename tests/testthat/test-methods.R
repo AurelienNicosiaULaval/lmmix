@@ -37,7 +37,7 @@ test_that("core S3 methods return documented shapes", {
   expect_equal(dim(confint(fit, parm = 2)), c(1L, 2L))
   expect_error(confint(fit, parm = "unknown"), "Unknown fixed-effect")
   expect_error(anova(fit, type = 2), "Only type III")
-  expect_error(anova(fit, fit), "Model-comparison")
+  expect_error(anova(fit, fit), "strictly nested")
 })
 
 test_that("plot.lmm returns ggplot2 diagnostics", {
@@ -131,7 +131,8 @@ test_that("prediction handles known and new random-effect groups", {
     Sex = factor(c("Male", "Male"), levels = c("Male", "Female")),
     Subject = factor(c("M01", "NEW"))
   )
-  conditional <- predict(fit, newdata = newdata)
+  expect_error(predict(fit, newdata = newdata), "New grouping level")
+  conditional <- predict(fit, newdata = newdata, allow.new.levels = TRUE)
   marginal <- predict(fit, newdata = newdata, re.form = NA)
 
   expect_false(isTRUE(all.equal(conditional[[1L]], marginal[[1L]])))
@@ -140,7 +141,8 @@ test_that("prediction handles known and new random-effect groups", {
 
   augmented <- generics::augment(
     fit,
-    newdata = newdata[c("age", "Sex", "Subject")]
+    newdata = newdata[c("age", "Sex", "Subject")],
+    allow.new.levels = TRUE
   )
   expect_true(all(is.na(augmented$.resid)))
 })

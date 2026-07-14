@@ -98,8 +98,10 @@ inverse in the likelihood calculation.
 
 ## Optimization and covariance-parameter uncertainty
 
-`lmm_control()` selects `nlminb()` or `optim()` and controls iteration limits,
-tolerances, parameter bounds and the numerical differentiation method. After
+`lmm_control()` can select `nlminb()` or `optim()` directly. Its default
+`optimizer = "auto"` starts with `nlminb()` and uses deterministic perturbed
+starts and alternative optimizers only when an earlier attempt does not
+converge. Every attempt is retained in `fit$convergence$attempts`. After
 optimization, `numDeriv` computes the observed likelihood Hessian on the
 unconstrained (eta) scale.
 
@@ -141,9 +143,33 @@ the implemented Satterthwaite approximation is
 This follows @satterthwaite1946. The gradient of (q) is evaluated numerically
 on the same unconstrained covariance scale used by the optimizer.
 
-With `ddf = "residual"`, the package instead uses (n-p). A request for
-`ddf = "kenward-roger"` is rejected. No Kenward-Roger covariance adjustment is
-implemented.
+With `ddf = "residual"`, the package instead uses (n-p).
+
+## Kenward-Roger adjustment
+
+For `ddf = "kenward-roger"`, the package applies the small-sample adjustment
+of @kenward1997. This method is available only with REML. Let
+
+\[
+\Phi = (X^\mathsf{T}V^{-1}X)^{-1}
+\]
+
+and let (W) denote the covariance matrix of the estimated unconstrained
+covariance parameters. First and second numerical derivatives of (V) are used
+to construct the (P_h), (Q_{hj}), and (R_{hj}) matrices in the Kenward-Roger
+expansion. The adjusted fixed-effect covariance is
+
+\[
+\widehat\Phi_A = \widehat\Phi +
+2\widehat\Phi\left\{\sum_{h,j}W_{hj}
+\left(Q_{hj} - P_h\widehat\Phi P_j - \frac{1}{4}R_{hj}\right)
+\right\}\widehat\Phi.
+\]
+
+Coefficient tests use this adjusted covariance. Multi-degree-of-freedom tests
+also use the Kenward-Roger scale factor and denominator degrees of freedom.
+`vcov(fit)` returns the adjusted covariance, while
+`vcov(fit, adjusted = FALSE)` returns the unadjusted GLS covariance.
 
 ## Type III tests
 
@@ -153,8 +179,12 @@ to the fitted coefficient parameterization. For a multi-row hypothesis matrix
 one-dimensional components. Their Satterthwaite degrees of freedom are
 combined with the Fai-Cornelius moment-matching formula [@fai1996].
 
-Only type III tests are implemented. `anova()` does not perform likelihood-ratio
-comparisons between fitted models.
+For one model, `anova()` returns type III tests. With two or more nested
+models, it performs likelihood-ratio comparisons. Models that differ in fixed
+effects are compared under ML; REML fits are refitted automatically by
+default. Covariance-model comparisons must already use ML. Their chi-squared
+reference distribution can be approximate when the null value lies on the
+boundary of the parameter space [@self1987].
 
 ## Estimated marginal means
 
@@ -167,26 +197,31 @@ the contrast matrix. This targets population marginal means as described by
 
 Pairwise contrasts are differences between automatically generated marginal
 mean rows. Multiplicity correction is applied to pairwise p-values with
-`stats::p.adjust()`. Confidence intervals are pointwise and are not adjusted.
+`stats::p.adjust()`. When p-values are adjusted, `conf_adjust = "auto"`
+produces simultaneous Bonferroni confidence intervals. Pointwise intervals
+remain available with `conf_adjust = "none"`.
 
 ## Empirical BLUPs and prediction
 
-After covariance estimation, the empirical BLUP is
+For each independent random-effect term (k), covariance estimation is followed
+by the empirical BLUP
 
 \[
-\widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
+\widehat u_k = G_kZ_k^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 \]
 
 Conditional fitted values use (X\widehat\beta + Z\widehat u); marginal fitted
 values use (X\widehat\beta). For new data, known grouping levels use their
-empirical random effects and new grouping levels receive a random contribution
-of zero.
+empirical random effects. New levels cause an error unless
+`allow.new.levels = TRUE`, which requests their population-level prediction
+with a zero random contribution.
 
 ## Computational scope
 
-The current implementation builds a dense (n \times n) marginal covariance
+Version `0.2.0` builds a dense (n \times n) marginal covariance
 matrix at each objective evaluation. Although the random-effects design matrix
 is initially sparse, covariance assembly and factorization are dense. The
 package is therefore intended for small and moderate data sets. Large-scale
-sparse algorithms, multiple random-effect terms, generalized responses and
-automatic optimizer restarts are not implemented in version `0.1.0`.
+sparse algorithms and generalized responses are outside the current model
+scope. Independent crossed and nested random-effect terms are supported, with
+an unstructured covariance within each term.

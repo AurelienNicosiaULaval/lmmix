@@ -1,3 +1,185 @@
+covariance_derivatives <- function(eta, design) {
+  n_parameters <- length(eta)
+  base <- build_covariance(eta, design)$v
+  step <- .Machine$double.eps^(1 / 4) * (abs(eta) + 1)
+  first <- vector("list", n_parameters)
+  second <- matrix(
+    vector("list", n_parameters * n_parameters),
+    nrow = n_parameters,
+    ncol = n_parameters
+  )
+  plus <- vector("list", n_parameters)
+  minus <- vector("list", n_parameters)
+
+  for (index in seq_len(n_parameters)) {
+    eta_plus <- eta
+    eta_minus <- eta
+    eta_plus[[index]] <- eta_plus[[index]] + step[[index]]
+    eta_minus[[index]] <- eta_minus[[index]] - step[[index]]
+    plus[[index]] <- build_covariance(eta_plus, design)$v
+    minus[[index]] <- build_covariance(eta_minus, design)$v
+    first[[index]] <- (plus[[index]] - minus[[index]]) / (2 * step[[index]])
+    second[[index, index]] <- (
+      plus[[index]] - 2 * base + minus[[index]]
+    ) / step[[index]]^2
+  }
+
+  if (n_parameters > 1L) {
+    for (row in 2:n_parameters) {
+      for (column in seq_len(row - 1L)) {
+        eta_pp <- eta_pm <- eta_mp <- eta_mm <- eta
+        eta_pp[[row]] <- eta_pp[[row]] + step[[row]]
+        eta_pp[[column]] <- eta_pp[[column]] + step[[column]]
+        eta_pm[[row]] <- eta_pm[[row]] + step[[row]]
+        eta_pm[[column]] <- eta_pm[[column]] - step[[column]]
+        eta_mp[[row]] <- eta_mp[[row]] - step[[row]]
+        eta_mp[[column]] <- eta_mp[[column]] + step[[column]]
+        eta_mm[[row]] <- eta_mm[[row]] - step[[row]]
+        eta_mm[[column]] <- eta_mm[[column]] - step[[column]]
+        derivative <- (
+          build_covariance(eta_pp, design)$v -
+            build_covariance(eta_pm, design)$v -
+            build_covariance(eta_mp, design)$v +
+            build_covariance(eta_mm, design)$v
+        ) / (4 * step[[row]] * step[[column]])
+        second[[row, column]] <- derivative
+        second[[column, row]] <- derivative
+      }
+    }
+  }
+
+  list(first = first, second = second)
+}
+
+kenward_roger_adjustment <- function(eta, eta_vcov, design, beta_vcov) {
+  if (any(!is.finite(eta_vcov))) {
+    cli::cli_abort(
+      "Kenward-Roger inference requires an invertible likelihood Hessian."
+    )
+  }
+  covariance <- build_covariance(eta, design)$v
+  chol_v <- chol_factor(covariance)
+  if (is.null(chol_v)) {
+    cli::cli_abort(
+      "Kenward-Roger inference requires a positive-definite covariance matrix."
+    )
+  }
+  v_inverse <- chol_solve(chol_v, diag(nrow(covariance)))
+  x <- design$x
+  derivatives <- covariance_derivatives(eta, design)
+  inverse_derivatives <- lapply(derivatives$first, function(derivative) {
+    -v_inverse %*% derivative %*% v_inverse
+  })
+  p_matrices <- lapply(inverse_derivatives, function(derivative) {
+    crossprod(x, derivative %*% x)
+  })
+  middle <- matrix(0, nrow(beta_vcov), ncol(beta_vcov))
+  n_parameters <- length(eta)
+
+  for (row in seq_len(n_parameters)) {
+    for (column in seq_len(n_parameters)) {
+      q_matrix <- crossprod(
+        x,
+        inverse_derivatives[[row]] %*%
+          covariance %*%
+          inverse_derivatives[[column]] %*%
+          x
+      )
+      r_matrix <- crossprod(
+        x,
+        v_inverse %*%
+          derivatives$second[[row, column]] %*%
+          v_inverse %*%
+          x
+      )
+      middle <- middle + eta_vcov[row, column] * (
+        q_matrix -
+          p_matrices[[row]] %*% beta_vcov %*% p_matrices[[column]] -
+          0.25 * r_matrix
+      )
+    }
+  }
+
+  adjusted <- symmetrize(
+    beta_vcov + 2 * beta_vcov %*% middle %*% beta_vcov
+  )
+  if (is.null(chol_factor(adjusted))) {
+    message <- paste(
+      "The Kenward-Roger adjusted fixed-effect covariance is not",
+      "positive definite."
+    )
+    cli::cli_abort(message)
+  }
+  dimnames(adjusted) <- dimnames(beta_vcov)
+  list(
+    adjusted_vcov = adjusted,
+    p_matrices = p_matrices,
+    derivatives = derivatives
+  )
+}
+
+kenward_roger_test_parameters <- function(object, contrast) {
+  contrast <- if (is.null(dim(contrast))) {
+    matrix(as.numeric(contrast), nrow = 1L)
+  } else {
+    as.matrix(contrast)
+  }
+  if (ncol(contrast) != length(object$coefficients)) {
+    cli::cli_abort("The contrast has an incompatible number of columns.")
+  }
+  rank <- qr(contrast)$rank
+  if (rank == 0L) {
+    return(list(df = NA_real_, scale = NA_real_))
+  }
+  if (rank < nrow(contrast)) {
+    row_qr <- qr(t(contrast))
+    contrast <- contrast[row_qr$pivot[seq_len(rank)], , drop = FALSE]
+  }
+
+  v0 <- object$beta_vcov_model
+  contrast_vcov <- symmetrize(contrast %*% v0 %*% t(contrast))
+  inverse <- solve(contrast_vcov)
+  m_matrix <- t(contrast) %*% inverse %*% contrast
+  mv0 <- m_matrix %*% v0
+  components <- lapply(object$kr$p_matrices, function(p_matrix) {
+    mv0 %*% p_matrix %*% v0
+  })
+  a1 <- 0
+  a2 <- 0
+  w <- object$eta_vcov
+  for (row in seq_along(components)) {
+    for (column in seq_along(components)) {
+      a1 <- a1 + w[row, column] *
+        sum(diag(components[[row]])) *
+        sum(diag(components[[column]]))
+      a2 <- a2 + w[row, column] * sum(diag(
+        components[[row]] %*% components[[column]]
+      ))
+    }
+  }
+
+  q <- nrow(contrast)
+  if (!is.finite(a2) || abs(a2) < sqrt(.Machine$double.eps)) {
+    return(list(df = Inf, scale = 1))
+  }
+  b <- (a1 + 6 * a2) / (2 * q)
+  e_star <- 1 / (1 - a2 / q)
+  g <- ((q + 1) * a1 - (q + 4) * a2) / ((q + 2) * a2)
+  denominator <- 3 * q + 2 - 2 * g
+  c1 <- g / denominator
+  c2 <- (q - g) / denominator
+  c3 <- (q + 2 - g) / denominator
+  v_star <- 2 / q * (1 + c1 * b) /
+    (1 - c2 * b)^2 / (1 - c3 * b)
+  rho <- v_star / (2 * e_star^2)
+  df <- 4 + (q + 2) / (q * rho - 1)
+  scale <- df / (e_star * (df - 2))
+  if (!is.finite(df) || df <= 2 || !is.finite(scale) || scale <= 0) {
+    cli::cli_abort("Kenward-Roger degrees of freedom could not be computed.")
+  }
+  list(df = df, scale = scale)
+}
+
 contrast_variance <- function(object, contrast, eta = object$eta) {
   beta_vcov <- beta_vcov_at_eta(eta, object$design)
   drop(contrast %*% beta_vcov %*% contrast)
@@ -29,6 +211,9 @@ satterthwaite_df <- function(object, contrast) {
 contrast_df <- function(object, contrast) {
   if (object$ddf == "residual") {
     return(nrow(object$design$x) - ncol(object$design$x))
+  }
+  if (object$ddf == "kenward-roger") {
+    return(kenward_roger_test_parameters(object, contrast)$df)
   }
   satterthwaite_df(object, contrast)
 }
@@ -144,6 +329,13 @@ multi_df_test <- function(object, contrast) {
 
   if (object$ddf == "residual") {
     denominator_df <- nrow(object$design$x) - ncol(object$design$x)
+  } else if (object$ddf == "kenward-roger") {
+    parameters <- kenward_roger_test_parameters(
+      object,
+      projected_contrasts
+    )
+    denominator_df <- parameters$df
+    statistic <- parameters$scale * statistic
   } else {
     component_df <- vapply(
       seq_len(numerator_df),

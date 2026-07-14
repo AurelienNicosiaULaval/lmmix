@@ -45,6 +45,29 @@ check_formula <- function(x, arg) {
   x
 }
 
+normalize_random_formulas <- function(random) {
+  if (is.null(random)) {
+    return(NULL)
+  }
+  if (inherits(random, "formula")) {
+    return(list(random))
+  }
+  if (!is.list(random) || length(random) == 0L) {
+    cli::cli_abort(
+      "{.arg random} must be a formula, a non-empty list of formulas, or NULL."
+    )
+  }
+  valid <- vapply(random, inherits, logical(1L), what = "formula")
+  if (!all(valid)) {
+    cli::cli_abort("Every element of {.arg random} must be a formula.")
+  }
+  signatures <- vapply(random, function(x) paste(deparse(x), collapse = ""), "")
+  if (anyDuplicated(signatures)) {
+    cli::cli_abort("Duplicated formulas in {.arg random} are not identifiable.")
+  }
+  random
+}
+
 parse_bar_formula <- function(x, arg) {
   check_formula(x, arg)
   if (length(x) != 2L) {
@@ -92,14 +115,42 @@ make_group <- function(data, vars, label) {
 }
 
 required_variables <- function(formula, random, repeated) {
+  random_formulas <- normalize_random_formulas(random)
   unique(c(
     all.vars(formula),
-    if (!is.null(random)) all.vars(random),
+    if (!is.null(random_formulas)) {
+      unlist(lapply(random_formulas, all.vars), use.names = FALSE)
+    },
     if (!is.null(repeated)) all.vars(repeated)
   ))
 }
 
-prepare_analysis_data <- function(data, formula, random, repeated) {
+na_action_name <- function(na.action) {
+  if (is.character(na.action) && length(na.action) == 1L) {
+    name <- na.action
+  } else if (identical(na.action, stats::na.omit)) {
+    name <- "na.omit"
+  } else if (identical(na.action, stats::na.exclude)) {
+    name <- "na.exclude"
+  } else if (identical(na.action, stats::na.fail)) {
+    name <- "na.fail"
+  } else {
+    message <- paste(
+      "{.arg na.action} must be {.fn na.omit}, {.fn na.exclude},",
+      "or {.fn na.fail}."
+    )
+    cli::cli_abort(message)
+  }
+  match_choice(name, c("na.omit", "na.exclude", "na.fail"), "na.action")
+}
+
+prepare_analysis_data <- function(
+  data,
+  formula,
+  random,
+  repeated,
+  na.action = stats::na.omit
+) {
   if (!is.data.frame(data)) {
     cli::cli_abort("{.arg data} must be a data frame or tibble.")
   }
@@ -114,6 +165,14 @@ prepare_analysis_data <- function(data, formula, random, repeated) {
   }
 
   used <- stats::complete.cases(data[vars])
+  action <- na_action_name(na.action)
+  if (action == "na.fail" && any(!used)) {
+    message <- paste(
+      "Missing values are not allowed when",
+      "{.arg na.action = na.fail}."
+    )
+    cli::cli_abort(message)
+  }
   if (!any(used)) {
     cli::cli_abort(
       "No complete observations remain after removing missing data."
@@ -124,8 +183,16 @@ prepare_analysis_data <- function(data, formula, random, repeated) {
     data = data[used, , drop = FALSE],
     row_index = which(used),
     omitted = which(!used),
-    variables = vars
+    variables = vars,
+    na_action = action
   )
+}
+
+restore_excluded <- function(object, values) {
+  if (!inherits(object$na.action, "exclude")) {
+    return(values)
+  }
+  stats::napredict(object$na.action, values)
 }
 
 factor_xlevels <- function(model_frame) {

@@ -27,7 +27,7 @@
 
 \method{coef}{lmm}(object, ...)
 
-\method{vcov}{lmm}(object, ...)
+\method{vcov}{lmm}(object, adjusted = TRUE, ...)
 
 \method{logLik}{lmm}(object, ...)
 
@@ -51,6 +51,7 @@
   object,
   newdata = NULL,
   re.form = NULL,
+  allow.new.levels = FALSE,
   na.action = stats::na.pass,
   ...
 )
@@ -63,7 +64,7 @@
 
 \method{terms}{lmm}(x, ...)
 
-\method{anova}{lmm}(object, ..., type = 3)
+\method{anova}{lmm}(object, ..., type = 3, refit = TRUE)
 
 \method{confint}{lmm}(object, parm = names(object$coefficients), level = 0.95, ...)
 }
@@ -71,8 +72,11 @@
 \item{x, object, formula}{An \code{lmm} object. The \code{formula} name follows the
 argument name of the \code{model.frame()} generic.}
 
-\item{...}{Additional arguments. Supplying another model to \code{anova()} is not
-supported.}
+\item{...}{Additional fitted \code{lmm} models for likelihood-ratio comparison,
+or arguments passed to the corresponding method.}
+
+\item{adjusted}{Whether \code{vcov()} returns the Kenward-Roger-adjusted
+covariance when available.}
 
 \item{k}{Penalty per parameter used by \code{AIC()}.}
 
@@ -88,6 +92,9 @@ values, a normal quantile-quantile plot, or observed against fitted values.}
 \item{re.form}{\code{NULL} includes empirical random effects. Any non-\code{NULL}
 value requests a fixed-effects-only prediction.}
 
+\item{allow.new.levels}{Whether conditional predictions may include new
+grouping levels. Their random contribution is zero when allowed.}
+
 \item{na.action}{Missing-value action retained for prediction-method
 compatibility.}
 
@@ -96,6 +103,9 @@ matrix.}
 
 \item{fixed.only}{Whether \code{formula()} returns only the fixed formula. If
 \code{FALSE}, it returns fixed, random, and repeated formulas in a list.}
+
+\item{refit}{Whether REML models that differ in fixed effects are refitted
+with ML before comparison.}
 
 \item{parm}{Fixed-effect parameters requested from \code{confint()}, supplied by
 name or position.}
@@ -113,6 +123,7 @@ testing and fixed-effect confidence intervals.
 \details{
 Conditional fitted values and predictions include empirical random effects.
 Marginal values use fixed effects only. In prediction from new data, known
-grouping levels use their fitted random effect and new levels receive a
-random contribution of zero.
+grouping levels use their fitted random effect. New levels are rejected by
+default and receive a random contribution of zero only when explicitly
+allowed.
 }

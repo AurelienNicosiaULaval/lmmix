@@ -6,12 +6,13 @@ ML or REML criterion. Its main use case is a model that contains both
 random effects and a structured residual covariance.
 
 The package estimates the covariance parameters, fixed effects and
-empirical BLUPs in one fitted object. It also provides Satterthwaite
-inference, type III tests, estimated marginal means, pairwise contrasts,
-standard model methods, `broom` methods and `emmeans` interoperability.
+empirical BLUPs in one fitted object. It also provides Satterthwaite and
+Kenward-Roger inference, type III tests, likelihood-ratio comparisons,
+estimated marginal means, pairwise contrasts, standard model methods,
+`broom` methods and `emmeans` interoperability.
 
-The package is under active development. The table below distinguishes
-current functionality from features that are not implemented.
+The package is under active development. The table below summarizes the
+implemented functionality and the intended model boundary.
 
 ## Installation
 
@@ -32,7 +33,7 @@ The package contains three complementary vignettes:
 - [Estimation and inference in lmmix](articles/theory-reml.html)
   ([source](vignettes/theory-reml.Rmd)) gives the mathematical
   formulation, covariance parameterizations, ML and REML criteria, and
-  Satterthwaite inference;
+  Satterthwaite and Kenward-Roger inference;
 - [Validation against independent R implementations and PROC
   MIXED](articles/validation.html) ([source](vignettes/validation.Rmd))
   documents the independent comparisons, numerical tolerances, and
@@ -52,16 +53,17 @@ vignette("validation", package = "lmmix")
 |:---|:---|
 | Response | Univariate continuous Gaussian response |
 | Estimation | Explicit profiled ML and REML optimization |
-| Random effects | No random effect, random intercept, or correlated random slopes for one grouping formula |
+| Random effects | No random effect, one grouping formula, or independent crossed or nested formulas with correlated slopes within each term |
 | Residual covariance | `id`, `cs`, `ar1`, `toep`, and `un` |
 | Combined covariance | Random effects and any supported residual structure in the same model |
-| Denominator degrees of freedom | Satterthwaite or residual |
-| Fixed-effect tests | Coefficient tests and type III tests |
+| Denominator degrees of freedom | Satterthwaite, Kenward-Roger, or residual |
+| Fixed-effect tests | Coefficient tests, type III tests, and nested-model likelihood-ratio comparisons |
 | Marginal means | Equal-weight estimated marginal means and automatic pairwise contrasts |
-| Multiplicity | Any method accepted by `stats::p.adjust()` for pairwise p-values |
+| Multiplicity | Any `stats::p.adjust()` method and simultaneous Bonferroni confidence intervals |
+| Missing data | `na.omit`, `na.exclude`, or `na.fail` |
 | Interoperability | `emmeans`, `tidy()`, `glance()`, and `augment()` |
 | Diagnostic plots | `plot.lmm()` returns `ggplot2` residual, Q-Q, and fitted-value diagnostics |
-| Not implemented | Kenward-Roger inference, likelihood-ratio model comparison, multiple random-effect terms, generalized responses |
+| Model boundary | Gaussian responses and dense covariance factorization for small and moderate data sets |
 
 ## Quick start: random center effect and AR(1) residuals
 
@@ -86,15 +88,17 @@ fit <- lmm(
 fit
 #> Linear mixed model fit by REML
 #> Formula: `Y ~ Drug * Time`
-#> Random: `~1 | Center`
+#> Random (Center): `~1 | Center`
 #> Repeated: `~Time | Center:Drug:Subject` (AR1)
 #> Log-likelihood: -245.313
 #> Convergence code: 0
 ```
 
-`lmm()` uses complete cases across every variable required by the fixed,
-random and repeated formulas. The fitted object therefore records 125
-observations for this example.
+By default, `lmm()` omits rows that are incomplete for variables
+required by the fixed, random and repeated formulas. The fitted object
+therefore records 125 observations for this example. Use
+`na.action = na.exclude` to restore omitted positions in fitted values,
+residuals and augmented data.
 
 ``` r
 nobs(fit)
@@ -139,12 +143,13 @@ lsmeans(fit, pairwise ~ Drug, adjust = "holm")
 #> 2 2         18.1        1.53  3.01     11.8    0.00128      13.3         23.0
 #> 3 3         17.1        1.53  3.01     11.1    0.00154      12.2         21.9
 #> ── Pairwise contrasts ──
+#> P-value adjustment: holm; confidence intervals: bonferroni
 #> # A tibble: 3 × 8
 #>   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`
 #>   <chr>       <dbl>       <dbl> <dbl>     <dbl>     <dbl>      <dbl>       <dbl>
-#> 1 1 - 2       -4.99        1.10  46.1    -4.54   0.000120      -7.20       -2.78
-#> 2 1 - 3       -3.89        1.10  46.1    -3.54   0.00183       -6.11       -1.68
-#> 3 2 - 3        1.10        1.10  46.9     0.993  0.326         -1.12        3.32
+#> 1 1 - 2       -4.99        1.10  46.1    -4.54   0.000120      -7.72       -2.26
+#> 2 1 - 3       -3.89        1.10  46.1    -3.54   0.00183       -6.62       -1.16
+#> 3 2 - 3        1.10        1.10  46.9     0.993  0.326         -1.64        3.84
 ```
 
 The convergence code and Hessian diagnostic should be checked before
@@ -185,6 +190,16 @@ random_fit <- lmm(
   response ~ treatment + time,
   random = ~ 1 + time | subject,
   structure = "id"
+)
+
+# Crossed random intercepts
+crossed_fit <- lmm(
+  data,
+  response ~ treatment + time,
+  random = list(
+    center = ~ 1 | center,
+    subject = ~ 1 | subject
+  )
 )
 
 # Combined random-effect and correlated-residual model
@@ -287,6 +302,21 @@ emmeans::emmeans(fit, ~Drug)
 #> Confidence level used: 0.95
 ```
 
+Kenward-Roger inference is available for REML fits. Nested models with
+different fixed effects are automatically refitted with ML for a
+likelihood-ratio comparison.
+
+``` r
+kr_fit <- lmm(
+  data,
+  response ~ treatment * time,
+  random = ~ 1 | subject,
+  ddf = "kenward-roger"
+)
+
+anova(reduced_fit, full_fit)
+```
+
 ## Validation
 
 The test suite separates numerical agreement from general software
@@ -298,6 +328,9 @@ tests.
 | Marginal CS and AR(1) | `nlme::gls()` | Fixed effects, covariance parameters, log-likelihood |
 | Marginal AR(1) | `mmrm::mmrm()` | Fixed effects, residual covariance, log-likelihood |
 | Satterthwaite inference | `lmerTest::lmer()` | Coefficient degrees of freedom and type III tests |
+| Kenward-Roger inference | `lmerTest` and `mmrm` | Adjusted covariance and denominator degrees of freedom |
+| Crossed random effects | `lme4::lmer()` | Fixed effects, covariance parameters and log-likelihood |
+| Nested-model comparisons | `lme4::anova()` | Likelihood-ratio statistics and p-values |
 | Combined random center and AR(1) | Stored PROC MIXED targets | Covariance parameters, fixed effects, type III tests and marginal means |
 
 The package also tests positive definiteness and convergence for every
@@ -305,31 +338,25 @@ supported residual structure in a combined model. See `VALIDATION.md`
 and the validation vignette for model specifications, tolerances and
 limitations.
 
-## Current limitations
+## Model scope and remaining boundaries
 
-The following limitations are part of the current `0.1.0` interface:
+Version `0.2.0` fits univariate Gaussian models. It is not a generalized
+mixed-model engine. The likelihood constructs and factors a dense
+marginal covariance matrix, so the package targets small and moderate
+data sets rather than large-scale sparse problems.
 
-- `ddf = "kenward-roger"` is rejected because Kenward-Roger inference is
-  not implemented.
-- `anova()` provides type III tests for one fitted model. It does not
-  compare nested fitted models.
-- Only one random-effects formula is accepted. Multiple crossed
-  random-effect terms are not implemented.
-- The implementation constructs a dense marginal covariance matrix. It
-  is intended for small and moderate data sets, not large-scale sparse
-  problems.
-- Missing observations are removed by complete-case analysis over all
-  model variables.
-- Pairwise multiplicity adjustments modify p-values. The reported
-  confidence intervals remain pointwise intervals.
-- New random-effect groups receive a random contribution of zero in
-  conditional prediction.
+Rows with missing responses or model covariates are handled according to
+`na.action`; the package does not impute missing covariates. Conditional
+prediction rejects unseen random-effect groups by default. Set
+`allow.new.levels = TRUE` to request the population-level prediction,
+for which the unseen random contribution is zero.
 
 ## Theoretical sources
 
 The REML implementation follows Patterson and Thompson (1971), Harville
 (1977), and LaMotte (2007). Satterthwaite inference follows
 Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai
-and Cornelius (1996). Estimated marginal means follow Searle, Speed, and
+and Cornelius (1996). Small-sample covariance adjustment follows Kenward
+and Roger (1997). Estimated marginal means follow Searle, Speed, and
 Milliken (1980). Full citations and DOI links are included in the
 package help and the [theory vignette](articles/theory-reml.html).

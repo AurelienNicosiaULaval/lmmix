@@ -158,7 +158,14 @@ lsmeans_estimates <- function(object, information, level) {
   out
 }
 
-lsmeans_pairs <- function(object, information, specs, level, adjust) {
+lsmeans_pairs <- function(
+  object,
+  information,
+  specs,
+  level,
+  adjust,
+  conf_adjust
+) {
   n_means <- nrow(information$contrast)
   if (n_means < 2L) {
     cli::cli_abort("At least two LS-means are required for pairwise contrasts.")
@@ -171,6 +178,20 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
     contrast_statistics(object, contrast, level = level)
   })
   statistics <- do.call(rbind, statistics)
+  n_contrasts <- nrow(statistics)
+  if (conf_adjust == "auto") {
+    conf_adjust <- if (adjust == "none") "none" else "bonferroni"
+  }
+  critical_probability <- if (conf_adjust == "bonferroni") {
+    1 - (1 - level) / (2 * n_contrasts)
+  } else {
+    (1 + level) / 2
+  }
+  critical <- stats::qt(critical_probability, df = statistics[, "df"])
+  conf_low <- statistics[, "estimate"] -
+    critical * statistics[, "std.error"]
+  conf_high <- statistics[, "estimate"] +
+    critical * statistics[, "std.error"]
 
   labels <- vapply(seq_len(nrow(information$combinations)), function(index) {
     format_lsmean_label(information$combinations[index, , drop = FALSE], specs)
@@ -182,9 +203,11 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
     df = statistics[, "df"],
     statistic = statistics[, "statistic"],
     p.value = stats::p.adjust(statistics[, "p.value"], method = adjust),
-    conf.low = statistics[, "conf.low"],
-    conf.high = statistics[, "conf.high"]
+    conf.low = conf_low,
+    conf.high = conf_high
   ))
+  attr(out, "p.adjust") <- adjust
+  attr(out, "conf.adjust") <- conf_adjust
   class(out) <- c("lmm_lsmeans_contrasts", class(out))
   out
 }
@@ -193,8 +216,9 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
 #'
 #' Marginal means use equal weights over nuisance-factor levels. Numeric
 #' covariates not listed in `specs` are held at their observed means.
-#' Multiplicity adjustment applies to pairwise p-values; confidence intervals
-#' remain pointwise.
+#' Multiplicity adjustment applies to pairwise p-values. Simultaneous
+#' Bonferroni confidence intervals are used automatically when p-values are
+#' adjusted, unless `conf_adjust = "none"` is requested.
 #'
 #' @param object An `lmm` object.
 #' @param specs Variables defining the marginal means, supplied as a character
@@ -204,6 +228,9 @@ lsmeans_pairs <- function(object, information, specs, level, adjust) {
 #' @param at Named list overriding reference-grid values.
 #' @param level Confidence level.
 #' @param adjust Multiplicity adjustment passed to [stats::p.adjust()].
+#' @param conf_adjust Confidence-interval adjustment. `"auto"` uses
+#'   Bonferroni intervals when `adjust` is not `"none"`; the alternatives are
+#'   `"none"` and `"bonferroni"`.
 #' @param ... Reserved for future extensions.
 #'
 #' @return A tibble, or a list with `lsmeans` and `contrasts` tibbles when
@@ -216,6 +243,7 @@ lsmeans <- function(
   at = list(),
   level = 0.95,
   adjust = "none",
+  conf_adjust = c("auto", "none", "bonferroni"),
   ...
 ) {
   if (!inherits(object, "lmm")) {
@@ -229,6 +257,7 @@ lsmeans <- function(
   if (!adjust %in% stats::p.adjust.methods) {
     cli::cli_abort("Unknown multiplicity adjustment {.val {adjust}}.")
   }
+  conf_adjust <- match.arg(conf_adjust)
 
   information <- lsmeans_contrast_matrix(
     object,
@@ -245,7 +274,8 @@ lsmeans <- function(
     information,
     specs = parsed$variables,
     level = level,
-    adjust = adjust
+    adjust = adjust,
+    conf_adjust = conf_adjust
   )
   structure(
     list(lsmeans = estimates, contrasts = contrasts),
@@ -258,6 +288,11 @@ print.lmm_lsmeans_list <- function(x, ...) {
   cli::cli_h2("Estimated marginal means")
   print(x$lsmeans)
   cli::cli_h2("Pairwise contrasts")
+  p_adjust <- attr(x$contrasts, "p.adjust")
+  conf_adjust <- attr(x$contrasts, "conf.adjust")
+  cli::cli_text(
+    "P-value adjustment: {p_adjust}; confidence intervals: {conf_adjust}"
+  )
   print(x$contrasts)
   invisible(x)
 }

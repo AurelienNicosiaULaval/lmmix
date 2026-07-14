@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 )
 
 has_nlme <- requireNamespace("nlme", quietly = TRUE)
+has_lme4 <- requireNamespace("lme4", quietly = TRUE)
 has_lmer_test <- requireNamespace("lmerTest", quietly = TRUE)
 has_mmrm <- requireNamespace("mmrm", quietly = TRUE)
 
@@ -68,6 +69,9 @@ presented as a new independent SAS run.
 | Marginal AR(1) REML | `mmrm::mmrm()` | fixed effects and log-likelihood: `1e-5`; residual covariance matrix: `1e-4` | absolute |
 | Random-intercept REML | `lmerTest::lmer()` | estimates and standard errors: `1e-5`; coefficient df: `5e-3` | absolute |
 | Type III Satterthwaite tests | `lmerTest::lmer()` | numerator df: `1e-6`; denominator df and F statistics: `5e-3` | absolute |
+| Marginal AR(1) Kenward-Roger | `mmrm::mmrm()` | fixed effects: `1e-5`; standard errors: `3e-3`; denominator df: `5e-3` | absolute |
+| Crossed random intercepts | `lme4::lmer()` | log-likelihood: `1e-5`; covariance parameters: `1e-4` | absolute |
+| Nested fixed-effect models | `lme4::anova()` | likelihood-ratio statistic and p-value: `1e-5` | absolute |
 | Random center plus AR(1) residual | PROC MIXED stored targets | covariance parameters, fixed effects, type III tests, LS-means, differences | target-specific precision |
 
 `nlme` provides independent likelihood comparisons for random-effects and
@@ -434,6 +438,120 @@ tibble::tibble(
   show_table()
 ```
 
+## Kenward-Roger comparison with `mmrm::mmrm()`
+
+The Kenward-Roger comparison uses a marginal AR(1) model, which both packages
+fit by REML. It checks fixed effects, adjusted standard errors, and denominator
+degrees of freedom.
+
+```{r kenward-roger-mmrm, eval=has_nlme && has_mmrm}
+fit.kr <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  repeated = ~ Occasion | Subject,
+  structure = "ar1",
+  ddf = "kenward-roger"
+)
+
+mmrm.formula <- stats::as.formula(
+  "distance ~ age + Sex + ar1(Occasion | Subject)",
+  env = asNamespace("mmrm")
+)
+ref.kr <- mmrm::mmrm(
+  mmrm.formula,
+  data = orthodont,
+  method = "Kenward-Roger"
+)
+fit.kr.table <- generics::tidy(fit.kr)
+ref.kr.table <- coef(summary(ref.kr))
+
+tibble::tibble(
+  term = fit.kr.table$term,
+  estimate.abs.diff = abs(fit.kr.table$estimate - coef(ref.kr)),
+  std.error.abs.diff = abs(
+    fit.kr.table$std.error - ref.kr.table[, "Std. Error"]
+  ),
+  df.abs.diff = abs(fit.kr.table$df - ref.kr.table[, "df"])
+) |>
+  show_table()
+```
+
+## Crossed random effects and model comparison
+
+The crossed-intercept comparison uses two independent grouping factors. The
+likelihood-ratio comparison uses nested fixed-effect models and the same ML
+covariance specification in both packages.
+
+```{r crossed-and-lrt, eval=has_nlme && has_lme4}
+set.seed(42)
+crossed <- expand.grid(
+  site = factor(seq_len(8)),
+  observer = factor(seq_len(6)),
+  replicate = seq_len(3)
+)
+site.effect <- stats::rnorm(8, sd = 0.8)
+observer.effect <- stats::rnorm(6, sd = 0.5)
+crossed$response <- 2 +
+  site.effect[crossed$site] +
+  observer.effect[crossed$observer] +
+  stats::rnorm(nrow(crossed), sd = 0.4)
+
+fit.crossed <- lmm(
+  crossed,
+  response ~ 1,
+  random = list(site = ~ 1 | site, observer = ~ 1 | observer)
+)
+ref.crossed <- lme4::lmer(
+  response ~ 1 + (1 | site) + (1 | observer),
+  data = crossed,
+  REML = TRUE
+)
+
+tibble::tibble(
+  quantity = c(
+    "logLik", "site variance", "observer variance", "residual variance"
+  ),
+  lmmix = c(as.numeric(logLik(fit.crossed)), VarCorr(fit.crossed)$estimate),
+  reference = c(
+    as.numeric(logLik(ref.crossed)),
+    as.data.frame(lme4::VarCorr(ref.crossed))$vcov
+  ),
+  abs.diff = abs(lmmix - reference)
+) |>
+  show_table()
+
+fit.reduced <- lmm(
+  orthodont,
+  distance ~ age,
+  random = ~ 1 | Subject
+)
+fit.full <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  random = ~ 1 | Subject
+)
+lmmix.lrt <- suppressMessages(anova(fit.reduced, fit.full))
+ref.reduced <- lme4::lmer(
+  distance ~ age + (1 | Subject),
+  data = orthodont,
+  REML = FALSE
+)
+ref.full <- lme4::lmer(
+  distance ~ age + Sex + (1 | Subject),
+  data = orthodont,
+  REML = FALSE
+)
+reference.lrt <- anova(ref.reduced, ref.full, refit = FALSE)
+
+tibble::tibble(
+  quantity = c("likelihood-ratio statistic", "p-value"),
+  lmmix = c(lmmix.lrt$Chisq[2], lmmix.lrt$p.value[2]),
+  reference = c(reference.lrt$Chisq[2], reference.lrt$`Pr(>Chisq)`[2]),
+  abs.diff = abs(lmmix - reference)
+) |>
+  show_table()
+```
+
 ## Combined covariance structures
 
 The included `multicentre` data reproduce the multilocation repeated-measures
@@ -733,10 +851,10 @@ tibble::tibble(
 
 ## Boundaries of the evidence
 
-The validation does not cover Kenward-Roger inference because it is not
-implemented. It does not validate generalized responses, multiple independent
-random-effect terms, likelihood-ratio model comparison, or large-scale sparse
-performance. The current combined-model evidence consists of structural tests
-and stored PROC MIXED regression targets. A fresh SAS execution with an
-archived log and output would be required to upgrade the SAS evidence to a new
-independent run.
+The validation covers Kenward-Roger inference for overlapping random-effects
+and marginal models, crossed random intercepts, and fixed-effect
+likelihood-ratio comparisons. It does not validate generalized responses or
+large-scale sparse performance because these are outside the model scope. For
+the combined random-effect and correlated-residual case, Kenward-Roger has
+structural tests but no fresh independent SAS execution. An archived SAS log
+and output would be required to upgrade that evidence.

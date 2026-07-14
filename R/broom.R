@@ -73,7 +73,8 @@ glance.lmm <- function(x, ...) {
 #' Augment data with fitted values and residuals
 #'
 #' @param x An `lmm` object.
-#' @param data Data used for augmentation. Defaults to the analysis data.
+#' @param data Optional data used for augmentation. By default, excluded rows
+#'   are restored when the model used [stats::na.exclude()].
 #' @param newdata Optional new data. If supplied, it takes precedence over
 #'   `data`.
 #' @param ... Additional arguments passed to [predict()].
@@ -81,14 +82,25 @@ glance.lmm <- function(x, ...) {
 #' @return A tibble with `.fitted`, `.resid`, and `.std.resid` columns.
 #' @importFrom generics augment
 #' @exportS3Method generics::augment
-augment.lmm <- function(x, data = x$data, newdata = NULL, ...) {
-  target <- newdata %||% data
+augment.lmm <- function(x, data = NULL, newdata = NULL, ...) {
+  default_data <- is.null(data) && is.null(newdata)
+  target <- if (!is.null(newdata)) {
+    newdata
+  } else if (!is.null(data)) {
+    data
+  } else if (inherits(x$na.action, "exclude")) {
+    x$original_data
+  } else {
+    x$data
+  }
   if (!is.data.frame(target)) {
     cli::cli_abort("Augmentation data must be a data frame or tibble.")
   }
 
-  default_data <- is.null(newdata) && identical(target, x$data)
   fitted_values <- if (default_data) x$fitted else predict(x, target, ...)
+  if (default_data) {
+    fitted_values <- fitted(x)
+  }
   response_name <- all.vars(x$formula)[[1L]]
   residual_values <- if (response_name %in% names(target)) {
     target[[response_name]] - fitted_values
@@ -96,7 +108,7 @@ augment.lmm <- function(x, data = x$data, newdata = NULL, ...) {
     rep(NA_real_, nrow(target))
   }
   scale <- if (default_data) {
-    sqrt(diag(x$covariance$r))
+    restore_excluded(x, sqrt(diag(x$covariance$r)))
   } else {
     rep(sigma(x), nrow(target))
   }

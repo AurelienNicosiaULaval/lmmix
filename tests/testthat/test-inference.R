@@ -68,9 +68,73 @@ test_that("the ANOVA print method reports its denominator df method", {
   expect_message(print(anova(fit)), "satterthwaite")
 })
 
-test_that("Kenward-Roger is rejected rather than silently approximated", {
+test_that("Kenward-Roger agrees with lmerTest degrees of freedom", {
+  skip_if_not_installed("lmerTest")
+  skip_if_not_installed("pbkrtest")
+  fit <- fit_orthodont_intercept(ddf = "kenward-roger")
+  reference <- lmerTest::lmer(
+    distance ~ age + Sex + (1 | Subject),
+    data = orthodont_data(),
+    REML = TRUE
+  )
+  reference_df <- vapply(seq_along(fixef(fit)), function(index) {
+    contrast <- numeric(length(fixef(fit)))
+    contrast[[index]] <- 1
+    lmerTest::contest1D(
+      reference,
+      contrast,
+      ddf = "Kenward-Roger"
+    )$df
+  }, numeric(1L))
+
+  expect_equal(summary(fit)$fixed$df, reference_df, tolerance = 5e-3)
+  expect_true(all(eigen(vcov(fit), symmetric = TRUE)$values > 0))
+  expect_false(isTRUE(all.equal(vcov(fit), vcov(fit, adjusted = FALSE))))
+})
+
+test_that("Kenward-Roger agrees with mmrm for marginal AR1 models", {
+  skip_if_not_installed("mmrm")
+  data <- orthodont_data()
+  fit <- lmm(
+    data,
+    distance ~ age + Sex,
+    repeated = ~ Occasion | Subject,
+    structure = "ar1",
+    ddf = "kenward-roger"
+  )
+  reference_formula <- stats::as.formula(
+    "distance ~ age + Sex + ar1(Occasion | Subject)",
+    env = asNamespace("mmrm")
+  )
+  reference <- mmrm::mmrm(
+    reference_formula,
+    data = data,
+    method = "Kenward-Roger"
+  )
+  reference_table <- coef(summary(reference))
+
+  expect_equal(fixef(fit), coef(reference), tolerance = 1e-5)
+  expect_equal(
+    summary(fit)$fixed$std.error,
+    unname(reference_table[, "Std. Error"]),
+    tolerance = 3e-3
+  )
+  expect_equal(
+    summary(fit)$fixed$df,
+    unname(reference_table[, "df"]),
+    tolerance = 5e-3
+  )
+})
+
+test_that("Kenward-Roger requires REML", {
   expect_error(
-    fit_orthodont_intercept(ddf = "kenward-roger"),
-    "not implemented"
+    lmm(
+      orthodont_data(),
+      distance ~ age + Sex,
+      random = ~ 1 | Subject,
+      method = "ML",
+      ddf = "kenward-roger"
+    ),
+    "requires.*REML"
   )
 })
