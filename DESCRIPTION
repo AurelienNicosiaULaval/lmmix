@@ -39,6 +39,7 @@ Suggests:
     lintr,
     mmrm,
     nlme,
+    pbkrtest,
     pkgdown,
     rmarkdown,
     styler,

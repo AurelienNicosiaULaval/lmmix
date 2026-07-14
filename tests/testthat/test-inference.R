@@ -70,6 +70,7 @@ test_that("the ANOVA print method reports its denominator df method", {
 
 test_that("Kenward-Roger agrees with lmerTest degrees of freedom", {
   skip_if_not_installed("lmerTest")
+  skip_if_not_installed("pbkrtest")
   fit <- fit_orthodont_intercept(ddf = "kenward-roger")
   reference <- lmerTest::lmer(
     distance ~ age + Sex + (1 | Subject),
