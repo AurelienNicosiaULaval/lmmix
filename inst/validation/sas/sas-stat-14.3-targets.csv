@@ -1,0 +1,50 @@
+example,model,quantity,term,estimate,std_error,num_df,den_df,statistic,p_value,output
+79.1,split_plot,covariance,Block,62.3958,,,,,,79.1.6
+79.1,split_plot,covariance,A*Block,15.3819,,,,,,79.1.6
+79.1,split_plot,covariance,Residual,9.3611,,,,,,79.1.6
+79.1,split_plot,deviance,-2 Res Log Likelihood,119.76184570,,,,,,79.1.5
+79.1,split_plot,type3,A,,,2,6,4.07,0.0764,79.1.8
+79.1,split_plot,type3,B,,,1,9,19.39,0.0017,79.1.8
+79.1,split_plot,type3,A*B,,,2,9,4.02,0.0566,79.1.8
+79.2,growth_un,covariance,"UN(1,1)",5.1192,1.4169,,,,,79.2.6
+79.2,growth_un,covariance,"UN(2,1)",2.4409,0.9835,,,,,79.2.6
+79.2,growth_un,covariance,"UN(2,2)",3.9279,1.0824,,,,,79.2.6
+79.2,growth_un,covariance,"UN(3,1)",3.6105,1.2767,,,,,79.2.6
+79.2,growth_un,covariance,"UN(3,2)",2.7175,1.0740,,,,,79.2.6
+79.2,growth_un,covariance,"UN(3,3)",5.9798,1.6279,,,,,79.2.6
+79.2,growth_un,covariance,"UN(4,1)",2.5222,1.0649,,,,,79.2.6
+79.2,growth_un,covariance,"UN(4,2)",3.0624,1.0135,,,,,79.2.6
+79.2,growth_un,covariance,"UN(4,3)",3.8235,1.2508,,,,,79.2.6
+79.2,growth_un,covariance,"UN(4,4)",4.6180,1.2573,,,,,79.2.6
+79.2,growth_un,deviance,-2 Log Likelihood,419.47704812,,,,,,79.2.4
+79.2,growth_un,fixed,Intercept,15.8423,0.9356,,25,16.93,<.0001,79.2.8
+79.2,growth_un,fixed,Gender F,1.5831,1.4658,,25,1.08,0.2904,79.2.8
+79.2,growth_un,fixed,Age,0.8268,0.07911,,25,10.45,<.0001,79.2.8
+79.2,growth_un,fixed,Age*Gender F,-0.3504,0.1239,,25,-2.83,0.0091,79.2.8
+79.2,growth_un,type3,Gender,,,1,25,1.17,0.2904,79.2.9
+79.2,growth_un,type3,Age,,,1,25,110.54,<.0001,79.2.9
+79.2,growth_un,type3,Age*Gender,,,1,25,7.99,0.0091,79.2.9
+79.2,growth_cs,covariance,CS,3.0306,0.9552,,,,0.0015,79.2.14
+79.2,growth_cs,covariance,Residual,1.8746,0.2946,,,,<.0001,79.2.14
+79.2,growth_cs,deviance,-2 Log Likelihood,428.63905802,,,,,,79.2.12
+79.2,growth_cs,fixed,Intercept,16.3406,0.9631,,25,16.97,<.0001,79.2.16
+79.2,growth_cs,fixed,Gender F,1.0321,1.5089,,25,0.68,0.5003,79.2.16
+79.2,growth_cs,fixed,Age,0.7844,0.07654,,79,10.25,<.0001,79.2.16
+79.2,growth_cs,fixed,Age*Gender F,-0.3048,0.1199,,79,-2.54,0.0130,79.2.16
+79.2,growth_cs,type3,Gender,,,1,25,0.47,0.5003,79.2.17
+79.2,growth_cs,type3,Age,,,1,79,111.10,<.0001,79.2.17
+79.2,growth_cs,type3,Age*Gender,,,1,79,6.46,0.0130,79.2.17
+79.5,random_coefficients,covariance,"UN(1,1)",0.9768,,,,,,79.5.5
+79.5,random_coefficients,covariance,"UN(2,1)",-0.1045,,,,,,79.5.5
+79.5,random_coefficients,covariance,"UN(2,2)",0.03717,,,,,,79.5.5
+79.5,random_coefficients,covariance,Residual,3.2932,,,,,,79.5.5
+79.5,random_coefficients,deviance,-2 Res Log Likelihood,350.32813577,,,,,,79.5.4
+79.5,random_coefficients,fixed,Intercept,102.70,0.6456,,2,159.08,<.0001,79.5.7
+79.5,random_coefficients,fixed,Month,-0.5259,0.1194,,2,-4.41,0.0478,79.5.7
+79.5,random_coefficients,random,Intercept Batch 1,-1.0010,0.6842,,78,-1.46,0.1474,79.5.8
+79.5,random_coefficients,random,Month Batch 1,0.1287,0.1245,,78,1.03,0.3047,79.5.8
+79.5,random_coefficients,random,Intercept Batch 2,0.3934,0.6842,,78,0.58,0.5669,79.5.8
+79.5,random_coefficients,random,Month Batch 2,-0.2060,0.1245,,78,-1.65,0.1021,79.5.8
+79.5,random_coefficients,random,Intercept Batch 3,0.6076,0.6842,,78,0.89,0.3772,79.5.8
+79.5,random_coefficients,random,Month Batch 3,0.07731,0.1245,,78,0.62,0.5365,79.5.8
+79.5,random_coefficients,type3,Month,,,1,2,19.41,0.0478,79.5.9

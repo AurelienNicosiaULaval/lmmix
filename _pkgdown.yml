@@ -42,6 +42,9 @@ reference:
   - title: Data
     contents:
       - multicentre
+      - sas_split_plot
+      - sas_growth
+      - sas_random_coefficients
 
 articles:
   - title: Guides

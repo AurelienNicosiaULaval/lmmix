@@ -39,6 +39,25 @@ The combined-model tests fit `id`, `cs`, `ar1`, `toep`, and `un` residual
 structures together with a random center intercept. Every fit must converge
 with a positive-definite likelihood Hessian and marginal covariance matrix.
 
+## Official PROC MIXED examples
+
+Three examples from the official SAS/STAT 14.3 documentation overlap exactly
+with the current `lmmix` model space.
+
+| SAS example | lmmix model | Quantities checked |
+|:--|:--|:--|
+| 79.1 Split-Plot Design | Two independent random-intercept terms, REML | Variance components, restricted likelihood criterion, type III tests |
+| 79.2 Repeated Measures | ML with UN and CS residual covariance | Covariance matrices, likelihood criterion, fixed-effect solutions, standard errors, type III statistics |
+| 79.5 Random Coefficients | Correlated random intercept and slope, REML | Random covariance, residual variance, likelihood criterion, fixed effects, BLUPs, type III test |
+
+The machine-readable targets and the runnable SAS program are installed under
+`validation/sas`. They come from the published output tables in SAS Institute
+Inc. (2017), *SAS/STAT 14.3 User's Guide: The MIXED Procedure*:
+<https://support.sas.com/documentation/onlinedoc/stat/>.
+
+These are documentation-based comparisons. No claim is made that SAS was run
+inside this repository. The full SAS manual is not redistributed.
+
 ## Multilocation data
 
 The included `multicentre` data reproduce the multilocation repeated-measures
