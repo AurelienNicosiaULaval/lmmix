@@ -14,7 +14,7 @@ Kenward-Roger inference.
 \section{Model scope}{
 
 The residual covariance may be independent, compound symmetric, AR(1),
-Toeplitz, or unstructured. A model may have no random effects, a random
+full or fixed-band Toeplitz, or unstructured. A model may have no random
 intercept, correlated random slopes, or multiple independent crossed or
 nested grouping formulas. The
 repeated-measures formula defines one ordering variable and the blocks of
@@ -24,9 +24,10 @@ the residual covariance.
 \section{Inference and post-processing}{
 
 Fitted objects provide coefficient tests, type III tests, estimated
-marginal means, pairwise contrasts, empirical BLUPs, predictions, standard
-model methods, \code{ggplot2} diagnostic plots, \code{broom} methods, and \code{emmeans}
-interoperability.
+marginal means, pairwise contrasts, covariance-parameter intervals,
+parametric-bootstrap likelihood-ratio tests, empirical BLUPs, predictions,
+standard model methods, \code{ggplot2} diagnostic plots, \code{broom} methods, and
+\code{emmeans} interoperability.
 }
 
 \section{Current limits}{

@@ -51,12 +51,15 @@ to admissible covariance matrices as follows.
 | Compound symmetry `cs` | Log variance and logistic correlation constrained to \((-1/(q-1), 1)\) |
 | Autoregressive `ar1` | Log variance and `tanh` correlation in \((-1, 1)\) |
 | Toeplitz `toep` | Log variance and partial autocorrelations mapped to a stationary Toeplitz correlation |
+| Banded Toeplitz `toep(k)` | First `k` covariance bands estimated; longer-lag covariances fixed to zero |
 | Unstructured `un` | Lower-triangular Cholesky factor with log diagonal |
 
 Here (q) is the number of distinct repeated-measurement occasions. Cholesky
 parameterizations guarantee positive definiteness for `G` and `un`. The
-partial-autocorrelation construction guarantees a positive-definite stationary
-Toeplitz correlation matrix.
+partial-autocorrelation construction guarantees a positive-definite full
+Toeplitz correlation matrix. For `toep(k)`, candidate banded blocks are checked
+by Cholesky factorization during likelihood evaluation, and non-positive-
+definite candidates are rejected.
 
 ## Profiled ML and REML criteria
 
@@ -184,7 +187,16 @@ models, it performs likelihood-ratio comparisons. Models that differ in fixed
 effects are compared under ML; REML fits are refitted automatically by
 default. Covariance-model comparisons must already use ML. Their chi-squared
 reference distribution can be approximate when the null value lies on the
-boundary of the parameter space [@self1987].
+boundary of the parameter space [@self1987]. Setting
+`test = "parametric.bootstrap"` simulates the reference distribution under
+each smaller fitted model, refits both models by ML, and uses the finite-
+simulation corrected tail proportion [@davison1997].
+
+Covariance-parameter confidence intervals are available with
+`confint(fit, parm = "theta_")`. Variance intervals use a log-scale delta
+method and correlation intervals use a Fisher-z delta method, so their limits
+respect the natural parameter bounds. They remain local Wald intervals based
+on the observed Hessian, not profile-likelihood intervals.
 
 ## Estimated marginal means
 
@@ -218,7 +230,7 @@ with a zero random contribution.
 
 ## Computational scope
 
-Version `0.2.0` builds a dense (n \times n) marginal covariance
+Version `0.3.0` builds a dense (n \times n) marginal covariance
 matrix at each objective evaluation. Although the random-effects design matrix
 is initially sparse, covariance assembly and factorization are dense. The
 package is therefore intended for small and moderate data sets. Large-scale

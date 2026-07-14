@@ -64,7 +64,15 @@
 
 \method{terms}{lmm}(x, ...)
 
-\method{anova}{lmm}(object, ..., type = 3, refit = TRUE)
+\method{anova}{lmm}(
+  object,
+  ...,
+  type = 3,
+  refit = TRUE,
+  test = c("chisq", "parametric.bootstrap"),
+  nsim = 199L,
+  seed = NULL
+)
 
 \method{confint}{lmm}(object, parm = names(object$coefficients), level = 0.95, ...)
 }
@@ -107,10 +115,20 @@ matrix.}
 \item{refit}{Whether REML models that differ in fixed effects are refitted
 with ML before comparison.}
 
-\item{parm}{Fixed-effect parameters requested from \code{confint()}, supplied by
-name or position.}
+\item{test}{Reference test for likelihood-ratio model comparisons. The
+default \code{"chisq"} uses the usual asymptotic chi-squared reference. The
+\code{"parametric.bootstrap"} option simulates under each smaller model and is
+appropriate when covariance parameters can lie on a boundary.}
 
-\item{level}{Confidence level for fixed-effect intervals.}
+\item{nsim}{Number of simulations for a parametric-bootstrap comparison.}
+
+\item{seed}{Optional integer seed for a reproducible parametric bootstrap.}
+
+\item{parm}{Parameters requested from \code{confint()}, supplied by name or fixed
+effect position. Use \code{"beta_"} for every fixed effect and \code{"theta_"} for
+every covariance parameter.}
+
+\item{level}{Confidence level for fixed-effect and covariance intervals.}
 }
 \value{
 The return value follows the corresponding base R generic.
@@ -126,4 +144,13 @@ Marginal values use fixed effects only. In prediction from new data, known
 grouping levels use their fitted random effect. New levels are rejected by
 default and receive a random contribution of zero only when explicitly
 allowed.
+}
+\references{
+Self, S. G., and Liang, K.-Y. (1987). Asymptotic properties of maximum
+likelihood estimators and likelihood ratio tests under nonstandard
+conditions. \emph{Journal of the American Statistical Association}, 82(398),
+605-610. \doi{10.1080/01621459.1987.10478472}
+
+Davison, A. C., and Hinkley, D. V. (1997). \emph{Bootstrap Methods and Their
+Application}. Cambridge University Press. \doi{10.1017/CBO9780511802843}
 }

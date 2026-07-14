@@ -45,6 +45,12 @@ VarCorr <- function(object, ...) {
 #'   `anova()`, only type `3` is implemented.
 #' @param refit Whether REML models that differ in fixed effects are refitted
 #'   with ML before comparison.
+#' @param test Reference test for likelihood-ratio model comparisons. The
+#'   default `"chisq"` uses the usual asymptotic chi-squared reference. The
+#'   `"parametric.bootstrap"` option simulates under each smaller model and is
+#'   appropriate when covariance parameters can lie on a boundary.
+#' @param nsim Number of simulations for a parametric-bootstrap comparison.
+#' @param seed Optional integer seed for a reproducible parametric bootstrap.
 #' @param which Diagnostic plot to draw: standardized residuals against fitted
 #'   values, a normal quantile-quantile plot, or observed against fitted values.
 #' @param newdata Optional data frame used for prediction.
@@ -58,11 +64,21 @@ VarCorr <- function(object, ...) {
 #'   matrix.
 #' @param fixed.only Whether `formula()` returns only the fixed formula. If
 #'   `FALSE`, it returns fixed, random, and repeated formulas in a list.
-#' @param parm Fixed-effect parameters requested from `confint()`, supplied by
-#'   name or position.
-#' @param level Confidence level for fixed-effect intervals.
+#' @param parm Parameters requested from `confint()`, supplied by name or fixed
+#'   effect position. Use `"beta_"` for every fixed effect and `"theta_"` for
+#'   every covariance parameter.
+#' @param level Confidence level for fixed-effect and covariance intervals.
 #' @param adjusted Whether `vcov()` returns the Kenward-Roger-adjusted
 #'   covariance when available.
+#'
+#' @references
+#' Self, S. G., and Liang, K.-Y. (1987). Asymptotic properties of maximum
+#' likelihood estimators and likelihood ratio tests under nonstandard
+#' conditions. *Journal of the American Statistical Association*, 82(398),
+#' 605-610. \doi{10.1080/01621459.1987.10478472}
+#'
+#' Davison, A. C., and Hinkley, D. V. (1997). *Bootstrap Methods and Their
+#' Application*. Cambridge University Press. \doi{10.1017/CBO9780511802843}
 #'
 #' @return The return value follows the corresponding base R generic.
 #'
@@ -85,10 +101,13 @@ print.lmm <- function(x, ...) {
   }
   if (!is.null(x$repeated_formula)) {
     cli::cli_text(
-      "Repeated: {.code {deparse(x$repeated_formula)}} ({toupper(x$structure)})"
+      paste0(
+        "Repeated: {.code {deparse(x$repeated_formula)}} ",
+        "({toupper(x$structure_label)})"
+      )
     )
   } else {
-    cli::cli_text("Residual structure: {toupper(x$structure)}")
+    cli::cli_text("Residual structure: {toupper(x$structure_label)}")
   }
   cli::cli_text("Log-likelihood: {format(x$log_likelihood, digits = 6)}")
   cli::cli_text("Convergence code: {x$convergence$code}")
@@ -111,7 +130,7 @@ summary.lmm <- function(object, level = 0.95, ...) {
     repeated_formula = object$repeated_formula,
     method = object$method,
     ddf = object$ddf,
-    structure = object$structure,
+    structure = object$structure_label,
     fixed = fixed_effects_table(object, level = level),
     covariance = object$covariance_components,
     type3 = type3_table(object),
@@ -459,9 +478,23 @@ terms.lmm <- function(x, ...) {
 
 #' @rdname lmm-methods
 #' @export
-anova.lmm <- function(object, ..., type = 3, refit = TRUE) {
+anova.lmm <- function(
+  object,
+  ...,
+  type = 3,
+  refit = TRUE,
+  test = c("chisq", "parametric.bootstrap"),
+  nsim = 199L,
+  seed = NULL
+) {
   dots <- list(...)
+  test <- match.arg(test)
   if (length(dots) == 0L) {
+    if (test != "chisq") {
+      cli::cli_abort(
+        "{.arg test} applies only to comparisons of two or more models."
+      )
+    }
     if (!identical(as.integer(type), 3L)) {
       cli::cli_abort("Only type III fixed-effect tests are implemented.")
     }
@@ -470,7 +503,13 @@ anova.lmm <- function(object, ..., type = 3, refit = TRUE) {
     class(out) <- c("anova.lmm", class(out))
     return(out)
   }
-  compare_lmm_models(c(list(object), dots), refit = refit)
+  compare_lmm_models(
+    c(list(object), dots),
+    refit = refit,
+    test = test,
+    nsim = nsim,
+    seed = seed
+  )
 }
 
 formula_signature <- function(formula) {
@@ -492,6 +531,7 @@ random_signatures <- function(object) {
 
 same_covariance_specification <- function(first, second) {
   identical(first$structure, second$structure) &&
+    identical(first$covariance_order, second$covariance_order) &&
     identical(
       formula_signature(first$repeated_formula),
       formula_signature(second$repeated_formula)
@@ -507,17 +547,30 @@ fixed_model_nested <- function(smaller, larger, tolerance = 1e-8) {
 }
 
 residual_structure_nested <- function(smaller, larger) {
-  if (identical(smaller, larger)) {
-    return(TRUE)
+  small_structure <- smaller$structure
+  large_structure <- larger$structure
+  small_spec <- smaller$design$covariance_spec
+  large_spec <- larger$design$covariance_spec
+
+  if (identical(small_structure, large_structure)) {
+    if (small_structure != "toep") {
+      return(TRUE)
+    }
+    return(small_spec$covariance_order <= large_spec$covariance_order)
   }
-  allowed <- list(
-    id = c("cs", "ar1", "toep", "un"),
-    cs = c("toep", "un"),
-    ar1 = c("toep", "un"),
-    toep = "un",
-    un = character()
-  )
-  larger %in% allowed[[smaller]]
+  if (small_structure == "id") {
+    return(large_structure %in% c("cs", "ar1", "toep", "un"))
+  }
+  if (small_structure %in% c("cs", "ar1")) {
+    if (large_structure == "un") {
+      return(TRUE)
+    }
+    return(
+      large_structure == "toep" &&
+        large_spec$covariance_order == large_spec$n_times
+    )
+  }
+  small_structure == "toep" && large_structure == "un"
 }
 
 random_model_nested <- function(smaller, larger) {
@@ -541,7 +594,7 @@ covariance_model_nested <- function(smaller, larger) {
     formula_signature(larger$repeated_formula)
   )
   same_repeated &&
-    residual_structure_nested(smaller$structure, larger$structure) &&
+    residual_structure_nested(smaller, larger) &&
     random_model_nested(smaller, larger)
 }
 
@@ -556,7 +609,7 @@ refit_lmm_ml <- function(object) {
     formula = object$formula,
     random = object$random_formula,
     repeated = object$repeated_formula,
-    structure = object$structure,
+    structure = object$structure_label,
     method = "ML",
     ddf = "satterthwaite",
     control = object$control,
@@ -586,8 +639,103 @@ validate_comparison_data <- function(models) {
   }
 }
 
-compare_lmm_models <- function(models, refit) {
+bootstrap_lrt_fit <- function(object, response) {
+  design <- object$design
+  design$y <- response
+  control <- object$control
+  control$initial <- object$eta
+  tryCatch(
+    suppressWarnings(fit_covariance_parameters(
+      design,
+      method = "ML",
+      control = control,
+      compute_hessian = FALSE
+    )),
+    error = function(cnd) NULL
+  )
+}
+
+bootstrap_lrt_pair <- function(smaller, larger, observed, nsim) {
+  mean <- drop(smaller$design$x %*% smaller$coefficients)
+  chol_v <- chol_factor(smaller$covariance$v)
+  if (is.null(chol_v)) {
+    cli::cli_abort("The null-model covariance matrix is not positive definite.")
+  }
+
+  statistics <- rep(NA_real_, nsim)
+  for (simulation in seq_len(nsim)) {
+    response <- mean + drop(t(chol_v) %*% stats::rnorm(length(mean)))
+    small_fit <- bootstrap_lrt_fit(smaller, response)
+    large_fit <- bootstrap_lrt_fit(larger, response)
+    converged <- !is.null(small_fit) && !is.null(large_fit) &&
+      small_fit$code == 0L && large_fit$code == 0L &&
+      is.finite(small_fit$objective) && is.finite(large_fit$objective)
+    if (converged) {
+      statistics[[simulation]] <- max(
+        2 * (small_fit$objective - large_fit$objective),
+        0
+      )
+    }
+  }
+
+  successful <- sum(is.finite(statistics))
+  if (successful == 0L) {
+    cli::cli_abort("Every parametric-bootstrap refit failed.")
+  }
+  if (successful < nsim) {
+    cli::cli_warn(
+      "{nsim - successful} of {nsim} parametric-bootstrap refits failed."
+    )
+  }
+  valid <- statistics[is.finite(statistics)]
+  list(
+    p.value = (1 + sum(valid >= observed)) / (successful + 1),
+    statistics = valid,
+    successful = successful
+  )
+}
+
+set_bootstrap_seed <- function(seed) {
+  if (is.null(seed)) {
+    return(NULL)
+  }
+  if (
+    !is.numeric(seed) || length(seed) != 1L || !is.finite(seed) ||
+      seed < 0 || seed > .Machine$integer.max || seed != floor(seed)
+  ) {
+    cli::cli_abort("{.arg seed} must be NULL or one non-negative integer.")
+  }
+  had_seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  old_seed <- if (had_seed) {
+    get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  } else {
+    NULL
+  }
+  set.seed(as.integer(seed))
+  function() {
+    if (had_seed) {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    }
+  }
+}
+
+compare_lmm_models <- function(models, refit, test, nsim, seed) {
   validate_comparison_data(models)
+  if (test == "parametric.bootstrap") {
+    if (
+      !is.numeric(nsim) || length(nsim) != 1L || !is.finite(nsim) ||
+        nsim < 1 || nsim > .Machine$integer.max || nsim != floor(nsim)
+    ) {
+      cli::cli_abort("{.arg nsim} must be one positive integer.")
+    }
+    restore_seed <- set_bootstrap_seed(seed)
+    if (!is.null(restore_seed)) {
+      on.exit(restore_seed(), add = TRUE)
+    }
+    nsim <- as.integer(nsim)
+  }
   fixed_signatures <- vapply(
     models,
     function(x) formula_signature(x$formula),
@@ -663,7 +811,18 @@ compare_lmm_models <- function(models, refit) {
       lower.tail = FALSE
     )
   }
-  if (covariance_differ) {
+  bootstrap <- vector("list", length(models))
+  if (test == "parametric.bootstrap") {
+    for (index in 2:length(models)) {
+      bootstrap[[index]] <- bootstrap_lrt_pair(
+        models[[index - 1L]],
+        models[[index]],
+        observed = max(chisq[[index]], 0),
+        nsim = nsim
+      )
+      p_value[[index]] <- bootstrap[[index]]$p.value
+    }
+  } else if (covariance_differ) {
     message <- paste(
       "Chi-squared reference distributions can be approximate for",
       "covariance parameters on the boundary."
@@ -683,8 +842,24 @@ compare_lmm_models <- function(models, refit) {
     p.value = p_value
   ))
   attr(out, "refitted") <- refitted
+  attr(out, "test") <- test
+  if (test == "parametric.bootstrap") {
+    attr(out, "nsim") <- nsim
+    attr(out, "bootstrap") <- bootstrap
+  }
   class(out) <- c("anova.lmm_list", class(out))
   out
+}
+
+#' @export
+print.anova.lmm_list <- function(x, ...) {
+  if (identical(attr(x, "test"), "parametric.bootstrap")) {
+    cli::cli_text(
+      "Likelihood-ratio tests with {attr(x, 'nsim')} bootstrap simulations"
+    )
+  }
+  NextMethod("print")
+  invisible(x)
 }
 
 #' @export
@@ -703,16 +878,63 @@ confint.lmm <- function(
   level = 0.95,
   ...
 ) {
+  if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
+    cli::cli_abort("{.arg level} must be one number strictly between 0 and 1.")
+  }
+  fixed_names <- names(object$coefficients)
+  covariance <- covariance_natural(object$eta, object$design)
+  covariance_names <- names(covariance)
   if (is.numeric(parm)) {
-    parm <- names(object$coefficients)[parm]
+    parm <- fixed_names[parm]
   }
-  unknown <- setdiff(parm, names(object$coefficients))
+  parm <- unlist(lapply(parm, function(value) {
+    switch(value,
+      beta_ = fixed_names,
+      theta_ = covariance_names,
+      value
+    )
+  }), use.names = FALSE)
+  parm <- unique(parm)
+  known <- c(fixed_names, covariance_names)
+  unknown <- setdiff(parm, known)
   if (length(unknown) > 0L) {
-    cli::cli_abort("Unknown fixed-effect parameter{?s}: {.field {unknown}}.")
+    cli::cli_abort("Unknown parameter{?s}: {.field {unknown}}.")
   }
-  table <- fixed_effects_table(object, level = level)
-  table <- table[match(parm, table$term), ]
-  out <- as.matrix(table[c("conf.low", "conf.high")])
+
+  fixed_table <- fixed_effects_table(object, level = level)
+  fixed_intervals <- as.matrix(fixed_table[c("conf.low", "conf.high")])
+  rownames(fixed_intervals) <- fixed_table$term
+
+  covariance_intervals <- matrix(
+    NA_real_,
+    nrow = length(covariance),
+    ncol = 2L,
+    dimnames = list(covariance_names, c("conf.low", "conf.high"))
+  )
+  standard_error <- object$covariance_components$std.error
+  critical <- stats::qnorm(1 - (1 - level) / 2)
+  components <- object$covariance_components$component
+  for (index in seq_along(covariance)) {
+    estimate <- unname(covariance[[index]])
+    se <- standard_error[[index]]
+    if (!is.finite(estimate) || !is.finite(se)) {
+      next
+    }
+    if (components[[index]] == "var" && estimate > 0) {
+      se_link <- se / estimate
+      covariance_intervals[index, ] <- exp(
+        log(estimate) + c(-1, 1) * critical * se_link
+      )
+    } else if (components[[index]] == "cor" && abs(estimate) < 1) {
+      se_link <- se / (1 - estimate^2)
+      covariance_intervals[index, ] <- tanh(
+        atanh(estimate) + c(-1, 1) * critical * se_link
+      )
+    }
+  }
+
+  intervals <- rbind(fixed_intervals, covariance_intervals)
+  out <- intervals[match(parm, rownames(intervals)), , drop = FALSE]
   colnames(out) <- c("Lower", "Upper")
   rownames(out) <- parm
   out

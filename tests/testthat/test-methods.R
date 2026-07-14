@@ -35,7 +35,7 @@ test_that("core S3 methods return documented shapes", {
   expect_equal(dim(confint(fit)), c(3L, 2L))
   expect_identical(colnames(confint(fit)), c("Lower", "Upper"))
   expect_equal(dim(confint(fit, parm = 2)), c(1L, 2L))
-  expect_error(confint(fit, parm = "unknown"), "Unknown fixed-effect")
+  expect_error(confint(fit, parm = "unknown"), "Unknown parameter")
   expect_error(anova(fit, type = 2), "Only type III")
   expect_error(anova(fit, fit), "strictly nested")
 })

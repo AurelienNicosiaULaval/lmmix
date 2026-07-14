@@ -87,11 +87,26 @@ official_random_fit <- lmm(
   ddf = "satterthwaite"
 )
 
+official_line_fit <- lmm(
+  sas_line_source,
+  Y ~ (Cult + Dir + Irrig)^2,
+  random = list(
+    Block = ~ 1 | Block,
+    Block.Dir = ~ 1 | Block:Dir,
+    Block.Irrig = ~ 1 | Block:Irrig
+  ),
+  repeated = ~ Sbplt | Block:Cult,
+  structure = "toep(4)",
+  method = "REML",
+  ddf = "residual"
+)
+
 test_that("official SAS example data are reproduced exactly", {
   expect_equal(nrow(sas_split_plot), 24L)
   expect_equal(nrow(sas_growth), 108L)
   expect_equal(nrow(sas_random_coefficients), 108L)
   expect_equal(sum(is.na(sas_random_coefficients$Y)), 24L)
+  expect_equal(nrow(sas_line_source), 108L)
 })
 
 test_that("SAS split-plot covariance and likelihood targets are reproduced", {
@@ -241,4 +256,26 @@ test_that("SAS random-coefficients fixed and random solutions are reproduced", {
     1e-2
   )
   expect_absolute_error_below(type3_result$p.value, 0.0478, 1e-4)
+})
+
+test_that("SAS line-source Toeplitz covariance is reproduced", {
+  target <- sas_targets("line_source", "covariance")
+  residual <- official_line_fit$covariance$residual_base
+  observed <- c(
+    official_line_fit$covariance$g$Block[1L, 1L],
+    official_line_fit$covariance$g$Block.Dir[1L, 1L],
+    official_line_fit$covariance$g$Block.Irrig[1L, 1L],
+    residual[1L, 2L],
+    residual[1L, 3L],
+    residual[1L, 4L],
+    residual[1L, 1L]
+  )
+  expect_absolute_error_below(observed, target$estimate, tolerance = 1e-4)
+
+  deviance_target <- sas_targets("line_source", "deviance")$estimate
+  expect_absolute_error_below(
+    deviance(official_line_fit),
+    deviance_target,
+    tolerance = 1e-5
+  )
 })

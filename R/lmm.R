@@ -81,7 +81,8 @@ lmm_control <- function(
 #'
 #' `lmm()` explicitly evaluates a profiled ML or REML criterion for
 #' `V = Z G Z' + R`. It can combine random effects with an independent,
-#' compound-symmetric, AR(1), Toeplitz, or unstructured residual covariance.
+#' compound-symmetric, AR(1), full or fixed-band Toeplitz, or unstructured
+#' residual covariance.
 #' Missing values are handled according to `na.action`.
 #'
 #' The `random` argument accepts a grouping formula or a list of independent
@@ -98,7 +99,9 @@ lmm_control <- function(
 #' @param repeated Optional one-sided repeated-measures formula such as
 #'   `~ time | subject`.
 #' @param structure Residual covariance structure: `"id"`, `"cs"`, `"ar1"`,
-#'   `"toep"`, or `"un"`.
+#'   `"toep"`, `"toep(k)"`, or `"un"`. The `"toep"` form estimates every
+#'   available Toeplitz band. The `"toep(k)"` form estimates `k` bands,
+#'   including the main diagonal, and fixes longer-lag covariances to zero.
 #' @param method Estimation method: restricted maximum likelihood (`"REML"`)
 #'   or maximum likelihood (`"ML"`).
 #' @param ddf Denominator degrees-of-freedom method: `"satterthwaite"`,
@@ -163,11 +166,8 @@ lmm <- function(
     cli::cli_abort("{.arg control} must be created by {.fn lmm_control}.")
   }
 
-  structure <- match_choice(
-    structure[[1L]],
-    c("id", "cs", "ar1", "toep", "un"),
-    "structure"
-  )
+  structure_spec <- parse_covariance_structure(structure[[1L]])
+  structure <- structure_spec$name
   method <- toupper(match.arg(toupper(method[[1L]]), c("REML", "ML")))
   ddf <- match_choice(
     ddf[[1L]],
@@ -214,7 +214,8 @@ lmm <- function(
   covariance_spec <- make_covariance_spec(
     random_design,
     repeated_design,
-    structure
+    structure,
+    covariance_order = structure_spec$order
   )
   design <- list(
     x = x,
@@ -305,6 +306,8 @@ lmm <- function(
     method = method,
     ddf = ddf,
     structure = structure,
+    covariance_order = covariance_spec$covariance_order,
+    structure_label = covariance_spec$structure_label,
     log_likelihood = -optimization$objective,
     convergence = list(
       code = optimization$code,

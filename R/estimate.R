@@ -53,7 +53,12 @@ run_covariance_optimizer <- function(
   }
 }
 
-fit_covariance_parameters <- function(design, method, control) {
+fit_covariance_parameters <- function(
+  design,
+  method,
+  control,
+  compute_hessian = TRUE
+) {
   objective <- function(eta) {
     negative_log_likelihood(eta, design = design, method = method)
   }
@@ -143,15 +148,24 @@ fit_covariance_parameters <- function(design, method, control) {
   selected <- attempts[[selected_index]]
   eta <- selected$eta
 
-  hessian <- numDeriv::hessian(objective, eta, method = control$deriv_method)
-  hessian_result <- invert_hessian(hessian)
+  if (isTRUE(compute_hessian)) {
+    hessian <- numDeriv::hessian(objective, eta, method = control$deriv_method)
+    hessian_result <- invert_hessian(hessian)
+  } else {
+    hessian <- matrix(NA_real_, npar, npar)
+    hessian_result <- list(
+      vcov = matrix(NA_real_, npar, npar),
+      positive_definite = NA,
+      eigenvalues = rep(NA_real_, npar)
+    )
+  }
   if (selected$code != 0L) {
     cli::cli_warn(c(
       "The optimizer did not report convergence.",
       "i" = "Code {selected$code}: {selected$message}"
     ))
   }
-  if (!hessian_result$positive_definite) {
+  if (isTRUE(compute_hessian) && !hessian_result$positive_definite) {
     message <- paste(
       "The likelihood Hessian is not positive definite;",
       "some inference may be unavailable."

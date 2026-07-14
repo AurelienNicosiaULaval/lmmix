@@ -26,7 +26,7 @@ devtools::install_github("AurelienNicosiaULaval/lmmix")
 
 ## Vignettes
 
-The package contains three complementary vignettes:
+The package contains four complementary vignettes:
 
 - [Using lmmix](articles/lmmix.html) ([source](vignettes/lmmix.Rmd))
   presents the fitting workflow and the main methods;
@@ -34,6 +34,10 @@ The package contains three complementary vignettes:
   ([source](vignettes/theory-reml.Rmd)) gives the mathematical
   formulation, covariance parameterizations, ML and REML criteria, and
   Satterthwaite and Kenward-Roger inference;
+- [Covariance intervals and boundary-aware model
+  comparisons](articles/boundary-inference.html)
+  ([source](vignettes/boundary-inference.Rmd)) explains bound-respecting
+  covariance intervals and parametric-bootstrap likelihood-ratio tests;
 - [Validation against independent R implementations and PROC
   MIXED](articles/validation.html) ([source](vignettes/validation.Rmd))
   documents the independent comparisons, numerical tolerances, and
@@ -44,6 +48,7 @@ They are also available from an installed package:
 ``` r
 vignette("lmmix", package = "lmmix")
 vignette("theory-reml", package = "lmmix")
+vignette("boundary-inference", package = "lmmix")
 vignette("validation", package = "lmmix")
 ```
 
@@ -54,10 +59,11 @@ vignette("validation", package = "lmmix")
 | Response | Univariate continuous Gaussian response |
 | Estimation | Explicit profiled ML and REML optimization |
 | Random effects | No random effect, one grouping formula, or independent crossed or nested formulas with correlated slopes within each term |
-| Residual covariance | `id`, `cs`, `ar1`, `toep`, and `un` |
+| Residual covariance | `id`, `cs`, `ar1`, full `toep`, banded `toep(k)`, and `un` |
 | Combined covariance | Random effects and any supported residual structure in the same model |
 | Denominator degrees of freedom | Satterthwaite, Kenward-Roger, or residual |
 | Fixed-effect tests | Coefficient tests, type III tests, and nested-model likelihood-ratio comparisons |
+| Covariance inference | Bound-respecting Wald intervals and parametric-bootstrap likelihood-ratio tests |
 | Marginal means | Equal-weight estimated marginal means and automatic pairwise contrasts |
 | Multiplicity | Any `stats::p.adjust()` method and simultaneous Bonferroni confidence intervals |
 | Missing data | `na.omit`, `na.exclude`, or `na.fail` |
@@ -334,6 +340,7 @@ tests.
 | Official split-plot example 79.1 | Published PROC MIXED output | Variance components, REML criterion and type III tests |
 | Official repeated-measures example 79.2 | Published PROC MIXED output | UN and CS covariance, ML criterion, fixed effects and type III statistics |
 | Official random-coefficients example 79.5 | Published PROC MIXED output | Random covariance, REML criterion, fixed effects, BLUPs and type III test |
+| Official line-source example 79.6 | Published PROC MIXED output | Three random variances, banded `TOEP(4)` covariance and REML criterion |
 | Combined random center and AR(1) | Stored PROC MIXED targets | Covariance parameters, fixed effects, type III tests and marginal means |
 
 The package also tests positive definiteness and convergence for every
@@ -343,7 +350,7 @@ limitations.
 
 ## Model scope and remaining boundaries
 
-Version `0.2.1` fits univariate Gaussian models. It is not a generalized
+Version `0.3.0` fits univariate Gaussian models. It is not a generalized
 mixed-model engine. The likelihood constructs and factors a dense
 marginal covariance matrix, so the package targets small and moderate
 data sets rather than large-scale sparse problems.

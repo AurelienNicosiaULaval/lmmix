@@ -1,7 +1,7 @@
 # Reproduce data sets used in official SAS PROC MIXED examples.
 #
 # Primary source: SAS Institute Inc. (2017), SAS/STAT 14.3 User's Guide,
-# Chapter 79, The MIXED Procedure, Examples 79.1, 79.2, and 79.5.
+# Chapter 79, The MIXED Procedure, Examples 79.1, 79.2, 79.5, and 79.6.
 # https://go.documentation.sas.com/doc/en/statug/14.3/
 
 sas_split_plot <- data.frame(
@@ -83,17 +83,52 @@ sas_random_coefficients <- data.frame(
 )
 sas_random_coefficients$Batch <- factor(sas_random_coefficients$Batch)
 
+line_source_wide <- data.frame(
+  Block = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+  Cult = c(
+    "Luke", "Nugaines", "Bridger",
+    "Nugaines", "Bridger", "Luke",
+    "Nugaines", "Luke", "Bridger"
+  ),
+  matrix(c(
+    2.4, 2.7, 5.6, 7.5, 7.9, 7.1, 6.1, 7.3, 7.4, 6.7, 3.8, 1.8,
+    2.2, 2.2, 4.3, 6.3, 7.9, 7.1, 6.2, 5.3, 5.3, 5.2, 5.4, 2.9,
+    2.9, 3.2, 5.1, 6.9, 6.1, 7.5, 5.6, 6.5, 6.6, 5.3, 4.1, 3.1,
+    2.4, 2.2, 4.0, 5.8, 6.1, 6.2, 7.0, 6.4, 6.7, 6.4, 3.7, 2.2,
+    2.6, 3.1, 5.7, 6.4, 7.7, 6.8, 6.3, 6.2, 6.6, 6.5, 4.2, 2.7,
+    2.2, 2.7, 4.3, 6.9, 6.8, 8.0, 6.5, 7.3, 5.9, 6.6, 3.0, 2.0,
+    1.8, 1.9, 3.7, 4.9, 5.4, 5.1, 5.7, 5.0, 5.6, 5.1, 4.2, 2.2,
+    2.1, 2.3, 3.7, 5.8, 6.3, 6.3, 6.5, 5.7, 5.8, 4.5, 2.7, 2.3,
+    2.7, 2.8, 4.0, 5.0, 5.2, 5.2, 5.9, 6.1, 6.0, 4.3, 3.1, 3.1
+  ), nrow = 9L, byrow = TRUE)
+)
+names(line_source_wide)[3:14] <- paste0("Y", seq_len(12L))
+sas_line_source <- data.frame(
+  Block = rep(line_source_wide$Block, each = 12L),
+  Cult = rep(line_source_wide$Cult, each = 12L),
+  Sbplt = rep(seq_len(12L), times = nrow(line_source_wide)),
+  Irrig = rep(c(seq_len(6L), 6:1), times = nrow(line_source_wide)),
+  Dir = rep(rep(c("North", "South"), each = 6L), nrow(line_source_wide)),
+  Y = as.vector(t(as.matrix(line_source_wide[paste0("Y", seq_len(12L))])))
+)
+sas_line_source$Block <- factor(sas_line_source$Block)
+sas_line_source$Cult <- factor(sas_line_source$Cult)
+sas_line_source$Dir <- factor(sas_line_source$Dir)
+sas_line_source$Irrig <- factor(sas_line_source$Irrig)
+
 stopifnot(
   nrow(sas_split_plot) == 24L,
   nrow(sas_growth) == 108L,
   nrow(sas_random_coefficients) == 108L,
-  sum(is.na(sas_random_coefficients$Y)) == 24L
+  sum(is.na(sas_random_coefficients$Y)) == 24L,
+  nrow(sas_line_source) == 108L
 )
 
 save(
   sas_split_plot,
   sas_growth,
   sas_random_coefficients,
+  sas_line_source,
   file = "data/sas_examples.rda",
   compress = "xz"
 )
