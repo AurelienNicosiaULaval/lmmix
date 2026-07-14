@@ -1,5 +1,19 @@
 # Changelog
 
+## lmmix 0.2.1
+
+- Added reproducible comparisons with official SAS PROC MIXED examples
+  79.1, 79.2, and 79.5 from the SAS/STAT 14.3 documentation.
+- Added the split-plot, repeated-measures growth, and
+  random-coefficients data used by those examples.
+- Added a runnable SAS validation program and machine-readable published
+  targets for covariance parameters, likelihood criteria, fixed effects,
+  BLUPs, and type III tests.
+- Added package and repository citation metadata for academic reuse.
+- Added CRAN submission preparation metadata and clarified the
+  distinction between published SAS targets and a fresh SAS execution
+  transcript.
+
 ## lmmix 0.2.0
 
 - Added Kenward-Roger covariance adjustment, denominator degrees of

@@ -56,6 +56,16 @@ marginal means in the linear model: An alternative to least squares
 means. *The American Statistician*, 34(4), 216-221.
 [doi:10.1080/00031305.1980.10483031](https://doi.org/10.1080/00031305.1980.10483031)
 
+## See also
+
+Useful links:
+
+- <https://github.com/AurelienNicosiaULaval/lmmix>
+
+- <https://aureliennicosiaulaval.github.io/lmmix/>
+
+- Report bugs at <https://github.com/AurelienNicosiaULaval/lmmix/issues>
+
 ## Author
 
 **Maintainer**: Aurélien Nicosia

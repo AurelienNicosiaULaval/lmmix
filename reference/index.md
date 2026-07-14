@@ -84,3 +84,9 @@
 
 - [`multicentre`](https://aureliennicosiaulaval.github.io/lmmix/reference/multicentre.md)
   : Multi-site repeated-measures experiment
+- [`sas_split_plot`](https://aureliennicosiaulaval.github.io/lmmix/reference/sas_split_plot.md)
+  : Split-plot example from the SAS MIXED procedure documentation
+- [`sas_growth`](https://aureliennicosiaulaval.github.io/lmmix/reference/sas_growth.md)
+  : Repeated-measures growth example from the SAS MIXED documentation
+- [`sas_random_coefficients`](https://aureliennicosiaulaval.github.io/lmmix/reference/sas_random_coefficients.md)
+  : Random-coefficients example from the SAS MIXED documentation

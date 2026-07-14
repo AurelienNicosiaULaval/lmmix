@@ -349,6 +349,9 @@ tests.
 | Kenward-Roger inference | `lmerTest` and `mmrm` | Adjusted covariance and denominator degrees of freedom |
 | Crossed random effects | [`lme4::lmer()`](https://rdrr.io/pkg/lme4/man/lmer.html) | Fixed effects, covariance parameters and log-likelihood |
 | Nested-model comparisons | `lme4::anova()` | Likelihood-ratio statistics and p-values |
+| Official split-plot example 79.1 | Published PROC MIXED output | Variance components, REML criterion and type III tests |
+| Official repeated-measures example 79.2 | Published PROC MIXED output | UN and CS covariance, ML criterion, fixed effects and type III statistics |
+| Official random-coefficients example 79.5 | Published PROC MIXED output | Random covariance, REML criterion, fixed effects, BLUPs and type III test |
 | Combined random center and AR(1) | Stored PROC MIXED targets | Covariance parameters, fixed effects, type III tests and marginal means |
 
 The package also tests positive definiteness and convergence for every
@@ -358,7 +361,7 @@ limitations.
 
 ## Model scope and remaining boundaries
 
-Version `0.2.0` fits univariate Gaussian models. It is not a generalized
+Version `0.2.1` fits univariate Gaussian models. It is not a generalized
 mixed-model engine. The likelihood constructs and factors a dense
 marginal covariance matrix, so the package targets small and moderate
 data sets rather than large-scale sparse problems.
@@ -379,3 +382,12 @@ and Roger (1997). Estimated marginal means follow Searle, Speed, and
 Milliken (1980). Full citations and DOI links are included in the
 package help and the [theory
 vignette](https://aureliennicosiaulaval.github.io/lmmix/articles/theory-reml.md).
+
+## Package citation
+
+The installed package provides its current academic citation directly:
+
+``` r
+
+citation("lmmix")
+```

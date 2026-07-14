@@ -8,20 +8,24 @@ two implementations use the same fixed-effects specification, covariance
 model, and estimation criterion. A small difference is meaningful only
 after those definitions have been aligned.
 
-Validation is organized in three layers:
+Validation is organized in four layers:
 
 1.  comparisons with independent R implementations for overlapping
     models;
 2.  structural checks for combined random-effect and
     residual-correlation models that no single reference R function
     covers;
-3.  regression comparisons with stored PROC MIXED targets for one fully
+3.  comparisons with published output tables from three official PROC
+    MIXED examples;
+4.  regression comparisons with stored PROC MIXED targets for one fully
     specified combined model.
 
 The numerical tables below are produced by executable R code when the
-vignette is built. The PROC MIXED values are stored targets. The
-repository does not contain a SAS execution transcript, so the SAS
-section is not presented as a new independent SAS run.
+vignette is built. The official PROC MIXED values are transcribed from
+the published SAS/STAT output tables. The repository also stores a
+runnable SAS program, but it does not contain a SAS execution
+transcript. These sections are therefore documentation-based
+comparisons, not a new independent SAS run.
 
 ## Comparison map
 
@@ -37,6 +41,9 @@ section is not presented as a new independent SAS run.
 | Marginal AR(1) Kenward-Roger | [`mmrm::mmrm()`](https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html) | fixed effects: `1e-5`; standard errors: `3e-3`; denominator df: `5e-3` | absolute |
 | Crossed random intercepts | [`lme4::lmer()`](https://rdrr.io/pkg/lme4/man/lmer.html) | log-likelihood: `1e-5`; covariance parameters: `1e-4` | absolute |
 | Nested fixed-effect models | `lme4::anova()` | likelihood-ratio statistic and p-value: `1e-5` | absolute |
+| Official split-plot example 79.1 | PROC MIXED published output | covariance parameters, REML criterion, type III tests | published precision |
+| Official repeated-measures example 79.2 | PROC MIXED published output | UN and CS covariance, ML criterion, fixed effects, type III statistics | published precision |
+| Official random-coefficients example 79.5 | PROC MIXED published output | random covariance, REML criterion, fixed effects, BLUPs, type III test | published precision |
 | Random center plus AR(1) residual | PROC MIXED stored targets | covariance parameters, fixed effects, type III tests, LS-means, differences | target-specific precision |
 
 `nlme` provides independent likelihood comparisons for random-effects
@@ -725,12 +732,463 @@ tibble::tibble(
 | toep      |           0 | TRUE                      |                0.467054 |
 | un        |           0 | TRUE                      |                0.383388 |
 
+## Official PROC MIXED examples
+
+The official SAS/STAT 14.3 documentation supplies complete data, model
+statements, and published output tables for several PROC MIXED examples
+([SAS Institute Inc. 2017](#ref-sas2017)). Three examples match the
+current `lmmix` model space exactly. The package includes their data, a
+runnable SAS program, and a machine-readable CSV of the published
+numerical targets.
+
+| SAS example | `lmmix` coverage | status |
+|:---|:---|:---|
+| 79.1 Split-Plot Design | two independent random-intercept terms, REML, type III tests | exact overlap |
+| 79.2 Repeated Measures | ML with UN and CS residual covariance | exact likelihood and covariance overlap |
+| 79.5 Random Coefficients | correlated random intercept and slope, REML, BLUPs | exact overlap |
+| 79.4 Known G and R | externally fixed multivariate G and R matrices | outside the current API |
+| 79.6 Line-Source Sprinkler | three random terms and banded `TOEP(4)` residual covariance | requires banded Toeplitz support |
+| 79.7 and 79.8 Influence | deletion diagnostics | influence diagnostics are not implemented |
+
+The source tables use SAS’s displayed precision. Comparisons therefore
+use the number of decimals printed in the documentation. The executable
+files are available through:
+
+``` r
+
+system.file(
+  "validation",
+  "sas",
+  package = "lmmix"
+)
+#> [1] "/home/runner/work/_temp/Library/lmmix/validation/sas"
+```
+
+### Example 79.1: split-plot design
+
+The split-plot example has random block and block-by-A intercepts. The
+Satterthwaite denominator degrees of freedom coincide with the
+containment values published by SAS for this balanced design.
+
+``` r
+
+official.split.fit <- lmm(
+  sas_split_plot,
+  Y ~ A * B,
+  random = list(
+    Block = ~ 1 | Block,
+    A_Block = ~ 1 | Block:A
+  ),
+  method = "REML",
+  ddf = "satterthwaite"
+)
+
+split.cov.target <- official_sas_target("split_plot", "covariance")
+split.cov.fit <- VarCorr(official.split.fit)$estimate
+
+tibble::tibble(
+  quantity = split.cov.target$term,
+  lmmix = split.cov.fit,
+  SAS.target = split.cov.target$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| quantity |     lmmix | SAS target | abs diff |
+|:---------|----------:|-----------:|---------:|
+| Block    | 62.395978 |    62.3958 | 0.000178 |
+| A\*Block | 15.381958 |    15.3819 | 0.000058 |
+| Residual |  9.361148 |     9.3611 | 0.000048 |
+
+``` r
+
+
+tibble::tibble(
+  quantity = "-2 restricted log likelihood",
+  lmmix = deviance(official.split.fit),
+  SAS.target = official_sas_target(
+    "split_plot",
+    "deviance"
+  )$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| quantity                     |    lmmix | SAS target | abs diff |
+|:-----------------------------|---------:|-----------:|---------:|
+| -2 restricted log likelihood | 119.7618 |   119.7618 |        0 |
+
+``` r
+
+split.test.target <- official_sas_target("split_plot", "type3")
+split.test.fit <- anova(official.split.fit)
+
+tibble::tibble(
+  term = split.test.fit$term,
+  lmmix.den.df = split.test.fit$den.df,
+  SAS.den.df = split.test.target$den_df,
+  lmmix.F = split.test.fit$statistic,
+  SAS.F = split.test.target$statistic,
+  lmmix.p.value = split.test.fit$p.value,
+  SAS.p.value = split.test.target$p_value
+) |>
+  show_table()
+```
+
+| term | lmmix den df | SAS den df |   lmmix F | SAS F | lmmix p value | SAS p value |
+|:-----|-------------:|-----------:|----------:|------:|--------------:|:------------|
+| A    |     5.999994 |          6 |  4.069568 |  4.07 |      0.076416 | 0.0764      |
+| B    |     8.999967 |          9 | 19.388647 | 19.39 |      0.001712 | 0.0017      |
+| A:B  |     8.999967 |          9 |  4.019272 |  4.02 |      0.056578 | 0.0566      |
+
+### Example 79.2: repeated measures
+
+The Potthoff-Roy growth data are fitted by ML with the same fixed
+effects and the same subject-level covariance blocks used in the SAS
+example. First, the unstructured model reproduces all ten entries of the
+published covariance matrix.
+
+``` r
+
+official.growth.un.fit <- lmm(
+  sas_growth,
+  y ~ Gender * Age,
+  repeated = ~ Age | Person,
+  structure = "un",
+  method = "ML"
+)
+
+growth.un.target <- official_sas_target("growth_un", "covariance")
+growth.un.matrix <- official.growth.un.fit$covariance$residual_base
+growth.un.fit <- c(
+  growth.un.matrix[1, 1],
+  growth.un.matrix[2, 1], growth.un.matrix[2, 2],
+  growth.un.matrix[3, 1], growth.un.matrix[3, 2],
+  growth.un.matrix[3, 3],
+  growth.un.matrix[4, 1], growth.un.matrix[4, 2],
+  growth.un.matrix[4, 3], growth.un.matrix[4, 4]
+)
+
+tibble::tibble(
+  covariance.parameter = growth.un.target$term,
+  lmmix = growth.un.fit,
+  SAS.target = growth.un.target$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| covariance parameter |    lmmix | SAS target | abs diff |
+|:---------------------|---------:|-----------:|---------:|
+| UN(1,1)              | 5.119290 |     5.1192 | 0.000090 |
+| UN(2,1)              | 2.440903 |     2.4409 | 0.000003 |
+| UN(2,2)              | 3.927938 |     3.9279 | 0.000038 |
+| UN(3,1)              | 3.610597 |     3.6105 | 0.000097 |
+| UN(3,2)              | 2.717738 |     2.7175 | 0.000238 |
+| UN(3,3)              | 5.980250 |     5.9798 | 0.000450 |
+| UN(4,1)              | 2.522168 |     2.5222 | 0.000032 |
+| UN(4,2)              | 3.062339 |     3.0624 | 0.000061 |
+| UN(4,3)              | 3.823700 |     3.8235 | 0.000200 |
+| UN(4,4)              | 4.618104 |     4.6180 | 0.000104 |
+
+``` r
+
+
+tibble::tibble(
+  quantity = "-2 log likelihood",
+  lmmix = deviance(official.growth.un.fit),
+  SAS.target = official_sas_target(
+    "growth_un",
+    "deviance"
+  )$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| quantity          |   lmmix | SAS target | abs diff |
+|:------------------|--------:|-----------:|---------:|
+| -2 log likelihood | 419.477 |    419.477 |        0 |
+
+SAS uses a last-level reference parameterization, whereas R uses a
+first-level treatment contrast by default. The following estimable
+transformation puts the `lmmix` coefficients on the published SAS scale
+before comparison.
+
+``` r
+
+growth.sas.transformation <- rbind(
+  Intercept = c(1, 1, 0, 0),
+  "Gender F" = c(0, -1, 0, 0),
+  Age = c(0, 0, 1, 1),
+  "Age*Gender F" = c(0, 0, 0, -1)
+)
+
+growth_sas_solution <- function(fit) {
+  variance <- growth.sas.transformation %*%
+    vcov(fit) %*%
+    t(growth.sas.transformation)
+  tibble::tibble(
+    term = rownames(growth.sas.transformation),
+    estimate = as.vector(growth.sas.transformation %*% fixef(fit)),
+    std.error = sqrt(diag(variance))
+  )
+}
+
+growth.un.solution <- growth_sas_solution(official.growth.un.fit)
+growth.un.fixed.target <- official_sas_target("growth_un", "fixed")
+
+tibble::tibble(
+  term = growth.un.solution$term,
+  lmmix.estimate = growth.un.solution$estimate,
+  SAS.estimate = growth.un.fixed.target$estimate,
+  estimate.abs.diff = abs(lmmix.estimate - SAS.estimate),
+  lmmix.std.error = growth.un.solution$std.error,
+  SAS.std.error = growth.un.fixed.target$std_error,
+  std.error.abs.diff = abs(lmmix.std.error - SAS.std.error)
+) |>
+  show_table()
+```
+
+| term | lmmix estimate | SAS estimate | estimate abs diff | lmmix std error | SAS std error | std error abs diff |
+|:---|---:|---:|---:|---:|---:|---:|
+| Intercept | 15.842291 | 15.8423 | 9.0e-06 | 0.935635 | 0.93560 | 3.5e-05 |
+| Gender F | 1.583081 | 1.5831 | 1.9e-05 | 1.465858 | 1.46580 | 5.8e-05 |
+| Age | 0.826805 | 0.8268 | 5.0e-06 | 0.079118 | 0.07911 | 8.0e-06 |
+| Age\*Gender F | -0.350440 | -0.3504 | 4.0e-05 | 0.123954 | 0.12390 | 5.4e-05 |
+
+The compound-symmetry model reproduces the common covariance, diagonal
+enhancement, fixed-effects solution, and likelihood criterion.
+
+``` r
+
+official.growth.cs.fit <- lmm(
+  sas_growth,
+  y ~ Gender * Age,
+  repeated = ~ Age | Person,
+  structure = "cs",
+  method = "ML"
+)
+
+growth.cs.matrix <- official.growth.cs.fit$covariance$residual_base
+growth.cs.fit <- c(
+  growth.cs.matrix[1, 2],
+  growth.cs.matrix[1, 1] - growth.cs.matrix[1, 2]
+)
+growth.cs.target <- official_sas_target("growth_cs", "covariance")
+
+tibble::tibble(
+  covariance.parameter = growth.cs.target$term,
+  lmmix = growth.cs.fit,
+  SAS.target = growth.cs.target$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| covariance parameter |    lmmix | SAS target | abs diff |
+|:---------------------|---------:|-----------:|---------:|
+| CS                   | 3.030536 |     3.0306 |  6.4e-05 |
+| Residual             | 1.874597 |     1.8746 |  3.0e-06 |
+
+``` r
+
+
+growth.cs.solution <- growth_sas_solution(official.growth.cs.fit)
+growth.cs.fixed.target <- official_sas_target("growth_cs", "fixed")
+
+tibble::tibble(
+  term = growth.cs.solution$term,
+  lmmix.estimate = growth.cs.solution$estimate,
+  SAS.estimate = growth.cs.fixed.target$estimate,
+  estimate.abs.diff = abs(lmmix.estimate - SAS.estimate),
+  lmmix.std.error = growth.cs.solution$std.error,
+  SAS.std.error = growth.cs.fixed.target$std_error,
+  std.error.abs.diff = abs(lmmix.std.error - SAS.std.error)
+) |>
+  show_table()
+```
+
+| term | lmmix estimate | SAS estimate | estimate abs diff | lmmix std error | SAS std error | std error abs diff |
+|:---|---:|---:|---:|---:|---:|---:|
+| Intercept | 16.340625 | 16.3406 | 2.5e-05 | 0.963084 | 0.96310 | 1.6e-05 |
+| Gender F | 1.032102 | 1.0321 | 2.0e-06 | 1.508863 | 1.50890 | 3.7e-05 |
+| Age | 0.784375 | 0.7844 | 2.5e-05 | 0.076538 | 0.07654 | 2.0e-06 |
+| Age\*Gender F | -0.304830 | -0.3048 | 3.0e-05 | 0.119913 | 0.11990 | 1.3e-05 |
+
+PROC MIXED uses the between-within denominator-df method in this
+example. `lmmix` does not currently expose that method, so the
+validation compares the likelihood, covariance, fixed-effect estimates,
+standard errors, and F statistics, but does not claim equality of
+denominator degrees of freedom.
+
+``` r
+
+growth.type3 <- rbind(
+  cbind(
+    model = "UN",
+    as.data.frame(anova(official.growth.un.fit))
+  ),
+  cbind(
+    model = "CS",
+    as.data.frame(anova(official.growth.cs.fit))
+  )
+)
+growth.type3.target <- rbind(
+  official_sas_target("growth_un", "type3"),
+  official_sas_target("growth_cs", "type3")
+)
+
+tibble::tibble(
+  model = growth.type3$model,
+  term = growth.type3$term,
+  lmmix.F = growth.type3$statistic,
+  SAS.F = growth.type3.target$statistic,
+  abs.diff = abs(lmmix.F - SAS.F)
+) |>
+  show_table()
+```
+
+| model | term       |    lmmix F |  SAS F | abs diff |
+|:------|:-----------|-----------:|-------:|---------:|
+| UN    | Gender     |   1.166332 |   1.17 | 0.003668 |
+| UN    | Age        | 110.530874 | 110.54 | 0.009126 |
+| UN    | Gender:Age |   7.993007 |   7.99 | 0.003007 |
+| CS    | Gender     |   0.467892 |   0.47 | 0.002108 |
+| CS    | Age        | 111.099057 | 111.10 | 0.000943 |
+| CS    | Gender:Age |   6.462269 |   6.46 | 0.002269 |
+
+### Example 79.5: random coefficients
+
+The pharmaceutical stability example fits a correlated random intercept
+and slope for each batch. It validates the random covariance matrix,
+residual variance, fixed effects, BLUPs, REML criterion, and the Month
+test.
+
+``` r
+
+official.random.fit <- lmm(
+  sas_random_coefficients,
+  Y ~ Month,
+  random = ~ 1 + Month | Batch,
+  method = "REML",
+  ddf = "satterthwaite"
+)
+
+random.cov.target <- official_sas_target(
+  "random_coefficients",
+  "covariance"
+)
+random.cov.fit <- c(
+  official.random.fit$covariance$g$Batch[1, 1],
+  official.random.fit$covariance$g$Batch[2, 1],
+  official.random.fit$covariance$g$Batch[2, 2],
+  official.random.fit$covariance$residual_base[1, 1]
+)
+
+tibble::tibble(
+  covariance.parameter = random.cov.target$term,
+  lmmix = random.cov.fit,
+  SAS.target = random.cov.target$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| covariance parameter |     lmmix | SAS target | abs diff |
+|:---------------------|----------:|-----------:|---------:|
+| UN(1,1)              |  0.976738 |    0.97680 |  6.2e-05 |
+| UN(2,1)              | -0.104473 |   -0.10450 |  2.7e-05 |
+| UN(2,2)              |  0.037166 |    0.03717 |  4.0e-06 |
+| Residual             |  3.293237 |    3.29320 |  3.7e-05 |
+
+``` r
+
+
+random.fixed.target <- official_sas_target(
+  "random_coefficients",
+  "fixed"
+)
+tibble::tibble(
+  term = names(fixef(official.random.fit)),
+  lmmix.estimate = fixef(official.random.fit),
+  SAS.estimate = random.fixed.target$estimate,
+  lmmix.std.error = sqrt(diag(vcov(official.random.fit))),
+  SAS.std.error = random.fixed.target$std_error
+) |>
+  show_table()
+```
+
+| term        | lmmix estimate | SAS estimate | lmmix std error | SAS std error |
+|:------------|---------------:|-------------:|----------------:|--------------:|
+| (Intercept) |     102.703803 |     102.7000 |        0.645594 |        0.6456 |
+| Month       |      -0.525945 |      -0.5259 |        0.119373 |        0.1194 |
+
+``` r
+
+
+random.blup.target <- official_sas_target(
+  "random_coefficients",
+  "random"
+)
+random.blup <- ranef(official.random.fit)
+tibble::tibble(
+  term = random.blup.target$term,
+  lmmix = as.vector(t(as.matrix(
+    random.blup[c("(Intercept)", "Month")]
+  ))),
+  SAS.target = random.blup.target$estimate,
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| term              |     lmmix | SAS target | abs diff |
+|:------------------|----------:|-----------:|---------:|
+| Intercept Batch 1 | -1.001034 |   -1.00100 |  3.4e-05 |
+| Month Batch 1     |  0.128680 |    0.12870 |  2.0e-05 |
+| Intercept Batch 2 |  0.393400 |    0.39340 |  0.0e+00 |
+| Month Batch 2     | -0.205992 |   -0.20600 |  8.0e-06 |
+| Intercept Batch 3 |  0.607634 |    0.60760 |  3.4e-05 |
+| Month Batch 3     |  0.077312 |    0.07731 |  2.0e-06 |
+
+``` r
+
+
+tibble::tibble(
+  quantity = c("-2 restricted log likelihood", "Month F statistic"),
+  lmmix = c(
+    deviance(official.random.fit),
+    anova(official.random.fit)$statistic
+  ),
+  SAS.target = c(
+    official_sas_target(
+      "random_coefficients",
+      "deviance"
+    )$estimate,
+    official_sas_target(
+      "random_coefficients",
+      "type3"
+    )$statistic
+  ),
+  abs.diff = abs(lmmix - SAS.target)
+) |>
+  show_table()
+```
+
+| quantity                     |     lmmix | SAS target | abs diff |
+|:-----------------------------|----------:|-----------:|---------:|
+| -2 restricted log likelihood | 350.32814 |   350.3281 | 0.000000 |
+| Month F statistic            |  19.41176 |    19.4100 | 0.001765 |
+
 ## Stored PROC MIXED comparison
 
 The stored targets correspond to the following specification. The RANDOM
 and REPEATED statements represent distinct covariance sources, and
 `DDFM=SATTERTHWAITE` requests approximate denominator degrees of freedom
-as documented by SAS Institute Inc. ([2015](#ref-sas2015)).
+as documented by SAS Institute Inc. ([2017](#ref-sas2017)).
 
 ``` sas
 proc mixed data=multicentre method=reml;
@@ -994,6 +1452,7 @@ suite.
 |:---|:---|
 | `test-likelihood.R` | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html), [`nlme::gls()`](https://rdrr.io/pkg/nlme/man/gls.html), and [`mmrm::mmrm()`](https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html) likelihood and covariance comparisons |
 | `test-inference.R` | [`lmerTest::lmer()`](https://rdrr.io/pkg/lmerTest/man/lmer.html) coefficient df and type III Satterthwaite comparisons |
+| `test-validation-sas-official.R` | official SAS examples 79.1, 79.2, and 79.5, including covariance, likelihood, fixed effects, BLUPs, and type III statistics |
 | `test-validation-sas.R` | every stored PROC MIXED covariance, fixed-effect, LS-mean, and difference target |
 | `test-covariance.R` | positive definiteness and structure-specific covariance checks |
 | `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and readable printed table headings |
@@ -1026,7 +1485,7 @@ tibble::tibble(
 
 | package  | version |
 |:---------|:--------|
-| lmmix    | 0.2.0   |
+| lmmix    | 0.2.1   |
 | nlme     | 3.1.169 |
 | lmerTest | 3.2.1   |
 | mmrm     | 0.3.18  |
@@ -1051,10 +1510,13 @@ The validation covers Kenward-Roger inference for overlapping
 random-effects and marginal models, crossed random intercepts, and
 fixed-effect likelihood-ratio comparisons. It does not validate
 generalized responses or large-scale sparse performance because these
-are outside the model scope. For the combined random-effect and
-correlated-residual case, Kenward-Roger has structural tests but no
-fresh independent SAS execution. An archived SAS log and output would be
-required to upgrade that evidence.
+are outside the model scope. For the official SAS examples, values are
+transcribed from published output rather than generated by a SAS session
+in this repository. The separate random-effect and repeated-covariance
+implementations have direct official targets, but the combined
+random-effect and correlated-residual Kenward-Roger case still has
+structural tests only. An archived SAS log and output would be required
+to upgrade that evidence.
 
 Kuznetsova, Alexandra, Per B. Brockhoff, and Rune H. B. Christensen.
 2017. “lmerTest Package: Tests in Linear Mixed Effects Models.” *Journal
@@ -1076,6 +1538,6 @@ Sabanes Bove, Daniel, Liming Li, Julia Dedic, et al. 2026. *Mmrm: Mixed
 Models for Repeated Measures*.
 <https://doi.org/10.32614/CRAN.package.mmrm>.
 
-SAS Institute Inc. 2015. *SAS/STAT 14.1 User’s Guide: The MIXED
+SAS Institute Inc. 2017. *SAS/STAT 14.3 User’s Guide: The MIXED
 Procedure*. Cary, NC.
-<https://support.sas.com/documentation/cdl/en/statug/68162/HTML/default/statug_mixed_syntax.htm>.
+<https://support.sas.com/documentation/onlinedoc/stat/>.

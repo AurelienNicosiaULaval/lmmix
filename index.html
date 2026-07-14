@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -424,6 +424,21 @@
 <td align="left">Likelihood-ratio statistics and p-values</td>
 </tr>
 <tr>
+<td align="left">Official split-plot example 79.1</td>
+<td align="left">Published PROC MIXED output</td>
+<td align="left">Variance components, REML criterion and type III tests</td>
+</tr>
+<tr>
+<td align="left">Official repeated-measures example 79.2</td>
+<td align="left">Published PROC MIXED output</td>
+<td align="left">UN and CS covariance, ML criterion, fixed effects and type III statistics</td>
+</tr>
+<tr>
+<td align="left">Official random-coefficients example 79.5</td>
+<td align="left">Published PROC MIXED output</td>
+<td align="left">Random covariance, REML criterion, fixed effects, BLUPs and type III test</td>
+</tr>
+<tr>
 <td align="left">Combined random center and AR(1)</td>
 <td align="left">Stored PROC MIXED targets</td>
 <td align="left">Covariance parameters, fixed effects, type III tests and marginal means</td>
@@ -435,13 +450,20 @@
 <div class="section level2">
 <h2 id="model-scope-and-remaining-boundaries">Model scope and remaining boundaries<a class="anchor" aria-label="anchor" href="#model-scope-and-remaining-boundaries"></a>
 </h2>
-<p>Version <code>0.2.0</code> fits univariate Gaussian models. It is not a generalized mixed-model engine. The likelihood constructs and factors a dense marginal covariance matrix, so the package targets small and moderate data sets rather than large-scale sparse problems.</p>
+<p>Version <code>0.2.1</code> fits univariate Gaussian models. It is not a generalized mixed-model engine. The likelihood constructs and factors a dense marginal covariance matrix, so the package targets small and moderate data sets rather than large-scale sparse problems.</p>
 <p>Rows with missing responses or model covariates are handled according to <code>na.action</code>; the package does not impute missing covariates. Conditional prediction rejects unseen random-effect groups by default. Set <code>allow.new.levels = TRUE</code> to request the population-level prediction, for which the unseen random contribution is zero.</p>
 </div>
 <div class="section level2">
 <h2 id="theoretical-sources">Theoretical sources<a class="anchor" aria-label="anchor" href="#theoretical-sources"></a>
 </h2>
 <p>The REML implementation follows Patterson and Thompson (1971), Harville (1977), and LaMotte (2007). Satterthwaite inference follows Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai and Cornelius (1996). Small-sample covariance adjustment follows Kenward and Roger (1997). Estimated marginal means follow Searle, Speed, and Milliken (1980). Full citations and DOI links are included in the package help and the <a href="articles/theory-reml.html">theory vignette</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="package-citation">Package citation<a class="anchor" aria-label="anchor" href="#package-citation"></a>
+</h2>
+<p>The installed package provides its current academic citation directly:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"lmmix"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
