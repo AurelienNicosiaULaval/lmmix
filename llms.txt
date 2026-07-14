@@ -79,8 +79,8 @@ vignette("validation", package = "lmmix")
 
 The [development
 roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html)
-centralizes the current limitations, validation boundaries, and planned
-development priorities.
+centralizes the version history, current limitations, validation
+boundaries, and planned development priorities.
 
 ## Quick start: random center effect and AR(1) residuals
 

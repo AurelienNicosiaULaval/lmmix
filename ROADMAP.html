@@ -46,6 +46,27 @@
 <p>This document centralizes the current scope, known limitations, validation boundaries, and development priorities for <code>lmmix</code>. It describes version 0.3.0 as released on 2026-07-14.</p>
 <p>The roadmap is informative rather than a promise of release dates. A feature is considered implemented only when it appears in <code>NEWS.md</code>, is documented, and is covered by automated tests.</p>
 <div class="section level2">
+<h2 id="release-history">Release history<a class="anchor" aria-label="anchor" href="#release-history"></a></h2>
+<p>The entries below summarize the role of each released or documented version. The complete itemized changelog is available in <a href="https://aureliennicosiaulaval.github.io/lmmix/news/index.html">NEWS</a>.</p>
+<div class="section level3">
+<h3 id="id_010-core-modeling-and-inference">0.1.0: core modeling and inference<a class="anchor" aria-label="anchor" href="#id_010-core-modeling-and-inference"></a></h3>
+<p>Version 0.1.0 established the initial package implementation on 2026-07-13. It introduced explicit profiled ML and REML estimation, the five original residual covariance structures, random intercepts and slopes, Satterthwaite inference, type III tests, estimated marginal means, standard model and <code>broom</code> methods, <code>emmeans</code> interoperability, and <code>ggplot2</code> diagnostics. It also established the theoretical and numerical validation documentation.</p>
+<p>This initial development version was not published as a GitHub release and does not have a corresponding Git tag. Its history begins with the <a href="https://github.com/AurelienNicosiaULaval/lmmix/commit/73e8b163241e42e713bf1e519b824fa9ab16fdeb" class="external-link">initial implementation</a>.</p>
+</div>
+<div class="section level3">
+<h3 id="id_020-broader-inference-and-model-handling">0.2.0: broader inference and model handling<a class="anchor" aria-label="anchor" href="#id_020-broader-inference-and-model-handling"></a></h3>
+<p><a href="https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.2.0" class="external-link">Version 0.2.0</a>, published on 2026-07-14, added Kenward-Roger inference, multiple independent random-effect terms, nested-model likelihood-ratio comparisons, deterministic optimizer fallbacks, explicit missing-data policies, guarded prediction for new grouping levels, simultaneous Bonferroni intervals, and independent validation of these capabilities.</p>
+</div>
+<div class="section level3">
+<h3 id="id_021-external-validation-and-release-metadata">0.2.1: external validation and release metadata<a class="anchor" aria-label="anchor" href="#id_021-external-validation-and-release-metadata"></a></h3>
+<p><a href="https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.2.1" class="external-link">Version 0.2.1</a>, published on 2026-07-14, consolidated validation against official PROC MIXED examples 79.1, 79.2, and 79.5. It added the corresponding data, runnable SAS program, machine-readable published targets, academic citation metadata, and release-preparation documentation.</p>
+</div>
+<div class="section level3">
+<h3 id="id_030-boundary-aware-comparisons">0.3.0: boundary-aware comparisons<a class="anchor" aria-label="anchor" href="#id_030-boundary-aware-comparisons"></a></h3>
+<p><a href="https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.3.0" class="external-link">Version 0.3.0</a>, published on 2026-07-14, added fixed-band Toeplitz covariance, validation against PROC MIXED example 79.6, transformed covariance intervals, and parametric-bootstrap likelihood-ratio tests for boundary-sensitive model comparisons.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="current-production-scope">Current production scope<a class="anchor" aria-label="anchor" href="#current-production-scope"></a></h2>
 <p>Version 0.3.0 fits univariate Gaussian linear mixed models by explicitly optimizing the ML or REML criterion. It supports:</p>
 <ul><li>one or more independent random-effect terms, including correlated random slopes within a term;</li>
@@ -118,7 +139,7 @@
 </div>
 <div class="section level2">
 <h2 id="tracking-changes">Tracking changes<a class="anchor" aria-label="anchor" href="#tracking-changes"></a></h2>
-<ul><li>Released changes are recorded in <code>NEWS.md</code>.</li>
+<ul><li>Released changes are recorded in the <a href="https://aureliennicosiaulaval.github.io/lmmix/news/index.html">NEWS changelog</a>.</li>
 <li>Numerical evidence and tolerances are recorded in <code>VALIDATION.md</code>.</li>
 <li>Proposed work can be discussed through <a href="https://github.com/AurelienNicosiaULaval/lmmix/issues" class="external-link">GitHub issues</a>.</li>
 </ul></div>

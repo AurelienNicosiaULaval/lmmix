@@ -8,6 +8,55 @@ The roadmap is informative rather than a promise of release dates. A
 feature is considered implemented only when it appears in `NEWS.md`, is
 documented, and is covered by automated tests.
 
+## Release history
+
+The entries below summarize the role of each released or documented
+version. The complete itemized changelog is available in
+[NEWS](https://aureliennicosiaulaval.github.io/lmmix/news/index.html).
+
+### 0.1.0: core modeling and inference
+
+Version 0.1.0 established the initial package implementation on
+2026-07-13. It introduced explicit profiled ML and REML estimation, the
+five original residual covariance structures, random intercepts and
+slopes, Satterthwaite inference, type III tests, estimated marginal
+means, standard model and `broom` methods, `emmeans` interoperability,
+and `ggplot2` diagnostics. It also established the theoretical and
+numerical validation documentation.
+
+This initial development version was not published as a GitHub release
+and does not have a corresponding Git tag. Its history begins with the
+[initial
+implementation](https://github.com/AurelienNicosiaULaval/lmmix/commit/73e8b163241e42e713bf1e519b824fa9ab16fdeb).
+
+### 0.2.0: broader inference and model handling
+
+[Version
+0.2.0](https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.2.0),
+published on 2026-07-14, added Kenward-Roger inference, multiple
+independent random-effect terms, nested-model likelihood-ratio
+comparisons, deterministic optimizer fallbacks, explicit missing-data
+policies, guarded prediction for new grouping levels, simultaneous
+Bonferroni intervals, and independent validation of these capabilities.
+
+### 0.2.1: external validation and release metadata
+
+[Version
+0.2.1](https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.2.1),
+published on 2026-07-14, consolidated validation against official PROC
+MIXED examples 79.1, 79.2, and 79.5. It added the corresponding data,
+runnable SAS program, machine-readable published targets, academic
+citation metadata, and release-preparation documentation.
+
+### 0.3.0: boundary-aware comparisons
+
+[Version
+0.3.0](https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.3.0),
+published on 2026-07-14, added fixed-band Toeplitz covariance,
+validation against PROC MIXED example 79.6, transformed covariance
+intervals, and parametric-bootstrap likelihood-ratio tests for
+boundary-sensitive model comparisons.
+
 ## Current production scope
 
 Version 0.3.0 fits univariate Gaussian linear mixed models by explicitly
@@ -121,7 +170,8 @@ release at this time.
 
 ## Tracking changes
 
-- Released changes are recorded in `NEWS.md`.
+- Released changes are recorded in the [NEWS
+  changelog](https://aureliennicosiaulaval.github.io/lmmix/news/index.html).
 - Numerical evidence and tolerances are recorded in `VALIDATION.md`.
 - Proposed work can be discussed through [GitHub
   issues](https://github.com/AurelienNicosiaULaval/lmmix/issues).
