@@ -107,25 +107,25 @@ summary(fit)
 #> ── Fixed effects ──
 #> 
 #> # A tibble: 3 × 8
-#>   term        estimate std.error statistic    df  p.value conf.low conf.high
-#>   <chr>          <dbl>     <dbl>     <dbl> <dbl>    <dbl>    <dbl>     <dbl>
-#> 1 (Intercept)   17.7      0.834      21.2   99.4 1.04e-38   16.1      19.4  
-#> 2 age            0.660    0.0616     10.7   80.0 3.95e-17    0.538     0.783
-#> 3 SexFemale     -2.32     0.761      -3.05  25.0 5.38e- 3   -3.89     -0.753
+#>   Term     Estimate `Std Error` Statistic    DF `p value` `Conf Low` `Conf High`
+#>   <chr>       <dbl>       <dbl>     <dbl> <dbl>     <dbl>      <dbl>       <dbl>
+#> 1 (Interc…   17.7        0.834      21.2   99.4  1.04e-38     16.1        19.4  
+#> 2 age         0.660      0.0616     10.7   80.0  3.95e-17      0.538       0.783
+#> 3 SexFema…   -2.32       0.761      -3.05  25.0  5.38e- 3     -3.89       -0.753
 #> ── Type III tests ──
 #> 
 #> # A tibble: 2 × 5
-#>   term  num.df den.df statistic  p.value
-#>   <chr>  <dbl>  <dbl>     <dbl>    <dbl>
-#> 1 age        1   80.0    115.   3.95e-17
-#> 2 Sex        1   25.0      9.29 5.38e- 3
+#>   Term  `Num DF` `Den DF` Statistic `p value`
+#>   <chr>    <dbl>    <dbl>     <dbl>     <dbl>
+#> 1 age          1     80.0    115.    3.95e-17
+#> 2 Sex          1     25.0      9.29  5.38e- 3
 #> ── Covariance parameters ──
 #> 
 #> # A tibble: 2 × 5
-#>   group    term        component estimate std.error
-#>   <chr>    <chr>       <chr>        <dbl>     <dbl>
-#> 1 Subject  (Intercept) var           3.27     1.07 
-#> 2 Residual id          var           2.05     0.324
+#>   Group    Term        Component Estimate `Std Error`
+#>   <chr>    <chr>       <chr>        <dbl>       <dbl>
+#> 1 Subject  (Intercept) var           3.27       1.07 
+#> 2 Residual id          var           2.05       0.324
 #> ── Information criteria ──
 #> 
 #>    logLik       AIC       BIC  deviance 

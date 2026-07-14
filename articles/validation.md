@@ -25,7 +25,7 @@ section is not presented as a new independent SAS run.
 
 ## Comparison map
 
-| lmmix.model | reference.function | quantities.compared | tolerance |
+| lmmix model | reference function | quantities compared | tolerance |
 |:---|:---|:---|:---|
 | Random-intercept REML | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html) | fixed effects and log-likelihood: `1e-6`; variance components: `1e-4` | absolute |
 | Random-slope REML | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html) | fixed effects and log-likelihood: `1e-5`; covariance parameters: `1e-4` | absolute |
@@ -69,7 +69,7 @@ tibble::tibble(
   show_table(digits = 0)
 ```
 
-| n.obs | n.subjects | n.occasions |
+| n obs | n subjects | n occasions |
 |------:|-----------:|------------:|
 |   108 |         27 |           4 |
 
@@ -102,7 +102,7 @@ comparison_table(
   show_table()
 ```
 
-| term        |     lmmix | reference | abs.diff |
+| term        |     lmmix | reference | abs diff |
 |:------------|----------:|----------:|---------:|
 | (Intercept) | 17.706713 | 17.706713 |        0 |
 | age         |  0.660185 |  0.660185 |        0 |
@@ -127,7 +127,7 @@ comparison_table(
   show_table()
 ```
 
-| term                 |    lmmix | reference | abs.diff |
+| term                 |    lmmix | reference | abs diff |
 |:---------------------|---------:|----------:|---------:|
 | random.intercept.var | 3.266790 |  3.266784 |  6.0e-06 |
 | residual.var         | 2.049417 |  2.049456 |  3.9e-05 |
@@ -143,7 +143,7 @@ comparison_table(
   show_table()
 ```
 
-| term   |     lmmix | reference | abs.diff |
+| term   |     lmmix | reference | abs diff |
 |:-------|----------:|----------:|---------:|
 | logLik | -218.7563 | -218.7563 |        0 |
 
@@ -177,7 +177,7 @@ comparison_table(
   show_table()
 ```
 
-| term        |     lmmix | reference | abs.diff |
+| term        |     lmmix | reference | abs diff |
 |:------------|----------:|----------:|---------:|
 | (Intercept) | 17.635201 | 17.635200 |    1e-06 |
 | age         |  0.660185 |  0.660185 |    0e+00 |
@@ -209,7 +209,7 @@ comparison_table(
   show_table()
 ```
 
-| term                     |     lmmix | reference | abs.diff |
+| term                     |     lmmix | reference | abs diff |
 |:-------------------------|----------:|----------:|---------:|
 | random.intercept.var     |  7.823340 |  7.823336 |    4e-06 |
 | random.age.var           |  0.051269 |  0.051269 |    0e+00 |
@@ -227,7 +227,7 @@ comparison_table(
   show_table()
 ```
 
-| term   |     lmmix | reference | abs.diff |
+| term   |     lmmix | reference | abs diff |
 |:-------|----------:|----------:|---------:|
 | logLik | -217.6169 | -217.6169 |        0 |
 
@@ -267,7 +267,7 @@ rbind(
   show_table()
 ```
 
-| term        |       lmmix |   reference | abs.diff |
+| term        |       lmmix |   reference | abs diff |
 |:------------|------------:|------------:|---------:|
 | (Intercept) |   17.706713 |   17.706713 |        0 |
 | age         |    0.660185 |    0.660185 |        0 |
@@ -325,7 +325,7 @@ marginal.fixed <- do.call(rbind, lapply(c("cs", "ar1"), function(structure) {
 show_table(marginal.fixed)
 ```
 
-| structure | term        |     lmmix | reference | abs.diff |
+| structure | term        |     lmmix | reference | abs diff |
 |:----------|:------------|----------:|----------:|---------:|
 | cs        | (Intercept) | 17.706713 | 17.706713 |        0 |
 | cs        | age         |  0.660185 |  0.660185 |        0 |
@@ -360,7 +360,7 @@ marginal.covariance <- do.call(
 show_table(marginal.covariance)
 ```
 
-| structure | term         |    lmmix | reference | abs.diff |
+| structure | term         |    lmmix | reference | abs diff |
 |:----------|:-------------|---------:|----------:|---------:|
 | cs        | residual.var | 5.316233 |  5.316240 |    7e-06 |
 | cs        | residual.cor | 0.614490 |  0.614491 |    1e-06 |
@@ -387,7 +387,7 @@ tibble::tibble(
   show_table()
 ```
 
-| structure |     lmmix | reference | abs.diff |
+| structure |     lmmix | reference | abs diff |
 |:----------|----------:|----------:|---------:|
 | cs        | -218.7563 | -218.7563 |        0 |
 | ar1       | -222.7241 | -222.7241 |        0 |
@@ -421,7 +421,7 @@ comparison_table(
   show_table()
 ```
 
-| term        |     lmmix | reference | abs.diff |
+| term        |     lmmix | reference | abs diff |
 |:------------|----------:|----------:|---------:|
 | (Intercept) | 17.878709 | 17.878710 |    1e-06 |
 | age         |  0.652960 |  0.652960 |    0e+00 |
@@ -445,7 +445,7 @@ tibble::tibble(
   show_table()
 ```
 
-| quantity                         |     lmmix | reference | abs.diff |
+| quantity                         |     lmmix | reference | abs diff |
 |:---------------------------------|----------:|----------:|---------:|
 | logLik                           | -222.7241 | -222.7241 |  0.0e+00 |
 | residual.covariance.max.abs.diff |        NA |        NA |  4.3e-05 |
@@ -483,7 +483,7 @@ tibble::tibble(
   show_table()
 ```
 
-| term | lmmix.estimate | lmerTest.estimate | estimate.abs.diff | lmmix.std.error | lmerTest.std.error | std.error.abs.diff | lmmix.df | lmerTest.df | df.abs.diff |
+| term | lmmix estimate | lmerTest estimate | estimate abs diff | lmmix std error | lmerTest std error | std error abs diff | lmmix df | lmerTest df | df abs diff |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | (Intercept) | 17.706713 | 17.706713 | 0 | 0.833917 | 0.833922 | 5e-06 | 99.35300 | 99.35237 | 0.000639 |
 | age | 0.660185 | 0.660185 | 0 | 0.061605 | 0.061606 | 1e-06 | 80.00151 | 80.00000 | 0.001514 |
@@ -512,7 +512,7 @@ tibble::tibble(
   show_table()
 ```
 
-| term | lmmix.num.df | lmerTest.num.df | num.df.abs.diff | lmmix.den.df | lmerTest.den.df | den.df.abs.diff | lmmix.statistic | lmerTest.statistic | statistic.abs.diff |
+| term | lmmix num df | lmerTest num df | num df abs diff | lmmix den df | lmerTest den df | den df abs diff | lmmix statistic | lmerTest statistic | statistic abs diff |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | age | 1 | 1 | 0 | 80.00151 | 80 | 0.001514 | 114.840466 | 114.838287 | 0.002179 |
 | Sex | 1 | 1 | 0 | 25.00002 | 25 | 0.000021 | 9.292108 | 9.292099 | 0.000009 |
@@ -576,7 +576,7 @@ tibble::tibble(
   show_table()
 ```
 
-| structure | convergence | hessian.positive.definite | min.marginal.eigenvalue |
+| structure | convergence | hessian positive definite | min marginal eigenvalue |
 |:----------|------------:|:--------------------------|------------------------:|
 | id        |           0 | TRUE                      |                9.458960 |
 | cs        |           0 | TRUE                      |                0.618274 |
@@ -636,7 +636,7 @@ tibble::tibble(
   show_table()
 ```
 
-| parameter              |     lmmix | SAS.target | abs.diff |
+| parameter              |     lmmix | SAS target | abs diff |
 |:-----------------------|----------:|-----------:|---------:|
 | Center.(Intercept).var |  5.173828 |     5.1737 | 0.000128 |
 | Residual.ar1.var       | 10.670170 |    10.6702 | 0.000030 |
@@ -654,7 +654,7 @@ tibble::tibble(
   show_table()
 ```
 
-| quantity |    lmmix | SAS.target | abs.diff |
+| quantity |    lmmix | SAS target | abs diff |
 |:---------|---------:|-----------:|---------:|
 | deviance | 490.6257 |   490.6257 |        0 |
 
@@ -683,7 +683,7 @@ names(sas.fixed.table) <- c("term", "lmmix", "SAS.target", "abs.diff")
 show_table(sas.fixed.table)
 ```
 
-| term        |     lmmix | SAS.target | abs.diff |
+| term        |     lmmix | SAS target | abs diff |
 |:------------|----------:|-----------:|---------:|
 | (Intercept) | 12.052381 |  12.052459 |  7.8e-05 |
 | Drug2       |  4.764706 |   4.764706 |  0.0e+00 |
@@ -719,7 +719,7 @@ tibble::tibble(
   show_table()
 ```
 
-| term | lmmix.num.df | lmmix.den.df | lmmix.statistic | SAS.statistic | statistic.abs.diff | lmmix.p.value | SAS.p.value |
+| term | lmmix num df | lmmix den df | lmmix statistic | SAS statistic | statistic abs diff | lmmix p value | SAS p value |
 |:---|---:|---:|---:|---:|---:|---:|:---|
 | Drug | 2 | 46.35956 | 11.428034 | 11.43 | 0.001966 | 0.000092 | not.stored |
 | Time | 2 | 68.45549 | 59.267365 | 59.27 | 0.002635 | 0.000000 | not.stored |
@@ -777,7 +777,7 @@ tibble::tibble(
   show_table()
 ```
 
-| factor | level | lmmix.estimate | SAS.estimate | estimate.abs.diff | lmmix.std.error | SAS.std.error | std.error.abs.diff | lmmix.df | SAS.df |
+| factor | level | lmmix estimate | SAS estimate | estimate abs diff | lmmix std error | SAS std error | std error abs diff | lmmix df | SAS df |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|
 | Drug | 1 | 13.15682 | 13.1568 | 2.3e-05 | 1.529053 | 1.5290 | 5.3e-05 | 2.979813 | 2.98 |
 | Drug | 2 | 18.14838 | 18.1484 | 1.6e-05 | 1.532408 | 1.5324 | 8.0e-06 | 3.006723 | 3.01 |
@@ -829,7 +829,7 @@ tibble::tibble(
   show_table()
 ```
 
-| factor | contrast | lmmix.estimate | SAS.estimate | estimate.abs.diff | lmmix.std.error | SAS.std.error | std.error.abs.diff | lmmix.df | SAS.df | lmmix.p.value | SAS.p.value |
+| factor | contrast | lmmix estimate | SAS estimate | estimate abs diff | lmmix std error | SAS std error | std error abs diff | lmmix df | SAS df | lmmix p value | SAS p value |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|:---|
 | Drug | 1 - 2 | -4.991561 | -4.9916 | 3.9e-05 | 1.098965 | 1.0990 | 3.5e-05 | 46.10872 | 46.1 | 0.000040 | 0.00004 |
 | Drug | 1 - 3 | -3.894756 | -3.8948 | 4.4e-05 | 1.098726 | 1.0987 | 2.6e-05 | 46.05487 | 46.1 | 0.000914 | 0.0009 |
@@ -849,13 +849,13 @@ checked as inequalities, not as invented exact p-values.
 The numerical claims in this vignette are enforced in the package test
 suite.
 
-| test.file | enforced.comparison |
+| test file | enforced comparison |
 |:---|:---|
 | `test-likelihood.R` | [`nlme::lme()`](https://rdrr.io/pkg/nlme/man/lme.html), [`nlme::gls()`](https://rdrr.io/pkg/nlme/man/gls.html), and [`mmrm::mmrm()`](https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html) likelihood and covariance comparisons |
 | `test-inference.R` | [`lmerTest::lmer()`](https://rdrr.io/pkg/lmerTest/man/lmer.html) coefficient df and type III Satterthwaite comparisons |
 | `test-validation-sas.R` | every stored PROC MIXED covariance, fixed-effect, LS-mean, and difference target |
 | `test-covariance.R` | positive definiteness and structure-specific covariance checks |
-| `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and dot-separated table names |
+| `test-methods.R` | S3 outputs, `ggplot2` diagnostics, and readable printed table headings |
 
 ## Reproducibility information
 
@@ -900,7 +900,7 @@ tibble::tibble(
   show_table()
 ```
 
-| R.version.string             | platform            |
+| R version string             | platform            |
 |:-----------------------------|:--------------------|
 | R version 4.6.1 (2026-06-24) | x86_64-pc-linux-gnu |
 

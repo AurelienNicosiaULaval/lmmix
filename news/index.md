@@ -14,8 +14,8 @@
 - Added [`plot.lmm()`](../reference/lmm-methods.md) diagnostics that
   return `ggplot2` objects for residual, normal Q-Q, and
   observed-versus-fitted displays.
-- Standardized public table column names to syntactic dot-separated
-  names, including `std.error`, `p.value`, `conf.low`, and `conf.high`.
+- Added human-readable table printing without dots in displayed headings
+  while preserving standard `broom` column names for programmatic use.
 - Added the multilocation example from Milliken and Johnson (2009,
   Section 28.3) and validation tests against SAS PROC MIXED, `nlme`,
   `lmerTest`, and `mmrm`.
