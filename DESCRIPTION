@@ -1,6 +1,6 @@
 Package: lmmix
 Title: Linear Mixed Models with Correlated Residuals
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person("Aurélien", "Nicosia", ,
            "116816597+AurelienNicosiaULaval@users.noreply.github.com",
@@ -8,9 +8,13 @@ Authors@R:
 Description: Fits Gaussian linear mixed models by explicitly optimizing the
     maximum likelihood or restricted maximum likelihood criterion. Random
     effects and correlated residual structures can be combined in the same
-    model. Fixed-effect inference includes Satterthwaite denominator degrees
-    of freedom, type III tests, and estimated marginal means.
+    model. Fixed-effect inference includes Satterthwaite and Kenward-Roger
+    denominator degrees of freedom, type III tests, likelihood-ratio model
+    comparisons, and estimated marginal means.
 License: MIT + file LICENSE
+URL: https://github.com/AurelienNicosiaULaval/lmmix,
+    https://aureliennicosiaulaval.github.io/lmmix/
+BugReports: https://github.com/AurelienNicosiaULaval/lmmix/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -30,11 +34,14 @@ Suggests:
     covr,
     emmeans,
     knitr,
+    lme4,
     lmerTest,
+    lintr,
     mmrm,
     nlme,
     pkgdown,
     rmarkdown,
+    styler,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

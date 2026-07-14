@@ -39,8 +39,9 @@ colSums(is.na(multicentre))
 ```
 
 The fixed, random and repeated formulas jointly determine the variables used
-by the analysis. `lmm()` removes rows that are incomplete for any of those
-variables and stores the retained data in the fitted object.
+by the analysis. Missing rows are handled with `na.omit`, `na.exclude`, or
+`na.fail`. The default is `na.omit`; `na.exclude` restores omitted positions in
+fitted values, residuals, and augmented data.
 
 ## Fit a combined covariance model
 
@@ -84,6 +85,7 @@ fit$convergence[c(
   "iterations",
   "hessian_positive_definite"
 )]
+fit$convergence$attempts
 ```
 
 A nonzero convergence code or a non-positive-definite likelihood Hessian
@@ -108,14 +110,37 @@ anova(fit)
 confint(fit)
 ```
 
-`anova()` currently performs type III fixed-effect tests for one model. It does
-not compare nested models. Satterthwaite and residual denominator degrees of
-freedom are implemented. Kenward-Roger inference is not implemented.
+`anova()` performs type III fixed-effect tests for one model. With multiple
+models it performs likelihood-ratio comparisons, automatically refitting REML
+models with ML when their fixed effects differ. Satterthwaite, Kenward-Roger,
+and residual denominator degrees of freedom are available. Kenward-Roger is
+restricted to REML fits.
+
+```{r kenward-roger-and-comparison, eval=FALSE}
+fit_kr <- lmm(
+  data = multicentre,
+  formula = Y ~ Drug * Time,
+  random = ~ 1 | Center,
+  repeated = ~ Time | Center:Drug:Subject,
+  structure = "ar1",
+  ddf = "kenward-roger"
+)
+
+fit_reduced <- lmm(
+  data = multicentre,
+  formula = Y ~ Drug + Time,
+  random = ~ 1 | Center,
+  repeated = ~ Time | Center:Drug:Subject,
+  structure = "ar1"
+)
+anova(fit_reduced, fit)
+```
 
 ## Covariance parameters and random effects
 
 `VarCorr()` returns the estimated covariance components on their natural
-scale. `ranef()` returns empirical BLUPs as a tibble.
+scale. `ranef()` returns empirical BLUPs as a tibble for one random term and a
+named list of tibbles for multiple terms.
 
 ```{r covariance}
 VarCorr(fit)
@@ -137,8 +162,9 @@ lsmeans(fit, ~Time)
 ```
 
 Pairwise contrast matrices are generated automatically. The `adjust` argument
-is passed to `stats::p.adjust()` and therefore adjusts pairwise p-values. The
-confidence intervals remain pointwise.
+is passed to `stats::p.adjust()`. When p-values are adjusted,
+`conf_adjust = "auto"` reports simultaneous Bonferroni confidence intervals.
+Use `conf_adjust = "none"` for pointwise intervals.
 
 ```{r pairwise}
 lsmeans(fit, pairwise ~ Drug, adjust = "holm")
@@ -169,8 +195,9 @@ head(residuals(fit, type = "pearson"))
 ```
 
 For `predict(fit, newdata)`, known grouping levels receive their fitted random
-effect. New groups receive a random contribution of zero. Set `re.form` to a
-non-`NULL` value to request fixed-effects-only predictions.
+effect. New groups cause an error unless `allow.new.levels = TRUE` is supplied;
+when allowed, their random contribution is zero. Set `re.form` to a non-`NULL`
+value to request fixed-effects-only predictions.
 
 ## Diagnostic plots
 
@@ -230,6 +257,16 @@ fit_random <- lmm(
   structure = "id"
 )
 
+# Independent crossed random intercepts
+fit_crossed <- lmm(
+  data,
+  response ~ treatment + time,
+  random = list(
+    center = ~ 1 | center,
+    subject = ~ 1 | subject
+  )
+)
+
 # Combined random intercept and Toeplitz residual covariance
 fit_combined <- lmm(
   data,
@@ -242,9 +279,8 @@ fit_combined <- lmm(
 
 ## Practical limits
 
-The current implementation constructs the full dense matrix `V` during
+Version `0.2.0` constructs the full dense matrix `V` during
 optimization. It is appropriate for small and moderate data sets. It is not a
-large-scale sparse mixed-model engine. The interface accepts one random-effects
-formula and one repeated-measures structure. Generalized responses, multiple
-random-effect terms, Kenward-Roger inference and likelihood-ratio model
-comparison are outside the current `0.1.0` implementation.
+large-scale sparse mixed-model engine. The interface accepts multiple
+independent random-effect formulas and one repeated-measures structure.
+Generalized responses remain outside the Gaussian model scope.

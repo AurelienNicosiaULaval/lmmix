@@ -1,6 +1,6 @@
 #' Control numerical optimization for `lmm()`
 #'
-#' @param optimizer Optimizer to use, either `"nlminb"` or `"optim"`.
+#' @param optimizer Optimizer strategy: `"auto"`, `"nlminb"`, or `"optim"`.
 #' @param optim_method Method passed to [stats::optim()] when `optimizer =
 #'   "optim"`.
 #' @param max_iter Maximum number of optimizer iterations.
@@ -9,11 +9,14 @@
 #' @param initial Optional numeric vector of unconstrained starting values.
 #' @param lower,upper Bounds for unconstrained covariance parameters.
 #' @param deriv_method Numerical differentiation method passed to `numDeriv`.
+#' @param max_restarts Maximum number of deterministic restart attempts after
+#'   an unsuccessful initial fit.
+#' @param restart_scale Size of deterministic perturbations to starting values.
 #'
 #' @return An object of class `lmm_control`.
 #' @export
 lmm_control <- function(
-  optimizer = c("nlminb", "optim"),
+  optimizer = c("auto", "nlminb", "optim"),
   optim_method = "BFGS",
   max_iter = 1000L,
   rel_tol = 1e-8,
@@ -21,7 +24,9 @@ lmm_control <- function(
   initial = NULL,
   lower = -20,
   upper = 20,
-  deriv_method = "Richardson"
+  deriv_method = "Richardson",
+  max_restarts = 3L,
+  restart_scale = 0.25
 ) {
   optimizer <- match.arg(optimizer)
   if (!is.numeric(max_iter) || length(max_iter) != 1L || max_iter < 1) {
@@ -32,6 +37,20 @@ lmm_control <- function(
   }
   if (!is.numeric(x_tol) || length(x_tol) != 1L || x_tol <= 0) {
     cli::cli_abort("{.arg x_tol} must be a positive number.")
+  }
+  if (
+    !is.numeric(max_restarts) ||
+      length(max_restarts) != 1L ||
+      max_restarts < 0
+  ) {
+    cli::cli_abort("{.arg max_restarts} must be a non-negative number.")
+  }
+  if (
+    !is.numeric(restart_scale) ||
+      length(restart_scale) != 1L ||
+      restart_scale < 0
+  ) {
+    cli::cli_abort("{.arg restart_scale} must be a non-negative number.")
   }
   if (!is.numeric(lower) || !is.numeric(upper) || any(lower >= upper)) {
     cli::cli_abort("{.arg lower} must be smaller than {.arg upper}.")
@@ -50,7 +69,9 @@ lmm_control <- function(
       initial = initial,
       lower = lower,
       upper = upper,
-      deriv_method = deriv_method
+      deriv_method = deriv_method,
+      max_restarts = as.integer(max_restarts),
+      restart_scale = restart_scale
     ),
     class = "lmm_control"
   )
@@ -61,10 +82,10 @@ lmm_control <- function(
 #' `lmm()` explicitly evaluates a profiled ML or REML criterion for
 #' `V = Z G Z' + R`. It can combine random effects with an independent,
 #' compound-symmetric, AR(1), Toeplitz, or unstructured residual covariance.
-#' Rows that are incomplete for any variable used by the fixed, random, or
-#' repeated formula are removed before fitting.
+#' Missing values are handled according to `na.action`.
 #'
-#' The `random` argument accepts one grouping formula. The `repeated` argument
+#' The `random` argument accepts a grouping formula or a list of independent
+#' grouping formulas. The `repeated` argument
 #' accepts one ordering variable and one grouping expression. Each repeated
 #' group may have at most one observation per ordering value. The current
 #' likelihood assembles a dense marginal covariance matrix.
@@ -73,17 +94,18 @@ lmm_control <- function(
 #'   pipe-friendly.
 #' @param formula A two-sided fixed-effects formula.
 #' @param random Optional one-sided random-effects formula such as
-#'   `~ 1 | subject` or `~ 1 + time | subject`.
+#'   `~ 1 | subject`, or a list of such formulas.
 #' @param repeated Optional one-sided repeated-measures formula such as
 #'   `~ time | subject`.
 #' @param structure Residual covariance structure: `"id"`, `"cs"`, `"ar1"`,
 #'   `"toep"`, or `"un"`.
 #' @param method Estimation method: restricted maximum likelihood (`"REML"`)
 #'   or maximum likelihood (`"ML"`).
-#' @param ddf Denominator degrees-of-freedom method. `"satterthwaite"` and
-#'   `"residual"` are implemented. `"kenward-roger"` is reserved for future
-#'   implementation.
+#' @param ddf Denominator degrees-of-freedom method: `"satterthwaite"`,
+#'   `"kenward-roger"`, or `"residual"`.
 #' @param control An object returned by `lmm_control()`.
+#' @param na.action Missing-value action: [stats::na.omit()],
+#'   [stats::na.exclude()], or [stats::na.fail()].
 #'
 #' @return An object of class `lmm`. The object stores fixed and random-effect
 #'   estimates, covariance components, fitted values, residuals, optimization
@@ -102,6 +124,10 @@ lmm_control <- function(
 #' Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S and
 #' S-PLUS*. Springer. \doi{10.1007/b98882}
 #'
+#' Kenward, M. G., and Roger, J. H. (1997). Small sample inference for fixed
+#' effects from restricted maximum likelihood. *Biometrics*, 53(3), 983-997.
+#' \doi{10.2307/2533558}
+#'
 #' @examples
 #' fit <- lmm(
 #'   data = nlme::Orthodont,
@@ -118,15 +144,17 @@ lmm <- function(
   structure = c("id", "cs", "ar1", "toep", "un"),
   method = c("REML", "ML"),
   ddf = c("satterthwaite", "residual", "kenward-roger"),
-  control = lmm_control()
+  control = lmm_control(),
+  na.action = stats::na.omit
 ) {
   call <- match.call()
   formula <- check_formula(formula, "formula")
   if (length(formula) != 3L) {
     cli::cli_abort("{.arg formula} must be a two-sided formula.")
   }
-  if (!is.null(random)) {
-    check_formula(random, "random")
+  random_formulas <- normalize_random_formulas(random)
+  if (!is.null(random_formulas)) {
+    lapply(random_formulas, check_formula, arg = "random")
   }
   if (!is.null(repeated)) {
     check_formula(repeated, "repeated")
@@ -146,15 +174,17 @@ lmm <- function(
     c("satterthwaite", "residual", "kenward-roger"),
     "ddf"
   )
-  if (ddf == "kenward-roger") {
-    message <- paste(
-      "Kenward-Roger inference is not implemented.",
-      "Use {.val satterthwaite} or {.val residual}."
-    )
-    cli::cli_abort(message)
+  if (ddf == "kenward-roger" && method != "REML") {
+    cli::cli_abort("Kenward-Roger inference requires {.val REML} estimation.")
   }
 
-  prepared <- prepare_analysis_data(data, formula, random, repeated)
+  prepared <- prepare_analysis_data(
+    data,
+    formula,
+    random_formulas,
+    repeated,
+    na.action = na.action
+  )
   analysis_data <- prepared$data
   fixed_frame <- stats::model.frame(
     formula,
@@ -179,7 +209,7 @@ lmm <- function(
     cli::cli_abort("REML requires more observations than fixed-effect columns.")
   }
 
-  random_design <- make_random_design(random, analysis_data)
+  random_design <- make_random_design(random_formulas, analysis_data)
   repeated_design <- make_repeated_design(repeated, analysis_data, structure)
   covariance_spec <- make_covariance_spec(
     random_design,
@@ -200,17 +230,36 @@ lmm <- function(
     cli::cli_abort("The fitted covariance matrix is not positive definite.")
   }
   random_effects <- estimate_blup(gls, design)
+  kr <- NULL
+  beta_vcov <- gls$beta_vcov
+  if (ddf == "kenward-roger") {
+    kr <- kenward_roger_adjustment(
+      optimization$eta,
+      optimization$eta_vcov,
+      design,
+      gls$beta_vcov
+    )
+    beta_vcov <- kr$adjusted_vcov
+  }
   marginal_fitted <- drop(x %*% gls$beta)
   conditional_fitted <- marginal_fitted
   if (!is.null(random_effects)) {
-    conditional_fitted <- conditional_fitted + as.numeric(
-      random_design$z %*% as.vector(t(random_effects))
-    )
+    for (label in names(random_design$terms)) {
+      conditional_fitted <- conditional_fitted + as.numeric(
+        random_design$terms[[label]]$z %*%
+          as.vector(t(random_effects[[label]]))
+      )
+    }
   }
 
   omitted <- if (length(prepared$omitted) > 0L) {
+    action_class <- if (prepared$na_action == "na.exclude") {
+      "exclude"
+    } else {
+      "omit"
+    }
     stats::setNames(
-      structure(prepared$omitted, class = "omit"),
+      structure(prepared$omitted, class = action_class),
       row.names(data)[prepared$omitted]
     )
   } else {
@@ -220,18 +269,26 @@ lmm <- function(
   result <- list(
     call = call,
     formula = formula,
-    random_formula = random,
+    random_formula = if (inherits(random, "formula")) {
+      random
+    } else {
+      random_formulas
+    },
     repeated_formula = repeated,
     terms = fixed_terms,
     contrasts = attr(x, "contrasts"),
     xlevels = factor_xlevels(fixed_frame),
     model_frame = fixed_frame,
     data = analysis_data,
+    original_data = data,
     original_row_index = prepared$row_index,
     na.action = omitted,
+    na_action = prepared$na_action,
     design = design,
     coefficients = gls$beta,
-    beta_vcov = gls$beta_vcov,
+    beta_vcov = beta_vcov,
+    beta_vcov_model = gls$beta_vcov,
+    kr = kr,
     eta = optimization$eta,
     eta_vcov = optimization$eta_vcov,
     hessian = optimization$hessian,
@@ -256,7 +313,8 @@ lmm <- function(
       iterations = optimization$iterations,
       evaluations = optimization$evaluations,
       hessian_positive_definite = optimization$hessian_positive_definite,
-      hessian_eigenvalues = optimization$hessian_eigenvalues
+      hessian_eigenvalues = optimization$hessian_eigenvalues,
+      attempts = optimization$attempts
     ),
     control = control
   )

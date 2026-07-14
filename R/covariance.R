@@ -1,8 +1,4 @@
-make_random_design <- function(random, data) {
-  if (is.null(random)) {
-    return(NULL)
-  }
-
+make_random_design_term <- function(random, data) {
   parsed <- parse_bar_formula(random, "random")
   group <- make_group(data, parsed$group_vars, "random")
   random_frame <- stats::model.frame(
@@ -39,6 +35,31 @@ make_random_design <- function(random, data) {
     term_names = colnames(z_base),
     n_groups = n_groups,
     n_terms = n_terms
+  )
+}
+
+make_random_design <- function(random, data) {
+  formulas <- normalize_random_formulas(random)
+  if (is.null(formulas)) {
+    return(NULL)
+  }
+
+  terms <- lapply(formulas, make_random_design_term, data = data)
+  supplied_names <- names(formulas)
+  labels <- vapply(terms, `[[`, character(1L), "group_label")
+  if (!is.null(supplied_names)) {
+    use_name <- nzchar(supplied_names)
+    labels[use_name] <- supplied_names[use_name]
+  }
+  labels <- make.unique(labels)
+  names(terms) <- labels
+  names(formulas) <- labels
+
+  list(
+    formulas = formulas,
+    terms = terms,
+    labels = labels,
+    z = do.call(cbind, lapply(terms, `[[`, "z"))
   )
 }
 
@@ -124,11 +145,24 @@ triangle_size <- function(n) {
 }
 
 make_covariance_spec <- function(random_design, repeated_design, structure) {
-  random_npar <- if (is.null(random_design)) {
-    0L
+  random_npar_by_term <- if (is.null(random_design)) {
+    integer()
   } else {
-    triangle_size(random_design$n_terms)
+    vapply(
+      random_design$terms,
+      function(term) triangle_size(term$n_terms),
+      numeric(1L)
+    )
   }
+  random_npar <- sum(random_npar_by_term)
+  random_index <- if (random_npar == 0L) {
+    list()
+  } else {
+    ends <- cumsum(random_npar_by_term)
+    starts <- ends - random_npar_by_term + 1L
+    Map(seq.int, starts, ends)
+  }
+  names(random_index) <- names(random_npar_by_term)
 
   q <- repeated_design$n_times
   residual_npar <- switch(structure,
@@ -142,8 +176,9 @@ make_covariance_spec <- function(random_design, repeated_design, structure) {
   list(
     structure = structure,
     random_npar = random_npar,
+    random_npar_by_term = random_npar_by_term,
     residual_npar = residual_npar,
-    random_index = if (random_npar > 0L) seq_len(random_npar) else integer(),
+    random_index = random_index,
     residual_index = random_npar + seq_len(residual_npar),
     npar = random_npar + residual_npar,
     n_times = q
@@ -239,18 +274,25 @@ build_covariance <- function(eta, design) {
   repeated_design <- design$repeated
   n <- nrow(design$x)
 
-  g <- NULL
-  g_big <- NULL
+  g <- list()
+  g_big <- list()
   random_part <- matrix(0, n, n)
   if (!is.null(random_design)) {
-    g <- random_covariance(eta[spec$random_index], random_design)
-    g_big <- Matrix::bdiag(replicate(
-      random_design$n_groups,
-      g,
-      simplify = FALSE
-    ))
-    z_matrix <- as.matrix(random_design$z)
-    random_part <- as.matrix(z_matrix %*% g_big %*% t(z_matrix))
+    for (index in seq_along(random_design$terms)) {
+      term <- random_design$terms[[index]]
+      label <- names(random_design$terms)[[index]]
+      term_g <- random_covariance(eta[spec$random_index[[index]]], term)
+      term_g_big <- Matrix::bdiag(replicate(
+        term$n_groups,
+        term_g,
+        simplify = FALSE
+      ))
+      random_part <- random_part + as.matrix(
+        term$z %*% term_g_big %*% Matrix::t(term$z)
+      )
+      g[[label]] <- term_g
+      g_big[[label]] <- term_g_big
+    }
   }
 
   residual_base <- residual_covariance(eta[spec$residual_index], spec)
@@ -266,8 +308,8 @@ build_covariance <- function(eta, design) {
 
   list(
     v = symmetrize(random_part + residual),
-    g = g,
-    g_big = g_big,
+    g = if (length(g) == 0L) NULL else g,
+    g_big = if (length(g_big) == 0L) NULL else g_big,
     r = residual,
     residual_base = residual_base
   )
@@ -282,16 +324,20 @@ initial_eta <- function(y, design) {
 
   out <- numeric(spec$npar)
   if (spec$random_npar > 0L) {
-    k <- design$random$n_terms
-    position <- 1L
-    for (row in seq_len(k)) {
-      for (column in seq_len(row)) {
-        out[[position]] <- if (row == column) {
-          log(sqrt(0.25 * response_variance / k))
-        } else {
-          0
+    n_random <- length(design$random$terms)
+    for (index in seq_along(design$random$terms)) {
+      k <- design$random$terms[[index]]$n_terms
+      term_index <- spec$random_index[[index]]
+      position <- 1L
+      for (row in seq_len(k)) {
+        for (column in seq_len(row)) {
+          out[term_index[[position]]] <- if (row == column) {
+            log(sqrt(0.25 * response_variance / (n_random * k)))
+          } else {
+            0
+          }
+          position <- position + 1L
         }
-        position <- position + 1L
       }
     }
   }
@@ -334,19 +380,33 @@ covariance_natural <- function(eta, design) {
   values <- numeric()
 
   if (!is.null(design$random)) {
-    g <- random_covariance(eta[spec$random_index], design$random)
-    terms <- design$random$term_names
-    random_values <- stats::setNames(diag(g), paste0("random.var.", terms))
-    if (length(terms) > 1L) {
-      correlations <- stats::cov2cor(g)
-      for (row in 2:length(terms)) {
-        for (column in seq_len(row - 1L)) {
-          name <- paste0("random.cor.", terms[[row]], ".", terms[[column]])
-          random_values[[name]] <- correlations[row, column]
+    multiple <- length(design$random$terms) > 1L
+    for (index in seq_along(design$random$terms)) {
+      random_term <- design$random$terms[[index]]
+      g <- random_covariance(eta[spec$random_index[[index]]], random_term)
+      terms <- random_term$term_names
+      prefix <- if (multiple) {
+        paste0("random.var.", index, ".")
+      } else {
+        "random.var."
+      }
+      random_values <- stats::setNames(diag(g), paste0(prefix, terms))
+      if (length(terms) > 1L) {
+        correlations <- stats::cov2cor(g)
+        for (row in 2:length(terms)) {
+          for (column in seq_len(row - 1L)) {
+            prefix <- if (multiple) {
+              paste0("random.cor.", index, ".")
+            } else {
+              "random.cor."
+            }
+            name <- paste0(prefix, terms[[row]], ".", terms[[column]])
+            random_values[[name]] <- correlations[row, column]
+          }
         }
       }
+      values <- c(values, random_values)
     }
-    values <- c(values, random_values)
   }
 
   residual <- residual_covariance(eta[spec$residual_index], spec)

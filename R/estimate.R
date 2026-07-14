@@ -1,3 +1,58 @@
+run_covariance_optimizer <- function(
+  start,
+  objective,
+  optimizer,
+  optim_method,
+  lower,
+  upper,
+  control
+) {
+  if (optimizer == "nlminb") {
+    optimization <- stats::nlminb(
+      start = start,
+      objective = objective,
+      lower = lower,
+      upper = upper,
+      control = list(
+        iter.max = control$max_iter,
+        eval.max = max(200L, 2L * control$max_iter),
+        rel.tol = control$rel_tol,
+        x.tol = control$x_tol
+      )
+    )
+    list(
+      eta = optimization$par,
+      code = optimization$convergence,
+      message = optimization$message,
+      iterations = optimization$iterations,
+      evaluations = optimization$evaluations,
+      optimizer = "nlminb",
+      method = NA_character_
+    )
+  } else {
+    optimization <- stats::optim(
+      par = start,
+      fn = objective,
+      method = optim_method,
+      lower = if (optim_method == "L-BFGS-B") lower else -Inf,
+      upper = if (optim_method == "L-BFGS-B") upper else Inf,
+      control = list(
+        maxit = control$max_iter,
+        reltol = control$rel_tol
+      )
+    )
+    list(
+      eta = optimization$par,
+      code = optimization$convergence,
+      message = optimization$message %||% "",
+      iterations = unname(optimization$counts[["function"]]),
+      evaluations = optimization$counts,
+      optimizer = "optim",
+      method = optim_method
+    )
+  }
+}
+
 fit_covariance_parameters <- function(design, method, control) {
   objective <- function(eta) {
     negative_log_likelihood(eta, design = design, method = method)
@@ -18,49 +73,82 @@ fit_covariance_parameters <- function(design, method, control) {
     )
   }
 
-  if (control$optimizer == "nlminb") {
-    optimization <- stats::nlminb(
-      start = start,
-      objective = objective,
-      lower = lower,
-      upper = upper,
-      control = list(
-        iter.max = control$max_iter,
-        eval.max = max(200L, 2L * control$max_iter),
-        rel.tol = control$rel_tol,
-        x.tol = control$x_tol
-      )
+  strategies <- if (control$optimizer == "auto") {
+    list(
+      c(optimizer = "nlminb", method = NA_character_),
+      c(optimizer = "optim", method = "BFGS"),
+      c(optimizer = "optim", method = "L-BFGS-B")
     )
-    eta <- optimization$par
-    convergence_code <- optimization$convergence
-    convergence_message <- optimization$message
-    iterations <- optimization$iterations
-    evaluations <- optimization$evaluations
   } else {
-    optimization <- stats::optim(
-      par = start,
-      fn = objective,
-      method = control$optim_method,
-      lower = if (control$optim_method == "L-BFGS-B") lower else -Inf,
-      upper = if (control$optim_method == "L-BFGS-B") upper else Inf,
-      control = list(
-        maxit = control$max_iter,
-        reltol = control$rel_tol
-      )
-    )
-    eta <- optimization$par
-    convergence_code <- optimization$convergence
-    convergence_message <- optimization$message %||% ""
-    iterations <- unname(optimization$counts[["function"]])
-    evaluations <- optimization$counts
+    list(c(
+      optimizer = control$optimizer,
+      method = if (control$optimizer == "optim") {
+        control$optim_method
+      } else {
+        NA_character_
+      }
+    ))
   }
+
+  max_attempts <- 1L + control$max_restarts
+  attempts <- vector("list", max_attempts)
+  for (attempt in seq_len(max_attempts)) {
+    strategy <- strategies[[1L + (attempt - 1L) %% length(strategies)]]
+    attempt_start <- start
+    if (attempt > 1L && control$restart_scale > 0) {
+      perturbation <- control$restart_scale * sin(
+        seq_len(npar) * (attempt - 1L)
+      )
+      attempt_start <- pmin(upper, pmax(lower, start + perturbation))
+    }
+    result <- tryCatch(
+      run_covariance_optimizer(
+        attempt_start,
+        objective,
+        optimizer = strategy[["optimizer"]],
+        optim_method = strategy[["method"]],
+        lower = lower,
+        upper = upper,
+        control = control
+      ),
+      error = function(cnd) {
+        list(
+          eta = attempt_start,
+          code = 999L,
+          message = conditionMessage(cnd),
+          iterations = NA_integer_,
+          evaluations = NA,
+          optimizer = strategy[["optimizer"]],
+          method = strategy[["method"]]
+        )
+      }
+    )
+    result$objective <- objective(result$eta)
+    result$attempt <- attempt
+    attempts[[attempt]] <- result
+    if (result$code == 0L && is.finite(result$objective)) {
+      attempts <- attempts[seq_len(attempt)]
+      break
+    }
+  }
+
+  converged <- vapply(attempts, function(x) x$code == 0L, logical(1L))
+  candidates <- if (any(converged)) which(converged) else seq_along(attempts)
+  selected_index <- candidates[[which.min(vapply(
+    attempts[candidates],
+    `[[`,
+    numeric(1L),
+    "objective"
+  ))]]
+  selected <- attempts[[selected_index]]
+  eta <- selected$eta
 
   hessian <- numDeriv::hessian(objective, eta, method = control$deriv_method)
   hessian_result <- invert_hessian(hessian)
-  if (convergence_code != 0L) {
+  if (selected$code != 0L) {
     cli::cli_warn(c(
       "The optimizer did not report convergence.",
-      "i" = "Code {convergence_code}: {convergence_message}"
+      "i" = "Code {selected$code}: {selected$message}"
     ))
   }
   if (!hessian_result$positive_definite) {
@@ -78,11 +166,19 @@ fit_covariance_parameters <- function(design, method, control) {
     eta_vcov = hessian_result$vcov,
     hessian_positive_definite = hessian_result$positive_definite,
     hessian_eigenvalues = hessian_result$eigenvalues,
-    code = convergence_code,
-    message = convergence_message,
-    iterations = iterations,
-    evaluations = evaluations,
-    optimizer = control$optimizer
+    code = selected$code,
+    message = selected$message,
+    iterations = selected$iterations,
+    evaluations = selected$evaluations,
+    optimizer = selected$optimizer,
+    attempts = tibble::tibble(
+      attempt = vapply(attempts, `[[`, integer(1L), "attempt"),
+      optimizer = vapply(attempts, `[[`, character(1L), "optimizer"),
+      method = vapply(attempts, `[[`, character(1L), "method"),
+      convergence = vapply(attempts, `[[`, integer(1L), "code"),
+      objective = vapply(attempts, `[[`, numeric(1L), "objective"),
+      selected = seq_along(attempts) == selected_index
+    )
   )
 }
 
@@ -92,36 +188,37 @@ estimate_blup <- function(gls, design) {
     return(NULL)
   }
 
-  u <- drop(
-    gls$covariance$g_big %*%
-      t(as.matrix(random_design$z)) %*%
-      gls$v_inv_residual
-  )
-  matrix(
-    u,
-    nrow = random_design$n_groups,
-    ncol = random_design$n_terms,
-    byrow = TRUE,
-    dimnames = list(
-      random_design$group_levels,
-      random_design$term_names
+  effects <- lapply(seq_along(random_design$terms), function(index) {
+    term <- random_design$terms[[index]]
+    label <- names(random_design$terms)[[index]]
+    u <- drop(
+      gls$covariance$g_big[[label]] %*%
+        Matrix::t(term$z) %*%
+        gls$v_inv_residual
     )
-  )
+    matrix(
+      u,
+      nrow = term$n_groups,
+      ncol = term$n_terms,
+      byrow = TRUE,
+      dimnames = list(term$group_levels, term$term_names)
+    )
+  })
+  names(effects) <- names(random_design$terms)
+  effects
 }
 
 covariance_metadata <- function(names, design) {
-  random_group <- if (is.null(design$random)) {
-    NA_character_
-  } else {
-    design$random$group_label
-  }
-
   rows <- lapply(names, function(name) {
     pieces <- strsplit(name, ".", fixed = TRUE)[[1L]]
     if (pieces[[1L]] == "random") {
       component <- pieces[[2L]]
+      multiple <- length(design$random$terms) > 1L
+      random_index <- if (multiple) as.integer(pieces[[3L]]) else 1L
+      term_start <- if (multiple) 4L else 3L
+      random_group <- design$random$terms[[random_index]]$group_label
       separator <- if (component == "cor") ", " else "."
-      term <- paste(pieces[-c(1L, 2L)], collapse = separator)
+      term <- paste(pieces[term_start:length(pieces)], collapse = separator)
       list(group = random_group, term = term, component = component)
     } else {
       component <- pieces[[2L]]

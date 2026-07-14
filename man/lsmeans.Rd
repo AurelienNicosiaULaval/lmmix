@@ -11,6 +11,7 @@ lsmeans(
   at = list(),
   level = 0.95,
   adjust = "none",
+  conf_adjust = c("auto", "none", "bonferroni"),
   ...
 )
 }
@@ -29,6 +30,10 @@ differences.}
 
 \item{adjust}{Multiplicity adjustment passed to \code{\link[stats:p.adjust]{stats::p.adjust()}}.}
 
+\item{conf_adjust}{Confidence-interval adjustment. \code{"auto"} uses
+Bonferroni intervals when \code{adjust} is not \code{"none"}; the alternatives are
+\code{"none"} and \code{"bonferroni"}.}
+
 \item{...}{Reserved for future extensions.}
 }
 \value{
@@ -38,6 +43,7 @@ pairwise comparisons are requested.
 \description{
 Marginal means use equal weights over nuisance-factor levels. Numeric
 covariates not listed in \code{specs} are held at their observed means.
-Multiplicity adjustment applies to pairwise p-values; confidence intervals
-remain pointwise.
+Multiplicity adjustment applies to pairwise p-values. Simultaneous
+Bonferroni confidence intervals are used automatically when p-values are
+adjusted, unless \code{conf_adjust = "none"} is requested.
 }

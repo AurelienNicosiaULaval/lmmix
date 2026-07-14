@@ -5,7 +5,7 @@
 \title{Control numerical optimization for \code{lmm()}}
 \usage{
 lmm_control(
-  optimizer = c("nlminb", "optim"),
+  optimizer = c("auto", "nlminb", "optim"),
   optim_method = "BFGS",
   max_iter = 1000L,
   rel_tol = 1e-08,
@@ -13,11 +13,13 @@ lmm_control(
   initial = NULL,
   lower = -20,
   upper = 20,
-  deriv_method = "Richardson"
+  deriv_method = "Richardson",
+  max_restarts = 3L,
+  restart_scale = 0.25
 )
 }
 \arguments{
-\item{optimizer}{Optimizer to use, either \code{"nlminb"} or \code{"optim"}.}
+\item{optimizer}{Optimizer strategy: \code{"auto"}, \code{"nlminb"}, or \code{"optim"}.}
 
 \item{optim_method}{Method passed to \code{\link[stats:optim]{stats::optim()}} when \code{optimizer = "optim"}.}
 
@@ -32,6 +34,11 @@ lmm_control(
 \item{lower, upper}{Bounds for unconstrained covariance parameters.}
 
 \item{deriv_method}{Numerical differentiation method passed to \code{numDeriv}.}
+
+\item{max_restarts}{Maximum number of deterministic restart attempts after
+an unsuccessful initial fit.}
+
+\item{restart_scale}{Size of deterministic perturbations to starting values.}
 }
 \value{
 An object of class \code{lmm_control}.

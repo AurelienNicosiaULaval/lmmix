@@ -31,6 +31,9 @@ tested in each overlapping case.
 | Satterthwaite coefficients | `lmerTest::lmer()` | Estimates and standard errors | absolute `1e-5` |
 | Satterthwaite coefficients | `lmerTest::lmer()` | Denominator df | absolute `5e-3` |
 | Type III Satterthwaite tests | `lmerTest::lmer()` | Numerator df, denominator df, F statistics | absolute `1e-6`, `5e-3`, and `5e-3` |
+| Marginal AR(1) Kenward-Roger | `mmrm::mmrm()` | Fixed effects, adjusted standard errors, denominator df | absolute `1e-5`, `3e-3`, and `5e-3` |
+| Crossed random intercepts | `lme4::lmer()` | Log-likelihood and covariance parameters | absolute `1e-5` and `1e-4` |
+| Nested fixed-effect models | `lme4::anova()` | Likelihood-ratio statistic and p-value | absolute `1e-5` |
 
 The combined-model tests fit `id`, `cs`, `ar1`, `toep`, and `un` residual
 structures together with a random center intercept. Every fit must converge
@@ -81,6 +84,10 @@ The implementation is grounded in the following sources:
   <https://doi.org/10.2307/3002019>
 * Fai, A. H.-T., and Cornelius, P. L. (1996), for multi-degree-of-freedom
   approximate F-tests. <https://doi.org/10.1080/00949659608811740>
+* Kenward, M. G., and Roger, J. H. (1997), for small-sample covariance and
+  denominator-df adjustment. <https://doi.org/10.2307/2533558>
+* Self, S. G., and Liang, K.-Y. (1987), for likelihood-ratio tests with
+  parameters on the boundary. <https://doi.org/10.1080/01621459.1987.10478472>
 * Searle, S. R., Speed, F. M., and Milliken, G. A. (1980), for population
   marginal means. <https://doi.org/10.1080/00031305.1980.10483031>
 * Pinheiro, J. C., and Bates, D. M. (2000), for structured covariance models.
@@ -88,7 +95,8 @@ The implementation is grounded in the following sources:
 
 ## Boundaries of the evidence
 
-The validation does not cover Kenward-Roger inference, multiple random-effect
-terms, generalized responses, likelihood-ratio model comparison, or
-large-scale sparse performance because those capabilities are not implemented
-in version `0.1.0`.
+The validation covers Kenward-Roger inference in overlapping random-effects
+and marginal models, multiple crossed random intercepts, and fixed-effect
+likelihood-ratio comparisons. Generalized responses and large-scale sparse
+performance remain outside the package scope. Combined-model Kenward-Roger
+inference has structural tests but no fresh independent SAS execution.

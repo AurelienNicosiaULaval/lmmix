@@ -4,12 +4,13 @@
 \alias{augment.lmm}
 \title{Augment data with fitted values and residuals}
 \usage{
-\method{augment}{lmm}(x, data = x$data, newdata = NULL, ...)
+\method{augment}{lmm}(x, data = NULL, newdata = NULL, ...)
 }
 \arguments{
 \item{x}{An \code{lmm} object.}
 
-\item{data}{Data used for augmentation. Defaults to the analysis data.}
+\item{data}{Optional data used for augmentation. By default, excluded rows
+are restored when the model used \code{\link[stats:na.fail]{stats::na.exclude()}}.}
 
 \item{newdata}{Optional new data. If supplied, it takes precedence over
 \code{data}.}
