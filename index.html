@@ -45,6 +45,7 @@
     <li><a class="dropdown-item" href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="ROADMAP.html">Roadmap</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -171,6 +172,7 @@
 </tr>
 </tbody>
 </table>
+<p>The <a href="https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html">development roadmap</a> centralizes the current limitations, validation boundaries, and planned development priorities.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start-random-center-effect-and-ar1-residuals">Quick start: random center effect and AR(1) residuals<a class="anchor" aria-label="anchor" href="#quick-start-random-center-effect-and-ar1-residuals"></a>
@@ -463,6 +465,7 @@
 <div class="section level2">
 <h2 id="model-scope-and-remaining-boundaries">Model scope and remaining boundaries<a class="anchor" aria-label="anchor" href="#model-scope-and-remaining-boundaries"></a>
 </h2>
+<p>The complete and maintained list is available in the <a href="https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html">development roadmap</a>.</p>
 <p>Version <code>0.3.0</code> fits univariate Gaussian models. It is not a generalized mixed-model engine. The likelihood constructs and factors a dense marginal covariance matrix, so the package targets small and moderate data sets rather than large-scale sparse problems.</p>
 <p>Rows with missing responses or model covariates are handled according to <code>na.action</code>; the package does not impute missing covariates. Conditional prediction rejects unseen random-effect groups by default. Set <code>allow.new.levels = TRUE</code> to request the population-level prediction, for which the unseen random contribution is zero.</p>
 </div>
