@@ -1,11 +1,12 @@
 # Official SAS PROC MIXED validation targets
 
-This directory records validation inputs and numerical targets from three
+This directory records validation inputs and numerical targets from four
 official examples in Chapter 79 of the SAS/STAT 14.3 User's Guide:
 
 - Example 79.1, Split-Plot Design;
 - Example 79.2, Repeated Measures;
-- Example 79.5, Random Coefficients.
+- Example 79.5, Random Coefficients;
+- Example 79.6, Line-Source Sprinkler Irrigation.
 
 Primary source:
 

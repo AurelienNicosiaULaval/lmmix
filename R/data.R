@@ -70,3 +70,24 @@
 #'   Example 79.5, Random Coefficients.
 #'   \url{https://support.sas.com/documentation/onlinedoc/stat/}
 "sas_random_coefficients"
+
+#' Line-source irrigation example from the SAS MIXED documentation
+#'
+#' Winter-wheat yields for three cultivars in three blocks. Each plot contains
+#' twelve subplots arranged on two sides of a line-source sprinkler. SAS uses
+#' these data in Example 79.6 of the SAS/STAT 14.3 documentation to combine
+#' three random-intercept terms with a four-band Toeplitz residual covariance.
+#'
+#' @format A data frame with 108 rows and 6 variables:
+#' \describe{
+#'   \item{Block}{Block identifier with three levels.}
+#'   \item{Cult}{Winter-wheat cultivar with three levels.}
+#'   \item{Sbplt}{Ordered subplot position from 1 to 12.}
+#'   \item{Irrig}{Irrigation level with six levels.}
+#'   \item{Dir}{Side of the sprinkler with levels North and South.}
+#'   \item{Y}{Continuous yield response.}
+#' }
+#' @source SAS Institute Inc. (2017). *SAS/STAT 14.3 User's Guide*,
+#'   Example 79.6, Line-Source Sprinkler Irrigation.
+#'   \url{https://support.sas.com/documentation/onlinedoc/stat/}
+"sas_line_source"

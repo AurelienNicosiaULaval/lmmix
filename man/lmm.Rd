@@ -29,7 +29,9 @@ pipe-friendly.}
 \code{~ time | subject}.}
 
 \item{structure}{Residual covariance structure: \code{"id"}, \code{"cs"}, \code{"ar1"},
-\code{"toep"}, or \code{"un"}.}
+\code{"toep"}, \code{"toep(k)"}, or \code{"un"}. The \code{"toep"} form estimates every
+available Toeplitz band. The \code{"toep(k)"} form estimates \code{k} bands,
+including the main diagonal, and fixes longer-lag covariances to zero.}
 
 \item{method}{Estimation method: restricted maximum likelihood (\code{"REML"})
 or maximum likelihood (\code{"ML"}).}
@@ -50,7 +52,8 @@ diagnostics, the analysis data, and the model matrices.
 \description{
 \code{lmm()} explicitly evaluates a profiled ML or REML criterion for
 \verb{V = Z G Z' + R}. It can combine random effects with an independent,
-compound-symmetric, AR(1), Toeplitz, or unstructured residual covariance.
+compound-symmetric, AR(1), full or fixed-band Toeplitz, or unstructured
+residual covariance.
 Missing values are handled according to \code{na.action}.
 }
 \details{

@@ -1,3 +1,18 @@
+# lmmix 0.3.0
+
+* Added fixed-band Toeplitz residual covariance through specifications such as
+  `structure = "toep(4)"`, while retaining full `"toep"` behavior.
+* Added an exact likelihood and covariance comparison with official PROC MIXED
+  Example 79.6, including its line-source irrigation data and runnable SAS
+  specification.
+* Extended `confint()` with `"beta_"` and `"theta_"` selectors. Covariance
+  intervals use log and Fisher-z transformations to respect variance and
+  correlation bounds.
+* Added reproducible parametric-bootstrap likelihood-ratio tests for nested
+  models through `anova(..., test = "parametric.bootstrap")`.
+* Added a vignette on covariance intervals, boundary-aware comparisons, and
+  inspection of the simulated null reference distribution.
+
 # lmmix 0.2.1
 
 * Added reproducible comparisons with official SAS PROC MIXED examples 79.1,

@@ -48,3 +48,11 @@ example,model,quantity,term,estimate,std_error,num_df,den_df,statistic,p_value,o
 79.5,random_coefficients,random,Intercept Batch 3,0.6076,0.6842,,78,0.89,0.3772,79.5.8
 79.5,random_coefficients,random,Month Batch 3,0.07731,0.1245,,78,0.62,0.5365,79.5.8
 79.5,random_coefficients,type3,Month,,,1,2,19.41,0.0478,79.5.9
+79.6,line_source,covariance,Block,0.2194,,,,,,79.6.6
+79.6,line_source,covariance,Block*Dir,0.01768,,,,,,79.6.6
+79.6,line_source,covariance,Block*Irrig,0.03539,,,,,,79.6.6
+79.6,line_source,covariance,TOEP(2),0.007986,,,,,,79.6.6
+79.6,line_source,covariance,TOEP(3),0.001452,,,,,,79.6.6
+79.6,line_source,covariance,TOEP(4),-0.09253,,,,,,79.6.6
+79.6,line_source,covariance,Residual,0.2850,,,,,,79.6.6
+79.6,line_source,deviance,-2 Res Log Likelihood,183.23797748,,,,,,79.6.4

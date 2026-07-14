@@ -1,0 +1,154 @@
+---
+title: "Covariance intervals and boundary-aware model comparisons"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{Covariance intervals and boundary-aware model comparisons}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5
+)
+library(lmmix)
+library(ggplot2)
+```
+
+## Scope
+
+This vignette covers two inferential questions that differ from inference on
+fixed effects:
+
+1. confidence intervals for variance and correlation parameters;
+2. likelihood-ratio comparisons when the null model can place a variance on
+   the boundary at zero.
+
+The usual chi-squared likelihood-ratio reference can fail at a boundary
+[@self1987]. A parametric bootstrap instead estimates the null distribution by
+simulating from the fitted smaller model and refitting both models to every
+simulated response [@davison1997].
+
+## Confidence intervals for covariance parameters
+
+The `theta_` selector requests all covariance parameters. Variance intervals
+are formed on the log scale, and correlation intervals are formed on the
+Fisher-z scale. The delta-method standard errors are transformed before the
+normal critical value is applied. This keeps variance limits positive and
+correlation limits inside `(-1, 1)`.
+
+```{r covariance-intervals}
+orthodont <- as.data.frame(nlme::Orthodont)
+
+fit <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  random = ~ age | Subject
+)
+
+confint(fit, parm = "theta_")
+```
+
+The default `confint(fit)` remains backward compatible and returns only fixed
+effects. Use `parm = c("beta_", "theta_")` to request both families. These are
+local Wald intervals based on the observed likelihood Hessian. They should not
+be interpreted as profile-likelihood or bootstrap intervals, especially when
+the Hessian is poorly conditioned or an estimate is close to a boundary.
+
+## Parametric-bootstrap likelihood-ratio test
+
+The following comparison asks whether the Orthodont data support a random
+subject intercept beyond an independent Gaussian residual model. Both models
+are fitted by ML because covariance-model likelihood-ratio comparisons must
+use the same fixed effects under ML.
+
+```{r boundary-models}
+null_fit <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  method = "ML"
+)
+
+random_fit <- lmm(
+  orthodont,
+  distance ~ age + Sex,
+  random = ~ 1 | Subject,
+  method = "ML"
+)
+```
+
+The ordinary call retains the asymptotic chi-squared reference and emits a
+boundary warning. The bootstrap alternative is requested explicitly.
+
+```{r boundary-bootstrap}
+asymptotic <- suppressWarnings(anova(null_fit, random_fit))
+bootstrap <- anova(
+  null_fit,
+  random_fit,
+  test = "parametric.bootstrap",
+  nsim = 49,
+  seed = 20260714
+)
+
+data.frame(
+  method = c("asymptotic chi-squared", "parametric bootstrap"),
+  statistic = c(asymptotic$Chisq[2], bootstrap$Chisq[2]),
+  p_value = c(asymptotic$p.value[2], bootstrap$p.value[2])
+)
+```
+
+For each simulation, `lmmix` draws a Gaussian response using the fitted mean
+and marginal covariance of the null model, refits both models by ML, and
+recomputes the likelihood-ratio statistic. The finite-simulation correction is
+
+\[
+\widehat p = \frac{1 + \sum_{b=1}^{B}
+I(T_b \geq T_{\mathrm{obs}})}{B + 1}.
+\]
+
+The simulated null distribution is retained as an attribute for diagnostics.
+
+```{r boundary-distribution}
+bootstrap_statistics <- attr(bootstrap, "bootstrap")[[2]]$statistics
+
+ggplot(
+  data.frame(statistic = bootstrap_statistics),
+  aes(x = statistic)
+) +
+  geom_histogram(bins = 12, color = "white", fill = "#2C7FB8") +
+  geom_vline(
+    xintercept = bootstrap$Chisq[2],
+    color = "#D7301F",
+    linewidth = 0.9
+  ) +
+  labs(
+    x = "Simulated likelihood-ratio statistic under the null",
+    y = "Count",
+    title = "Parametric-bootstrap reference distribution"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+The 49 simulations above keep the installed vignette reasonably fast and give
+a p-value resolution of `1 / 50`. They are a reproducible demonstration, not a
+publication-grade Monte Carlo analysis. For substantive inference, increase
+`nsim`, commonly to at least 999, and examine the retained distribution and
+the number of successful refits. The returned p-value uses only successful
+refits and the method warns if any refit fails.
+
+## Reproducibility
+
+Supplying `seed` makes the simulated reference distribution reproducible and
+restores the caller's random-number state on exit. Omitting `seed` uses and
+advances the current R random-number stream. The fitted objects, simulation
+count, successful-refit count, and simulated statistics remain available in
+the returned comparison object.
+
+```{r session-info}
+sessionInfo()
+```

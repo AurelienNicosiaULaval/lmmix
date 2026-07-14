@@ -108,6 +108,7 @@ fixef(fit)
 vcov(fit)
 anova(fit)
 confint(fit)
+confint(fit, parm = "theta_")
 ```
 
 `anova()` performs type III fixed-effect tests for one model. With multiple
@@ -134,6 +135,15 @@ fit_reduced <- lmm(
   structure = "ar1"
 )
 anova(fit_reduced, fit)
+
+# Use a simulated null reference for a covariance comparison.
+anova(
+  smaller_ml_fit,
+  larger_ml_fit,
+  test = "parametric.bootstrap",
+  nsim = 999,
+  seed = 2026
+)
 ```
 
 ## Covariance parameters and random effects
@@ -275,11 +285,20 @@ fit_combined <- lmm(
   repeated = ~ time | center:subject,
   structure = "toep"
 )
+
+# Four-band Toeplitz covariance, including the main diagonal
+fit_banded <- lmm(
+  data,
+  response ~ treatment * time,
+  random = ~ 1 | center,
+  repeated = ~ time | center:subject,
+  structure = "toep(4)"
+)
 ```
 
 ## Practical limits
 
-Version `0.2.0` constructs the full dense matrix `V` during
+Version `0.3.0` constructs the full dense matrix `V` during
 optimization. It is appropriate for small and moderate data sets. It is not a
 large-scale sparse mixed-model engine. The interface accepts multiple
 independent random-effect formulas and one repeated-measures structure.

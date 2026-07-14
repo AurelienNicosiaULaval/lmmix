@@ -144,7 +144,40 @@ triangle_size <- function(n) {
   n * (n + 1L) / 2L
 }
 
-make_covariance_spec <- function(random_design, repeated_design, structure) {
+parse_covariance_structure <- function(structure) {
+  if (!is.character(structure) || length(structure) != 1L || is.na(structure)) {
+    cli::cli_abort("{.arg structure} must be a single character value.")
+  }
+  value <- tolower(gsub("[[:space:]]+", "", structure))
+  if (value %in% c("id", "cs", "ar1", "toep", "un")) {
+    return(list(name = value, order = NULL, label = value))
+  }
+
+  match <- regexec("^toep\\(([1-9][0-9]*)\\)$", value)
+  pieces <- regmatches(value, match)[[1L]]
+  if (length(pieces) == 2L) {
+    order <- as.integer(pieces[[2L]])
+    return(list(
+      name = "toep",
+      order = order,
+      label = paste0("toep(", order, ")")
+    ))
+  }
+
+  cli::cli_abort(
+    paste(
+      "{.arg structure} must be one of {.val id}, {.val cs}, {.val ar1},",
+      "{.val toep}, {.code toep(k)}, or {.val un}."
+    )
+  )
+}
+
+make_covariance_spec <- function(
+  random_design,
+  repeated_design,
+  structure,
+  covariance_order = NULL
+) {
   random_npar_by_term <- if (is.null(random_design)) {
     integer()
   } else {
@@ -165,11 +198,20 @@ make_covariance_spec <- function(random_design, repeated_design, structure) {
   names(random_index) <- names(random_npar_by_term)
 
   q <- repeated_design$n_times
+  explicit_order <- !is.null(covariance_order)
+  if (structure == "toep") {
+    covariance_order <- covariance_order %||% q
+    if (covariance_order > q) {
+      cli::cli_abort(
+        "The order in {.code toep(k)} cannot exceed the {q} time levels."
+      )
+    }
+  }
   residual_npar <- switch(structure,
     id = 1L,
     cs = 1L + as.integer(q > 1L),
     ar1 = 1L + as.integer(q > 1L),
-    toep = q,
+    toep = covariance_order,
     un = triangle_size(q)
   )
 
@@ -181,7 +223,17 @@ make_covariance_spec <- function(random_design, repeated_design, structure) {
     random_index = random_index,
     residual_index = random_npar + seq_len(residual_npar),
     npar = random_npar + residual_npar,
-    n_times = q
+    n_times = q,
+    covariance_order = if (structure == "toep") {
+      as.integer(covariance_order)
+    } else {
+      NA_integer_
+    },
+    structure_label = if (structure == "toep" && explicit_order) {
+      paste0("toep(", covariance_order, ")")
+    } else {
+      structure
+    }
   )
 }
 
@@ -252,8 +304,13 @@ residual_covariance <- function(eta, spec) {
       rho^abs(outer(seq_len(q), seq_len(q), "-"))
     },
     toep = {
-      partial <- if (q > 1L) tanh(eta[-1L]) else numeric()
-      acf <- c(1, pacf_to_acf(partial))
+      order <- spec$covariance_order
+      partial <- if (order > 1L) tanh(eta[-1L]) else numeric()
+      acf <- c(
+        1,
+        pacf_to_acf(partial),
+        rep(0, q - order)
+      )
       matrix(acf[abs(outer(seq_len(q), seq_len(q), "-")) + 1L], q, q)
     }
   )
@@ -368,7 +425,11 @@ initial_eta <- function(y, design) {
       } else if (spec$structure == "ar1") {
         out[residual_index[[2L]]] <- atanh(0.1)
       } else {
-        out[residual_index[-1L]] <- c(atanh(0.1), rep(0, q - 2L))
+        correlation_count <- length(residual_index) - 1L
+        out[residual_index[-1L]] <- c(
+          atanh(0.1),
+          rep(0, correlation_count - 1L)
+        )
       }
     }
   }
@@ -437,7 +498,7 @@ covariance_natural <- function(eta, design) {
         residual[1L, 2L] / residual[[1L]]
     }
     if (spec$structure == "toep" && spec$n_times > 1L) {
-      for (lag in seq_len(spec$n_times - 1L)) {
+      for (lag in seq_len(spec$covariance_order - 1L)) {
         residual_values[[paste0("residual.cor.lag", lag)]] <-
           residual[1L, lag + 1L] / residual[[1L]]
       }

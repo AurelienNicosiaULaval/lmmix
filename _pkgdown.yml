@@ -45,6 +45,7 @@ reference:
       - sas_split_plot
       - sas_growth
       - sas_random_coefficients
+      - sas_line_source
 
 articles:
   - title: Guides
@@ -52,4 +53,5 @@ articles:
     contents:
       - lmmix
       - theory-reml
+      - boundary-inference
       - validation
