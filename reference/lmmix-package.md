@@ -3,15 +3,15 @@
 `lmmix` fits Gaussian linear mixed models by explicitly evaluating a
 profiled ML or REML criterion. It supports models that combine random
 effects with correlated residual structures and provides Satterthwaite
-inference.
+and Kenward-Roger inference.
 
 ## Model scope
 
 The residual covariance may be independent, compound symmetric, AR(1),
 Toeplitz, or unstructured. A model may have no random effects, a random
-intercept, or correlated random slopes for one grouping formula. The
-repeated-measures formula defines one ordering variable and the blocks
-of the residual covariance.
+intercept, correlated random slopes, or multiple independent crossed or
+nested grouping formulas. The repeated-measures formula defines one
+ordering variable and the blocks of the residual covariance.
 
 ## Inference and post-processing
 
@@ -22,10 +22,9 @@ standard model methods, `ggplot2` diagnostic plots, `broom` methods, and
 
 ## Current limits
 
-Kenward-Roger inference, generalized responses, multiple random-effect
-terms, and likelihood-ratio model comparison are not implemented. The
-likelihood currently uses a dense marginal covariance matrix and is
-intended for small and moderate data sets.
+The package fits univariate Gaussian responses. The likelihood uses a
+dense marginal covariance matrix and is intended for small and moderate
+data sets rather than large-scale sparse problems.
 
 ## References
 
@@ -47,6 +46,10 @@ multiple degree of freedom hypotheses in generalized least squares
 analyses of unbalanced split-plot experiments. *Journal of Statistical
 Computation and Simulation*, 54(4), 363-378.
 [doi:10.1080/00949659608811740](https://doi.org/10.1080/00949659608811740)
+
+Kenward, M. G., and Roger, J. H. (1997). Small sample inference for
+fixed effects from restricted maximum likelihood. *Biometrics*, 53(3),
+983-997. [doi:10.2307/2533558](https://doi.org/10.2307/2533558)
 
 Searle, S. R., Speed, F. M., and Milliken, G. A. (1980). Population
 marginal means in the linear model: An alternative to least squares

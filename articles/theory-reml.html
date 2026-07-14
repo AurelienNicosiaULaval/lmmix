@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
       <h1>Estimation and inference in lmmix</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/theory-reml.Rmd" class="external-link"><code>vignettes/theory-reml.Rmd</code></a></small>
       <div class="d-none name"><code>theory-reml.Rmd</code></div>
     </div>
 
@@ -185,11 +185,14 @@ matrix inverse in the likelihood calculation.</p>
 <div class="section level2">
 <h2 id="optimization-and-covariance-parameter-uncertainty">Optimization and covariance-parameter uncertainty<a class="anchor" aria-label="anchor" href="#optimization-and-covariance-parameter-uncertainty"></a>
 </h2>
-<p><code><a href="../reference/lmm_control.html">lmm_control()</a></code> selects <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb()</a></code> or
-<code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim()</a></code> and controls iteration limits, tolerances,
-parameter bounds and the numerical differentiation method. After
-optimization, <code>numDeriv</code> computes the observed likelihood
-Hessian on the unconstrained (eta) scale.</p>
+<p><code><a href="../reference/lmm_control.html">lmm_control()</a></code> can select <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb()</a></code> or
+<code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim()</a></code> directly. Its default
+<code>optimizer = "auto"</code> starts with <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb()</a></code> and
+uses deterministic perturbed starts and alternative optimizers only when
+an earlier attempt does not converge. Every attempt is retained in
+<code>fit$convergence$attempts</code>. After optimization,
+<code>numDeriv</code> computes the observed likelihood Hessian on the
+unconstrained (eta) scale.</p>
 <p>The inverse Hessian estimates</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi mathvariant="normal">Σ</mi><mo accent="true">̂</mo></mover><mi>η</mi></msub><mo>=</mo><mrow><mi mathvariant="normal">Var</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mover><mi>η</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \widehat\Sigma_\eta =
@@ -221,9 +224,34 @@ g = \frac{\partial q(\eta)}{\partial\eta},
 <p>This follows <span class="citation">Satterthwaite (<a href="#ref-satterthwaite1946">1946</a>)</span>. The gradient of (q) is
 evaluated numerically on the same unconstrained covariance scale used by
 the optimizer.</p>
-<p>With <code>ddf = "residual"</code>, the package instead uses (n-p). A
-request for <code>ddf = "kenward-roger"</code> is rejected. No
-Kenward-Roger covariance adjustment is implemented.</p>
+<p>With <code>ddf = "residual"</code>, the package instead uses
+(n-p).</p>
+</div>
+<div class="section level2">
+<h2 id="kenward-roger-adjustment">Kenward-Roger adjustment<a class="anchor" aria-label="anchor" href="#kenward-roger-adjustment"></a>
+</h2>
+<p>For <code>ddf = "kenward-roger"</code>, the package applies the
+small-sample adjustment of <span class="citation">Kenward and Roger (<a href="#ref-kenward1997">1997</a>)</span>. This method is available only
+with REML. Let</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Φ</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msup><mi>X</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>X</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">
+\Phi = (X^\mathsf{T}V^{-1}X)^{-1}
+</annotation></semantics></math></p>
+<p>and let (W) denote the covariance matrix of the estimated
+unconstrained covariance parameters. First and second numerical
+derivatives of (V) are used to construct the (P_h), (Q_{hj}), and
+(R_{hj}) matrices in the Kenward-Roger expansion. The adjusted
+fixed-effect covariance is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi mathvariant="normal">Φ</mi><mo accent="true">̂</mo></mover><mi>A</mi></msub><mo>=</mo><mover><mi mathvariant="normal">Φ</mi><mo accent="true">̂</mo></mover><mo>+</mo><mn>2</mn><mover><mi mathvariant="normal">Φ</mi><mo accent="true">̂</mo></mover><mrow><mo stretchy="true" form="prefix">{</mo><munder><mo>∑</mo><mrow><mi>h</mi><mo>,</mo><mi>j</mi></mrow></munder><msub><mi>W</mi><mrow><mi>h</mi><mi>j</mi></mrow></msub><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>Q</mi><mrow><mi>h</mi><mi>j</mi></mrow></msub><mo>−</mo><msub><mi>P</mi><mi>h</mi></msub><mover><mi mathvariant="normal">Φ</mi><mo accent="true">̂</mo></mover><msub><mi>P</mi><mi>j</mi></msub><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac><msub><mi>R</mi><mrow><mi>h</mi><mi>j</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">}</mo></mrow><mover><mi mathvariant="normal">Φ</mi><mo accent="true">̂</mo></mover><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\widehat\Phi_A = \widehat\Phi +
+2\widehat\Phi\left\{\sum_{h,j}W_{hj}
+\left(Q_{hj} - P_h\widehat\Phi P_j - \frac{1}{4}R_{hj}\right)
+\right\}\widehat\Phi.
+</annotation></semantics></math></p>
+<p>Coefficient tests use this adjusted covariance.
+Multi-degree-of-freedom tests also use the Kenward-Roger scale factor
+and denominator degrees of freedom. <code>vcov(fit)</code> returns the
+adjusted covariance, while <code>vcov(fit, adjusted = FALSE)</code>
+returns the unadjusted GLS covariance.</p>
 </div>
 <div class="section level2">
 <h2 id="type-iii-tests">Type III tests<a class="anchor" aria-label="anchor" href="#type-iii-tests"></a>
@@ -234,8 +262,14 @@ multi-row hypothesis matrix (L), the covariance of (L) is
 eigendecomposed into orthogonal one-dimensional components. Their
 Satterthwaite degrees of freedom are combined with the Fai-Cornelius
 moment-matching formula <span class="citation">(<a href="#ref-fai1996">Fai and Cornelius 1996</a>)</span>.</p>
-<p>Only type III tests are implemented. <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> does not
-perform likelihood-ratio comparisons between fitted models.</p>
+<p>For one model, <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> returns type III tests. With two
+or more nested models, it performs likelihood-ratio comparisons. Models
+that differ in fixed effects are compared under ML; REML fits are
+refitted automatically by default. Covariance-model comparisons must
+already use ML. Their chi-squared reference distribution can be
+approximate when the null value lies on the boundary of the parameter
+space <span class="citation">(<a href="#ref-self1987">Self and Liang
+1987</a>)</span>.</p>
 </div>
 <div class="section level2">
 <h2 id="estimated-marginal-means">Estimated marginal means<a class="anchor" aria-label="anchor" href="#estimated-marginal-means"></a>
@@ -248,31 +282,36 @@ fixed-effects model matrix are averaged to form the contrast matrix.
 This targets population marginal means as described by <span class="citation">Searle et al. (<a href="#ref-searle1980">1980</a>)</span>.</p>
 <p>Pairwise contrasts are differences between automatically generated
 marginal mean rows. Multiplicity correction is applied to pairwise
-p-values with <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code>. Confidence intervals are
-pointwise and are not adjusted.</p>
+p-values with <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code>. When p-values are
+adjusted, <code>conf_adjust = "auto"</code> produces simultaneous
+Bonferroni confidence intervals. Pointwise intervals remain available
+with <code>conf_adjust = "none"</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="empirical-blups-and-prediction">Empirical BLUPs and prediction<a class="anchor" aria-label="anchor" href="#empirical-blups-and-prediction"></a>
 </h2>
-<p>After covariance estimation, the empirical BLUP is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>u</mi><mo accent="true">̂</mo></mover><mo>=</mo><mi>G</mi><msup><mi>Z</mi><mi>𝖳</mi></msup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>−</mo><mi>X</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
+<p>For each independent random-effect term (k), covariance estimation is
+followed by the empirical BLUP</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>u</mi><mo accent="true">̂</mo></mover><mi>k</mi></msub><mo>=</mo><msub><mi>G</mi><mi>k</mi></msub><msubsup><mi>Z</mi><mi>k</mi><mi>𝖳</mi></msubsup><msup><mi>V</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>−</mo><mi>X</mi><mover><mi>β</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\widehat u_k = G_kZ_k^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 </annotation></semantics></math></p>
 <p>Conditional fitted values use (X+ Zu); marginal fitted values use
 (X). For new data, known grouping levels use their empirical random
-effects and new grouping levels receive a random contribution of
-zero.</p>
+effects. New levels cause an error unless
+<code>allow.new.levels = TRUE</code>, which requests their
+population-level prediction with a zero random contribution.</p>
 </div>
 <div class="section level2">
 <h2 id="computational-scope">Computational scope<a class="anchor" aria-label="anchor" href="#computational-scope"></a>
 </h2>
-<p>The current implementation builds a dense (n n) marginal covariance
+<p>Version <code>0.2.0</code> builds a dense (n n) marginal covariance
 matrix at each objective evaluation. Although the random-effects design
 matrix is initially sparse, covariance assembly and factorization are
 dense. The package is therefore intended for small and moderate data
-sets. Large-scale sparse algorithms, multiple random-effect terms,
-generalized responses and automatic optimizer restarts are not
-implemented in version <code>0.1.0</code>.</p>
+sets. Large-scale sparse algorithms and generalized responses are
+outside the current model scope. Independent crossed and nested
+random-effect terms are supported, with an unstructured covariance
+within each term.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-fai1996" class="csl-entry">
 Fai, Alex Hrong-Tai, and Paul L. Cornelius. 1996. <span>“Approximate
@@ -286,6 +325,11 @@ Harville, David A. 1977. <span>“Maximum Likelihood Approaches to
 Variance Component Estimation and to Related Problems.”</span>
 <em>Journal of the American Statistical Association</em> 72 (358):
 320–38. <a href="https://doi.org/10.1080/01621459.1977.10480998" class="external-link">https://doi.org/10.1080/01621459.1977.10480998</a>.
+</div>
+<div id="ref-kenward1997" class="csl-entry">
+Kenward, Michael G., and James H. Roger. 1997. <span>“Small Sample
+Inference for Fixed Effects from Restricted Maximum Likelihood.”</span>
+<em>Biometrics</em> 53 (3): 983–97. <a href="https://doi.org/10.2307/2533558" class="external-link">https://doi.org/10.2307/2533558</a>.
 </div>
 <div id="ref-lamotte2007" class="csl-entry">
 LaMotte, Lynn R. 2007. <span>“A Direct Derivation of the REML Likelihood
@@ -309,6 +353,12 @@ Estimates of Variance Components.”</span> <em>Biometrics Bulletin</em> 2
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. <span>“Population
 Marginal Means in the Linear Model: An Alternative to Least Squares
 Means.”</span> <em>The American Statistician</em> 34 (4): 216–21. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link">https://doi.org/10.1080/00031305.1980.10483031</a>.
+</div>
+<div id="ref-self1987" class="csl-entry">
+Self, Steven G., and Kung-Yee Liang. 1987. <span>“Asymptotic Properties
+of Maximum Likelihood Estimators and Likelihood Ratio Tests Under
+Nonstandard Conditions.”</span> <em>Journal of the American Statistical
+Association</em> 82 (398): 605–10. <a href="https://doi.org/10.1080/01621459.1987.10478472" class="external-link">https://doi.org/10.1080/01621459.1987.10478472</a>.
 </div>
 </div>
 </div>

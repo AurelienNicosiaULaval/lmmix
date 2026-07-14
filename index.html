@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,8 +61,8 @@
 <div class="page-header"><h1 id="lmmix">lmmix<a class="anchor" aria-label="anchor" href="#lmmix"></a>
 </h1></div>
 <p><code>lmmix</code> fits Gaussian linear mixed models by explicitly optimizing the ML or REML criterion. Its main use case is a model that contains both random effects and a structured residual covariance.</p>
-<p>The package estimates the covariance parameters, fixed effects and empirical BLUPs in one fitted object. It also provides Satterthwaite inference, type III tests, estimated marginal means, pairwise contrasts, standard model methods, <code>broom</code> methods and <code>emmeans</code> interoperability.</p>
-<p>The package is under active development. The table below distinguishes current functionality from features that are not implemented.</p>
+<p>The package estimates the covariance parameters, fixed effects and empirical BLUPs in one fitted object. It also provides Satterthwaite and Kenward-Roger inference, type III tests, likelihood-ratio comparisons, estimated marginal means, pairwise contrasts, standard model methods, <code>broom</code> methods and <code>emmeans</code> interoperability.</p>
+<p>The package is under active development. The table below summarizes the implemented functionality and the intended model boundary.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -79,7 +79,7 @@
 <li>
 <a href="articles/lmmix.html">Using lmmix</a> (<a href="vignettes/lmmix.Rmd">source</a>) presents the fitting workflow and the main methods;</li>
 <li>
-<a href="articles/theory-reml.html">Estimation and inference in lmmix</a> (<a href="vignettes/theory-reml.Rmd">source</a>) gives the mathematical formulation, covariance parameterizations, ML and REML criteria, and Satterthwaite inference;</li>
+<a href="articles/theory-reml.html">Estimation and inference in lmmix</a> (<a href="vignettes/theory-reml.Rmd">source</a>) gives the mathematical formulation, covariance parameterizations, ML and REML criteria, and Satterthwaite and Kenward-Roger inference;</li>
 <li>
 <a href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a> (<a href="vignettes/validation.Rmd">source</a>) documents the independent comparisons, numerical tolerances, and validation boundaries.</li>
 </ul>
@@ -112,7 +112,7 @@
 </tr>
 <tr>
 <td align="left">Random effects</td>
-<td align="left">No random effect, random intercept, or correlated random slopes for one grouping formula</td>
+<td align="left">No random effect, one grouping formula, or independent crossed or nested formulas with correlated slopes within each term</td>
 </tr>
 <tr>
 <td align="left">Residual covariance</td>
@@ -126,11 +126,11 @@
 </tr>
 <tr>
 <td align="left">Denominator degrees of freedom</td>
-<td align="left">Satterthwaite or residual</td>
+<td align="left">Satterthwaite, Kenward-Roger, or residual</td>
 </tr>
 <tr>
 <td align="left">Fixed-effect tests</td>
-<td align="left">Coefficient tests and type III tests</td>
+<td align="left">Coefficient tests, type III tests, and nested-model likelihood-ratio comparisons</td>
 </tr>
 <tr>
 <td align="left">Marginal means</td>
@@ -138,7 +138,13 @@
 </tr>
 <tr>
 <td align="left">Multiplicity</td>
-<td align="left">Any method accepted by <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code> for pairwise p-values</td>
+<td align="left">Any <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code> method and simultaneous Bonferroni confidence intervals</td>
+</tr>
+<tr>
+<td align="left">Missing data</td>
+<td align="left">
+<code>na.omit</code>, <code>na.exclude</code>, or <code>na.fail</code>
+</td>
 </tr>
 <tr>
 <td align="left">Interoperability</td>
@@ -152,8 +158,8 @@
 <code><a href="reference/lmm-methods.html">plot.lmm()</a></code> returns <code>ggplot2</code> residual, Q-Q, and fitted-value diagnostics</td>
 </tr>
 <tr>
-<td align="left">Not implemented</td>
-<td align="left">Kenward-Roger inference, likelihood-ratio model comparison, multiple random-effect terms, generalized responses</td>
+<td align="left">Model boundary</td>
+<td align="left">Gaussian responses and dense covariance factorization for small and moderate data sets</td>
 </tr>
 </tbody>
 </table>
@@ -163,7 +169,7 @@
 </h2>
 <p>The included <code>multicentre</code> data are a three-center repeated-measures example with three treatments and three measurement occasions. The data contain 153 rows, including 28 missing responses. Their source is Milliken and Johnson (2009, Section 28.3).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">lmmix</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/AurelienNicosiaULaval/lmmix" class="external-link">lmmix</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">multicentre</span>,</span>
@@ -178,11 +184,11 @@
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; Linear mixed model fit by REML</span></span>
 <span><span class="co">#&gt; Formula: `Y ~ Drug * Time`</span></span>
-<span><span class="co">#&gt; Random: `~1 | Center`</span></span>
+<span><span class="co">#&gt; Random (Center): `~1 | Center`</span></span>
 <span><span class="co">#&gt; Repeated: `~Time | Center:Drug:Subject` (AR1)</span></span>
 <span><span class="co">#&gt; Log-likelihood: -245.313</span></span>
 <span><span class="co">#&gt; Convergence code: 0</span></span></code></pre></div>
-<p><code><a href="reference/lmm.html">lmm()</a></code> uses complete cases across every variable required by the fixed, random and repeated formulas. The fitted object therefore records 125 observations for this example.</p>
+<p>By default, <code><a href="reference/lmm.html">lmm()</a></code> omits rows that are incomplete for variables required by the fixed, random and repeated formulas. The fitted object therefore records 125 observations for this example. Use <code>na.action = na.exclude</code> to restore omitted positions in fitted values, residuals and augmented data.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 125</span></span>
@@ -221,12 +227,13 @@
 <span><span class="co">#&gt; 2 2         18.1        1.53  3.01     11.8    0.00128      13.3         23.0</span></span>
 <span><span class="co">#&gt; 3 3         17.1        1.53  3.01     11.1    0.00154      12.2         21.9</span></span>
 <span><span class="co">#&gt; ── Pairwise contrasts ──</span></span>
+<span><span class="co">#&gt; P-value adjustment: holm; confidence intervals: bonferroni</span></span>
 <span><span class="co">#&gt; # A tibble: 3 × 8</span></span>
 <span><span class="co">#&gt;   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;       &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 1 - 2       -4.99        1.10  46.1    -4.54   0.000120      -7.20       -2.78</span></span>
-<span><span class="co">#&gt; 2 1 - 3       -3.89        1.10  46.1    -3.54   0.00183       -6.11       -1.68</span></span>
-<span><span class="co">#&gt; 3 2 - 3        1.10        1.10  46.9     0.993  0.326         -1.12        3.32</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 1 - 2       -4.99        1.10  46.1    -4.54   0.000120      -7.72       -2.26</span></span>
+<span><span class="co">#&gt; 2 1 - 3       -3.89        1.10  46.1    -3.54   0.00183       -6.62       -1.16</span></span>
+<span><span class="co">#&gt; 3 2 - 3        1.10        1.10  46.9     0.993  0.326         -1.64        3.84</span></span></code></pre></div>
 <p>The convergence code and Hessian diagnostic should be checked before interpreting inference.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">convergence</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
@@ -262,6 +269,16 @@
 <span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">+</span> <span class="va">time</span>,</span>
 <span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">time</span> <span class="op">|</span> <span class="va">subject</span>,</span>
 <span>  structure <span class="op">=</span> <span class="st">"id"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Crossed random intercepts</span></span>
+<span><span class="va">crossed_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">+</span> <span class="va">time</span>,</span>
+<span>  random <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    center <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">center</span>,</span>
+<span>    subject <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">subject</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Combined random-effect and correlated-residual model</span></span>
@@ -342,6 +359,16 @@
 <span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; Results are averaged over the levels of: Time</span></span>
 <span><span class="co">#&gt; Confidence level used: 0.95</span></span></code></pre></div>
+<p>Kenward-Roger inference is available for REML fits. Nested models with different fixed effects are automatically refitted with ML for a likelihood-ratio comparison.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">kr_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">*</span> <span class="va">time</span>,</span>
+<span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">subject</span>,</span>
+<span>  ddf <span class="op">=</span> <span class="st">"kenward-roger"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">reduced_fit</span>, <span class="va">full_fit</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="validation">Validation<a class="anchor" aria-label="anchor" href="#validation"></a>
@@ -380,6 +407,23 @@
 <td align="left">Coefficient degrees of freedom and type III tests</td>
 </tr>
 <tr>
+<td align="left">Kenward-Roger inference</td>
+<td align="left">
+<code>lmerTest</code> and <code>mmrm</code>
+</td>
+<td align="left">Adjusted covariance and denominator degrees of freedom</td>
+</tr>
+<tr>
+<td align="left">Crossed random effects</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/lme4/man/lmer.html" class="external-link">lme4::lmer()</a></code></td>
+<td align="left">Fixed effects, covariance parameters and log-likelihood</td>
+</tr>
+<tr>
+<td align="left">Nested-model comparisons</td>
+<td align="left"><code>lme4::anova()</code></td>
+<td align="left">Likelihood-ratio statistics and p-values</td>
+</tr>
+<tr>
 <td align="left">Combined random center and AR(1)</td>
 <td align="left">Stored PROC MIXED targets</td>
 <td align="left">Covariance parameters, fixed effects, type III tests and marginal means</td>
@@ -389,28 +433,26 @@
 <p>The package also tests positive definiteness and convergence for every supported residual structure in a combined model. See <code>VALIDATION.md</code> and the validation vignette for model specifications, tolerances and limitations.</p>
 </div>
 <div class="section level2">
-<h2 id="current-limitations">Current limitations<a class="anchor" aria-label="anchor" href="#current-limitations"></a>
+<h2 id="model-scope-and-remaining-boundaries">Model scope and remaining boundaries<a class="anchor" aria-label="anchor" href="#model-scope-and-remaining-boundaries"></a>
 </h2>
-<p>The following limitations are part of the current <code>0.1.0</code> interface:</p>
-<ul>
-<li>
-<code>ddf = "kenward-roger"</code> is rejected because Kenward-Roger inference is not implemented.</li>
-<li>
-<code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> provides type III tests for one fitted model. It does not compare nested fitted models.</li>
-<li>Only one random-effects formula is accepted. Multiple crossed random-effect terms are not implemented.</li>
-<li>The implementation constructs a dense marginal covariance matrix. It is intended for small and moderate data sets, not large-scale sparse problems.</li>
-<li>Missing observations are removed by complete-case analysis over all model variables.</li>
-<li>Pairwise multiplicity adjustments modify p-values. The reported confidence intervals remain pointwise intervals.</li>
-<li>New random-effect groups receive a random contribution of zero in conditional prediction.</li>
-</ul>
+<p>Version <code>0.2.0</code> fits univariate Gaussian models. It is not a generalized mixed-model engine. The likelihood constructs and factors a dense marginal covariance matrix, so the package targets small and moderate data sets rather than large-scale sparse problems.</p>
+<p>Rows with missing responses or model covariates are handled according to <code>na.action</code>; the package does not impute missing covariates. Conditional prediction rejects unseen random-effect groups by default. Set <code>allow.new.levels = TRUE</code> to request the population-level prediction, for which the unseen random contribution is zero.</p>
 </div>
 <div class="section level2">
 <h2 id="theoretical-sources">Theoretical sources<a class="anchor" aria-label="anchor" href="#theoretical-sources"></a>
 </h2>
-<p>The REML implementation follows Patterson and Thompson (1971), Harville (1977), and LaMotte (2007). Satterthwaite inference follows Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai and Cornelius (1996). Estimated marginal means follow Searle, Speed, and Milliken (1980). Full citations and DOI links are included in the package help and the <a href="articles/theory-reml.html">theory vignette</a>.</p>
+<p>The REML implementation follows Patterson and Thompson (1971), Harville (1977), and LaMotte (2007). Satterthwaite inference follows Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai and Cornelius (1996). Small-sample covariance adjustment follows Kenward and Roger (1997). Estimated marginal means follow Searle, Speed, and Milliken (1980). Full citations and DOI links are included in the package help and the <a href="articles/theory-reml.html">theory vignette</a>.</p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/AurelienNicosiaULaval/lmmix/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/AurelienNicosiaULaval/lmmix/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>

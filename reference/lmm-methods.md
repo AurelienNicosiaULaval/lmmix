@@ -14,7 +14,7 @@ print(x, ...)
 coef(object, ...)
 
 # S3 method for class 'lmm'
-vcov(object, ...)
+vcov(object, adjusted = TRUE, ...)
 
 # S3 method for class 'lmm'
 logLik(object, ...)
@@ -48,6 +48,7 @@ predict(
   object,
   newdata = NULL,
   re.form = NULL,
+  allow.new.levels = FALSE,
   na.action = stats::na.pass,
   ...
 )
@@ -65,7 +66,7 @@ formula(x, fixed.only = TRUE, ...)
 terms(x, ...)
 
 # S3 method for class 'lmm'
-anova(object, ..., type = 3)
+anova(object, ..., type = 3, refit = TRUE)
 
 # S3 method for class 'lmm'
 confint(object, parm = names(object$coefficients), level = 0.95, ...)
@@ -80,8 +81,13 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
 
 - ...:
 
-  Additional arguments. Supplying another model to
-  [`anova()`](https://rdrr.io/r/stats/anova.html) is not supported.
+  Additional fitted `lmm` models for likelihood-ratio comparison, or
+  arguments passed to the corresponding method.
+
+- adjusted:
+
+  Whether [`vcov()`](https://rdrr.io/r/stats/vcov.html) returns the
+  Kenward-Roger-adjusted covariance when available.
 
 - k:
 
@@ -111,6 +117,11 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
   `NULL` includes empirical random effects. Any non-`NULL` value
   requests a fixed-effects-only prediction.
 
+- allow.new.levels:
+
+  Whether conditional predictions may include new grouping levels. Their
+  random contribution is zero when allowed.
+
 - na.action:
 
   Missing-value action retained for prediction-method compatibility.
@@ -124,6 +135,11 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
   Whether [`formula()`](https://rdrr.io/r/stats/formula.html) returns
   only the fixed formula. If `FALSE`, it returns fixed, random, and
   repeated formulas in a list.
+
+- refit:
+
+  Whether REML models that differ in fixed effects are refitted with ML
+  before comparison.
 
 - parm:
 
@@ -143,5 +159,6 @@ The return value follows the corresponding base R generic.
 
 Conditional fitted values and predictions include empirical random
 effects. Marginal values use fixed effects only. In prediction from new
-data, known grouping levels use their fitted random effect and new
-levels receive a random contribution of zero.
+data, known grouping levels use their fitted random effect. New levels
+are rejected by default and receive a random contribution of zero only
+when explicitly allowed.

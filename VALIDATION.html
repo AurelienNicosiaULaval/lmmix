@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Validation scope</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/VALIDATION.md" class="external-link"><code>VALIDATION.md</code></a></small>
     </div>
 
 <div id="validation-scope" class="section level1">
@@ -108,6 +108,21 @@
 <td align="left">Numerator df, denominator df, F statistics</td>
 <td align="left">absolute <code>1e-6</code>, <code>5e-3</code>, and <code>5e-3</code>
 </td>
+</tr><tr><td align="left">Marginal AR(1) Kenward-Roger</td>
+<td align="left"><code><a href="https://openpharma.github.io/mmrm/latest-tag/reference/mmrm.html" class="external-link">mmrm::mmrm()</a></code></td>
+<td align="left">Fixed effects, adjusted standard errors, denominator df</td>
+<td align="left">absolute <code>1e-5</code>, <code>3e-3</code>, and <code>5e-3</code>
+</td>
+</tr><tr><td align="left">Crossed random intercepts</td>
+<td align="left"><code><a href="https://rdrr.io/pkg/lme4/man/lmer.html" class="external-link">lme4::lmer()</a></code></td>
+<td align="left">Log-likelihood and covariance parameters</td>
+<td align="left">absolute <code>1e-5</code> and <code>1e-4</code>
+</td>
+</tr><tr><td align="left">Nested fixed-effect models</td>
+<td align="left"><code>lme4::anova()</code></td>
+<td align="left">Likelihood-ratio statistic and p-value</td>
+<td align="left">absolute <code>1e-5</code>
+</td>
 </tr></tbody></table><p>The combined-model tests fit <code>id</code>, <code>cs</code>, <code>ar1</code>, <code>toep</code>, and <code>un</code> residual structures together with a random center intercept. Every fit must converge with a positive-definite likelihood Hessian and marginal covariance matrix.</p>
 </div>
 <div class="section level2">
@@ -139,6 +154,10 @@
 </li>
 <li>Fai, A. H.-T., and Cornelius, P. L. (1996), for multi-degree-of-freedom approximate F-tests. <a href="https://doi.org/10.1080/00949659608811740" class="external-link uri">https://doi.org/10.1080/00949659608811740</a>
 </li>
+<li>Kenward, M. G., and Roger, J. H. (1997), for small-sample covariance and denominator-df adjustment. <a href="https://doi.org/10.2307/2533558" class="external-link uri">https://doi.org/10.2307/2533558</a>
+</li>
+<li>Self, S. G., and Liang, K.-Y. (1987), for likelihood-ratio tests with parameters on the boundary. <a href="https://doi.org/10.1080/01621459.1987.10478472" class="external-link uri">https://doi.org/10.1080/01621459.1987.10478472</a>
+</li>
 <li>Searle, S. R., Speed, F. M., and Milliken, G. A. (1980), for population marginal means. <a href="https://doi.org/10.1080/00031305.1980.10483031" class="external-link uri">https://doi.org/10.1080/00031305.1980.10483031</a>
 </li>
 <li>Pinheiro, J. C., and Bates, D. M. (2000), for structured covariance models. <a href="https://doi.org/10.1007/b98882" class="external-link uri">https://doi.org/10.1007/b98882</a>
@@ -146,7 +165,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="boundaries-of-the-evidence">Boundaries of the evidence<a class="anchor" aria-label="anchor" href="#boundaries-of-the-evidence"></a></h2>
-<p>The validation does not cover Kenward-Roger inference, multiple random-effect terms, generalized responses, likelihood-ratio model comparison, or large-scale sparse performance because those capabilities are not implemented in version <code>0.1.0</code>.</p>
+<p>The validation covers Kenward-Roger inference in overlapping random-effects and marginal models, multiple crossed random intercepts, and fixed-effect likelihood-ratio comparisons. Generalized responses and large-scale sparse performance remain outside the package scope. Combined-model Kenward-Roger inference has structural tests but no fresh independent SAS execution.</p>
 </div>
 </div>
 

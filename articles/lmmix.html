@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
       <h1>Using lmmix</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/vignettes/lmmix.Rmd" class="external-link"><code>vignettes/lmmix.Rmd</code></a></small>
       <div class="d-none name"><code>lmmix.Rmd</code></div>
     </div>
 
@@ -80,7 +80,7 @@ covariance parameterizations, likelihood criteria, and inference
 derivations are presented separately in the vignette <em>Estimation and
 inference in lmmix</em>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">lmmix</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/AurelienNicosiaULaval/lmmix" class="external-link">lmmix</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="prepare-the-data">Prepare the data<a class="anchor" aria-label="anchor" href="#prepare-the-data"></a>
@@ -100,9 +100,10 @@ center and treatment.</p>
 <span><span class="co">#&gt;  Center    Drug Subject    Time       Y </span></span>
 <span><span class="co">#&gt;       0       0       0       0      28</span></span></code></pre></div>
 <p>The fixed, random and repeated formulas jointly determine the
-variables used by the analysis. <code><a href="../reference/lmm.html">lmm()</a></code> removes rows that are
-incomplete for any of those variables and stores the retained data in
-the fitted object.</p>
+variables used by the analysis. Missing rows are handled with
+<code>na.omit</code>, <code>na.exclude</code>, or <code>na.fail</code>.
+The default is <code>na.omit</code>; <code>na.exclude</code> restores
+omitted positions in fitted values, residuals, and augmented data.</p>
 </div>
 <div class="section level2">
 <h2 id="fit-a-combined-covariance-model">Fit a combined covariance model<a class="anchor" aria-label="anchor" href="#fit-a-combined-covariance-model"></a>
@@ -123,7 +124,7 @@ covariance within subject.</p>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; Linear mixed model fit by REML</span></span>
 <span><span class="co">#&gt; Formula: `Y ~ Drug * Time`</span></span>
-<span><span class="co">#&gt; Random: `~1 | Center`</span></span>
+<span><span class="co">#&gt; Random (Center): `~1 | Center`</span></span>
 <span><span class="co">#&gt; Repeated: `~Time | Center:Drug:Subject` (AR1)</span></span>
 <span><span class="co">#&gt; Log-likelihood: -245.313</span></span>
 <span><span class="co">#&gt; Convergence code: 0</span></span></code></pre></div>
@@ -188,7 +189,12 @@ object.</p>
 <span><span class="co">#&gt; [1] 13</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $hessian_positive_definite</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] TRUE</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="va">convergence</span><span class="op">$</span><span class="va">attempts</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   attempt optimizer method convergence objective selected</span></span>
+<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       1 nlminb    <span style="color: #BB0000;">NA</span>               0      245. TRUE</span></span></code></pre></div>
 <p>A nonzero convergence code or a non-positive-definite likelihood
 Hessian requires investigation before interpreting standard errors or
 denominator degrees of freedom. The fitting function emits a warning in
@@ -286,18 +292,38 @@ methods.</p>
 <span><span class="co">#&gt; Drug3:Time2 -1.3675896  0.4205612</span></span>
 <span><span class="co">#&gt; Drug2:Time3 -0.5046493  2.1512811</span></span>
 <span><span class="co">#&gt; Drug3:Time3 -0.9485017  1.6170050</span></span></code></pre></div>
-<p><code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> currently performs type III fixed-effect tests
-for one model. It does not compare nested models. Satterthwaite and
-residual denominator degrees of freedom are implemented. Kenward-Roger
-inference is not implemented.</p>
+<p><code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> performs type III fixed-effect tests for one
+model. With multiple models it performs likelihood-ratio comparisons,
+automatically refitting REML models with ML when their fixed effects
+differ. Satterthwaite, Kenward-Roger, and residual denominator degrees
+of freedom are available. Kenward-Roger is restricted to REML fits.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_kr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">multicentre</span>,</span>
+<span>  formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">Drug</span> <span class="op">*</span> <span class="va">Time</span>,</span>
+<span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">Center</span>,</span>
+<span>  repeated <span class="op">=</span> <span class="op">~</span> <span class="va">Time</span> <span class="op">|</span> <span class="va">Center</span><span class="op">:</span><span class="va">Drug</span><span class="op">:</span><span class="va">Subject</span>,</span>
+<span>  structure <span class="op">=</span> <span class="st">"ar1"</span>,</span>
+<span>  ddf <span class="op">=</span> <span class="st">"kenward-roger"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fit_reduced</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">multicentre</span>,</span>
+<span>  formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">Drug</span> <span class="op">+</span> <span class="va">Time</span>,</span>
+<span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">Center</span>,</span>
+<span>  repeated <span class="op">=</span> <span class="op">~</span> <span class="va">Time</span> <span class="op">|</span> <span class="va">Center</span><span class="op">:</span><span class="va">Drug</span><span class="op">:</span><span class="va">Subject</span>,</span>
+<span>  structure <span class="op">=</span> <span class="st">"ar1"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">fit_reduced</span>, <span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="covariance-parameters-and-random-effects">Covariance parameters and random effects<a class="anchor" aria-label="anchor" href="#covariance-parameters-and-random-effects"></a>
 </h2>
 <p><code><a href="../reference/VarCorr.html">VarCorr()</a></code> returns the estimated covariance components on
 their natural scale. <code><a href="../reference/ranef.html">ranef()</a></code> returns empirical BLUPs as a
-tibble.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+tibble for one random term and a named list of tibbles for multiple
+terms.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/VarCorr.html">VarCorr</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
 <span><span class="co">#&gt;   Group    Term        Component Estimate `Std Error`</span></span>
@@ -323,7 +349,7 @@ unstructured. Its variances and correlations appear as separate rows in
 covariates not requested in <code>specs</code> are held at their
 observed means. This construction targets population marginal means in
 the sense of <span class="citation">Searle et al. (<a href="#ref-searle1980">1980</a>)</span>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 8</span></span></span>
 <span><span class="co">#&gt;   Drug  Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`</span></span>
@@ -339,10 +365,12 @@ the sense of <span class="citation">Searle et al. (<a href="#ref-searle1980">198
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2         15.7        1.40  2.09      11.2   0.006<span style="text-decoration: underline;">70</span>       9.90        21.4</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 3         17.7        1.40  2.12      12.6   0.004<span style="text-decoration: underline;">95</span>      12.0         23.5</span></span></code></pre></div>
 <p>Pairwise contrast matrices are generated automatically. The
-<code>adjust</code> argument is passed to <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code>
-and therefore adjusts pairwise p-values. The confidence intervals remain
-pointwise.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code>adjust</code> argument is passed to
+<code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code>. When p-values are adjusted,
+<code>conf_adjust = "auto"</code> reports simultaneous Bonferroni
+confidence intervals. Use <code>conf_adjust = "none"</code> for
+pointwise intervals.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">pairwise</span> <span class="op">~</span> <span class="va">Drug</span>, adjust <span class="op">=</span> <span class="st">"holm"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Estimated marginal means</span> ──</span></span>
@@ -354,20 +382,21 @@ pointwise.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2         18.1        1.53  3.01     11.8    0.001<span style="text-decoration: underline;">28</span>      13.3         23.0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 3         17.1        1.53  3.01     11.1    0.001<span style="text-decoration: underline;">54</span>      12.2         21.9</span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Pairwise contrasts</span> ──</span></span>
+<span><span class="co">#&gt; P-value adjustment: holm; confidence intervals: bonferroni</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 8</span></span></span>
 <span><span class="co">#&gt;   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 1 - 2       -<span style="color: #BB0000;">4.99</span>        1.10  46.1    -<span style="color: #BB0000;">4.54</span>   0.000<span style="text-decoration: underline;">120</span>      -<span style="color: #BB0000;">7.20</span>       -<span style="color: #BB0000;">2.78</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 1 - 3       -<span style="color: #BB0000;">3.89</span>        1.10  46.1    -<span style="color: #BB0000;">3.54</span>   0.001<span style="text-decoration: underline;">83</span>       -<span style="color: #BB0000;">6.11</span>       -<span style="color: #BB0000;">1.68</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2 - 3        1.10        1.10  46.9     0.993  0.326         -<span style="color: #BB0000;">1.12</span>        3.32</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 1 - 2       -<span style="color: #BB0000;">4.99</span>        1.10  46.1    -<span style="color: #BB0000;">4.54</span>   0.000<span style="text-decoration: underline;">120</span>      -<span style="color: #BB0000;">7.72</span>       -<span style="color: #BB0000;">2.26</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 1 - 3       -<span style="color: #BB0000;">3.89</span>        1.10  46.1    -<span style="color: #BB0000;">3.54</span>   0.001<span style="text-decoration: underline;">83</span>       -<span style="color: #BB0000;">6.62</span>       -<span style="color: #BB0000;">1.16</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2 - 3        1.10        1.10  46.9     0.993  0.326         -<span style="color: #BB0000;">1.64</span>        3.84</span></span></code></pre></div>
 <p>Reference values for numeric covariates can be overridden with
 <code>at</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span>, at <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Time <span class="op">=</span> <span class="st">"2"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>When <code>emmeans</code> is installed, <code>lmmix</code> supplies
 the required fixed-effects basis and model-specific denominator degrees
 of freedom.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emmeans</span><span class="fu">::</span><span class="fu"><a href="https://rvlenth.github.io/emmeans/reference/emmeans.html" class="external-link">emmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="op">~</span><span class="va">Drug</span><span class="op">)</span></span>
 <span><span class="co">#&gt; NOTE: Results may be misleading due to involvement in interactions</span></span>
 <span><span class="co">#&gt;  Drug emmean   SE   df lower.CL upper.CL</span></span>
@@ -383,7 +412,7 @@ of freedom.</p>
 </h2>
 <p>Conditional fitted values include empirical random effects. Marginal
 fitted values use fixed effects only.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"conditional"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        1        4        5        6        7        8 </span></span>
 <span><span class="co">#&gt; 12.95368 12.95368 13.87477 15.34591 12.95368 13.87477</span></span>
@@ -394,9 +423,11 @@ fitted values use fixed effects only.</p>
 <span><span class="co">#&gt;           1           4           5           6           7           8 </span></span>
 <span><span class="co">#&gt;  1.23872457 -0.29195520  0.03833728 -0.10589561 -0.29195520 -0.88007058</span></span></code></pre></div>
 <p>For <code>predict(fit, newdata)</code>, known grouping levels receive
-their fitted random effect. New groups receive a random contribution of
-zero. Set <code>re.form</code> to a non-<code>NULL</code> value to
-request fixed-effects-only predictions.</p>
+their fitted random effect. New groups cause an error unless
+<code>allow.new.levels = TRUE</code> is supplied; when allowed, their
+random contribution is zero. Set <code>re.form</code> to a
+non-<code>NULL</code> value to request fixed-effects-only
+predictions.</p>
 </div>
 <div class="section level2">
 <h2 id="diagnostic-plots">Diagnostic plots<a class="anchor" aria-label="anchor" href="#diagnostic-plots"></a>
@@ -405,13 +436,13 @@ request fixed-effects-only predictions.</p>
 object. Three diagnostics are available through <code>which</code>:
 standardized residuals against fitted values, a normal Q-Q plot, and
 observed against fitted values.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"residuals"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="lmmix_files/figure-html/diagnostic-plots-1.png" class="r-plt" alt="Residual and normal Q-Q diagnostic plots" width="48%"><img src="lmmix_files/figure-html/diagnostic-plots-2.png" class="r-plt" alt="Residual and normal Q-Q diagnostic plots" width="48%"></p>
 <p>Because the returned object is a <code>ggplot</code>, layers and
 themes can be added in the usual way.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="lmmix_files/figure-html/customize-plot-1.png" class="r-plt" alt="Observed values plotted against fitted values" width="700"></p>
@@ -426,7 +457,7 @@ within the repeated-measures groups.</p>
 <code>broom</code> column names required for programmatic use. Input
 column names are preserved by <code>augment()</code> and
 <code><a href="../reference/ranef.html">ranef()</a></code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 7</span></span></span>
 <span><span class="co">#&gt;   Effect Term        Estimate `Std Error` Statistic    DF   `p value`</span></span>
@@ -461,7 +492,7 @@ column names are preserved by <code>augment()</code> and
 </h2>
 <p>The same interface covers marginal, random-effects and combined
 models.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Marginal model with unstructured repeated-measures covariance</span></span>
 <span><span class="va">fit_marginal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
@@ -478,6 +509,16 @@ models.</p>
 <span>  structure <span class="op">=</span> <span class="st">"id"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Independent crossed random intercepts</span></span>
+<span><span class="va">fit_crossed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">+</span> <span class="va">time</span>,</span>
+<span>  random <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    center <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">center</span>,</span>
+<span>    subject <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">subject</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Combined random intercept and Toeplitz residual covariance</span></span>
 <span><span class="va">fit_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
@@ -490,14 +531,12 @@ models.</p>
 <div class="section level2">
 <h2 id="practical-limits">Practical limits<a class="anchor" aria-label="anchor" href="#practical-limits"></a>
 </h2>
-<p>The current implementation constructs the full dense matrix
+<p>Version <code>0.2.0</code> constructs the full dense matrix
 <code>V</code> during optimization. It is appropriate for small and
 moderate data sets. It is not a large-scale sparse mixed-model engine.
-The interface accepts one random-effects formula and one
-repeated-measures structure. Generalized responses, multiple
-random-effect terms, Kenward-Roger inference and likelihood-ratio model
-comparison are outside the current <code>0.1.0</code>
-implementation.</p>
+The interface accepts multiple independent random-effect formulas and
+one repeated-measures structure. Generalized responses remain outside
+the Gaussian model scope.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-searle1980" class="csl-entry">
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. <span>“Population

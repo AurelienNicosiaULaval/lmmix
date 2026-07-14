@@ -1,12 +1,13 @@
 # Control numerical optimization for `lmm()`
 
-Control numerical optimization for [`lmm()`](lmm.md)
+Control numerical optimization for
+[`lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm.md)
 
 ## Usage
 
 ``` r
 lmm_control(
-  optimizer = c("nlminb", "optim"),
+  optimizer = c("auto", "nlminb", "optim"),
   optim_method = "BFGS",
   max_iter = 1000L,
   rel_tol = 1e-08,
@@ -14,7 +15,9 @@ lmm_control(
   initial = NULL,
   lower = -20,
   upper = 20,
-  deriv_method = "Richardson"
+  deriv_method = "Richardson",
+  max_restarts = 3L,
+  restart_scale = 0.25
 )
 ```
 
@@ -22,7 +25,7 @@ lmm_control(
 
 - optimizer:
 
-  Optimizer to use, either `"nlminb"` or `"optim"`.
+  Optimizer strategy: `"auto"`, `"nlminb"`, or `"optim"`.
 
 - optim_method:
 
@@ -54,6 +57,15 @@ lmm_control(
 - deriv_method:
 
   Numerical differentiation method passed to `numDeriv`.
+
+- max_restarts:
+
+  Maximum number of deterministic restart attempts after an unsuccessful
+  initial fit.
+
+- restart_scale:
+
+  Size of deterministic perturbations to starting values.
 
 ## Value
 

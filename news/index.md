@@ -1,5 +1,28 @@
 # Changelog
 
+## lmmix 0.2.0
+
+- Added Kenward-Roger covariance adjustment, denominator degrees of
+  freedom, and scaled multi-degree-of-freedom tests for REML fits.
+- Added independent crossed or nested random-effect terms through a
+  backward-compatible list-of-formulas interface.
+- Added likelihood-ratio comparisons for nested models. Models that
+  differ in fixed effects can be refitted automatically with ML, while
+  covariance-model comparisons require ML and report the
+  boundary-distribution caveat.
+- Added deterministic optimizer fallback attempts and retained complete
+  attempt diagnostics in fitted objects.
+- Added `na.action` support for `na.omit`, `na.exclude`, and `na.fail`,
+  including restoration of excluded rows in fitted values, residuals,
+  and augmented data.
+- New grouping levels now require `allow.new.levels = TRUE` for
+  conditional prediction instead of silently receiving a zero random
+  contribution.
+- Added simultaneous Bonferroni confidence intervals for adjusted
+  pairwise marginal-mean comparisons.
+- Added independent validation against `lme4`, `lmerTest`, `mmrm`, and
+  `emmeans` for the new 0.2.0 capabilities.
+
 ## lmmix 0.1.0
 
 - Added explicit profiled ML and REML estimation for Gaussian linear
@@ -11,9 +34,10 @@
 - Added Satterthwaite fixed-effect inference, type III tests, estimated
   marginal means, and pairwise contrasts.
 - Added standard model, broom, and `emmeans` methods.
-- Added [`plot.lmm()`](../reference/lmm-methods.md) diagnostics that
-  return `ggplot2` objects for residual, normal Q-Q, and
-  observed-versus-fitted displays.
+- Added
+  [`plot.lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  diagnostics that return `ggplot2` objects for residual, normal Q-Q,
+  and observed-versus-fitted displays.
 - Added human-readable table printing without dots in displayed headings
   while preserving standard `broom` column names for programmatic use.
 - Added the multilocation example from Milliken and Johnson (2009,

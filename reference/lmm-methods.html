@@ -11,7 +11,7 @@ testing and fixed-effect confidence intervals."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ testing and fixed-effect confidence intervals."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Standard methods for <code>lmm</code> fits</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/R/methods.R" class="external-link"><code>R/methods.R</code></a></small>
       <div class="d-none name"><code>lmm-methods.Rd</code></div>
     </div>
 
@@ -59,7 +59,7 @@ testing and fixed-effect confidence intervals.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'lmm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">object</span>, adjusted <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'lmm'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -93,6 +93,7 @@ testing and fixed-effect confidence intervals.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  re.form <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  allow.new.levels <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  na.action <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.pass</a></span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
@@ -110,7 +111,7 @@ testing and fixed-effect confidence intervals.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'lmm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, type <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, type <span class="op">=</span> <span class="fl">3</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'lmm'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">object</span>, parm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">object</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span>, level <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
@@ -126,8 +127,13 @@ argument name of the <code><a href="https://rdrr.io/r/stats/model.frame.html" cl
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments. Supplying another model to <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> is not
-supported.</p></dd>
+<dd><p>Additional fitted <code>lmm</code> models for likelihood-ratio comparison,
+or arguments passed to the corresponding method.</p></dd>
+
+
+<dt id="arg-adjusted">adjusted<a class="anchor" aria-label="anchor" href="#arg-adjusted"></a></dt>
+<dd><p>Whether <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> returns the Kenward-Roger-adjusted
+covariance when available.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
@@ -154,6 +160,11 @@ values, a normal quantile-quantile plot, or observed against fitted values.</p><
 value requests a fixed-effects-only prediction.</p></dd>
 
 
+<dt id="arg-allow-new-levels">allow.new.levels<a class="anchor" aria-label="anchor" href="#arg-allow-new-levels"></a></dt>
+<dd><p>Whether conditional predictions may include new
+grouping levels. Their random contribution is zero when allowed.</p></dd>
+
+
 <dt id="arg-na-action">na.action<a class="anchor" aria-label="anchor" href="#arg-na-action"></a></dt>
 <dd><p>Missing-value action retained for prediction-method
 compatibility.</p></dd>
@@ -167,6 +178,11 @@ matrix.</p></dd>
 <dt id="arg-fixed-only">fixed.only<a class="anchor" aria-label="anchor" href="#arg-fixed-only"></a></dt>
 <dd><p>Whether <code><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula()</a></code> returns only the fixed formula. If
 <code>FALSE</code>, it returns fixed, random, and repeated formulas in a list.</p></dd>
+
+
+<dt id="arg-refit">refit<a class="anchor" aria-label="anchor" href="#arg-refit"></a></dt>
+<dd><p>Whether REML models that differ in fixed effects are refitted
+with ML before comparison.</p></dd>
 
 
 <dt id="arg-parm">parm<a class="anchor" aria-label="anchor" href="#arg-parm"></a></dt>
@@ -186,8 +202,9 @@ name or position.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Conditional fitted values and predictions include empirical random effects.
 Marginal values use fixed effects only. In prediction from new data, known
-grouping levels use their fitted random effect and new levels receive a
-random contribution of zero.</p>
+grouping levels use their fitted random effect. New levels are rejected by
+default and receive a random contribution of zero only when explicitly
+allowed.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

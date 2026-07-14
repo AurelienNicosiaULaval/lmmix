@@ -2,8 +2,9 @@
 
 Marginal means use equal weights over nuisance-factor levels. Numeric
 covariates not listed in `specs` are held at their observed means.
-Multiplicity adjustment applies to pairwise p-values; confidence
-intervals remain pointwise.
+Multiplicity adjustment applies to pairwise p-values. Simultaneous
+Bonferroni confidence intervals are used automatically when p-values are
+adjusted, unless `conf_adjust = "none"` is requested.
 
 ## Usage
 
@@ -15,6 +16,7 @@ lsmeans(
   at = list(),
   level = 0.95,
   adjust = "none",
+  conf_adjust = c("auto", "none", "bonferroni"),
   ...
 )
 ```
@@ -46,6 +48,12 @@ lsmeans(
 
   Multiplicity adjustment passed to
   [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html).
+
+- conf_adjust:
+
+  Confidence-interval adjustment. `"auto"` uses Bonferroni intervals
+  when `adjust` is not `"none"`; the alternatives are `"none"` and
+  `"bonferroni"`.
 
 - ...:
 

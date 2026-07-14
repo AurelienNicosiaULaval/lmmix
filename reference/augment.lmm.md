@@ -6,7 +6,7 @@ Augment data with fitted values and residuals
 
 ``` r
 # S3 method for class 'lmm'
-augment(x, data = x$data, newdata = NULL, ...)
+augment(x, data = NULL, newdata = NULL, ...)
 ```
 
 ## Arguments
@@ -17,7 +17,9 @@ augment(x, data = x$data, newdata = NULL, ...)
 
 - data:
 
-  Data used for augmentation. Defaults to the analysis data.
+  Optional data used for augmentation. By default, excluded rows are
+  restored when the model used
+  [`stats::na.exclude()`](https://rdrr.io/r/stats/na.fail.html).
 
 - newdata:
 

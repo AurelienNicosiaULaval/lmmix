@@ -87,12 +87,15 @@ matrix inverse in the likelihood calculation.
 
 ## Optimization and covariance-parameter uncertainty
 
-[`lmm_control()`](../reference/lmm_control.md) selects
-[`nlminb()`](https://rdrr.io/r/stats/nlminb.html) or
-[`optim()`](https://rdrr.io/r/stats/optim.html) and controls iteration
-limits, tolerances, parameter bounds and the numerical differentiation
-method. After optimization, `numDeriv` computes the observed likelihood
-Hessian on the unconstrained (eta) scale.
+[`lmm_control()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm_control.md)
+can select [`nlminb()`](https://rdrr.io/r/stats/nlminb.html) or
+[`optim()`](https://rdrr.io/r/stats/optim.html) directly. Its default
+`optimizer = "auto"` starts with
+[`nlminb()`](https://rdrr.io/r/stats/nlminb.html) and uses deterministic
+perturbed starts and alternative optimizers only when an earlier attempt
+does not converge. Every attempt is retained in
+`fit$convergence$attempts`. After optimization, `numDeriv` computes the
+observed likelihood Hessian on the unconstrained (eta) scale.
 
 The inverse Hessian estimates
 
@@ -133,9 +136,34 @@ This follows Satterthwaite ([1946](#ref-satterthwaite1946)). The
 gradient of (q) is evaluated numerically on the same unconstrained
 covariance scale used by the optimizer.
 
-With `ddf = "residual"`, the package instead uses (n-p). A request for
-`ddf = "kenward-roger"` is rejected. No Kenward-Roger covariance
-adjustment is implemented.
+With `ddf = "residual"`, the package instead uses (n-p).
+
+## Kenward-Roger adjustment
+
+For `ddf = "kenward-roger"`, the package applies the small-sample
+adjustment of Kenward and Roger ([1997](#ref-kenward1997)). This method
+is available only with REML. Let
+
+``` math
+\Phi = (X^\mathsf{T}V^{-1}X)^{-1}
+```
+
+and let (W) denote the covariance matrix of the estimated unconstrained
+covariance parameters. First and second numerical derivatives of (V) are
+used to construct the (P_h), (Q\_{hj}), and (R\_{hj}) matrices in the
+Kenward-Roger expansion. The adjusted fixed-effect covariance is
+
+``` math
+\widehat\Phi_A = \widehat\Phi +
+2\widehat\Phi\left\{\sum_{h,j}W_{hj}
+\left(Q_{hj} - P_h\widehat\Phi P_j - \frac{1}{4}R_{hj}\right)
+\right\}\widehat\Phi.
+```
+
+Coefficient tests use this adjusted covariance. Multi-degree-of-freedom
+tests also use the Kenward-Roger scale factor and denominator degrees of
+freedom. `vcov(fit)` returns the adjusted covariance, while
+`vcov(fit, adjusted = FALSE)` returns the unadjusted GLS covariance.
 
 ## Type III tests
 
@@ -146,47 +174,57 @@ orthogonal one-dimensional components. Their Satterthwaite degrees of
 freedom are combined with the Fai-Cornelius moment-matching formula
 ([Fai and Cornelius 1996](#ref-fai1996)).
 
-Only type III tests are implemented.
-[`anova()`](https://rdrr.io/r/stats/anova.html) does not perform
-likelihood-ratio comparisons between fitted models.
+For one model, [`anova()`](https://rdrr.io/r/stats/anova.html) returns
+type III tests. With two or more nested models, it performs
+likelihood-ratio comparisons. Models that differ in fixed effects are
+compared under ML; REML fits are refitted automatically by default.
+Covariance-model comparisons must already use ML. Their chi-squared
+reference distribution can be approximate when the null value lies on
+the boundary of the parameter space ([Self and Liang
+1987](#ref-self1987)).
 
 ## Estimated marginal means
 
-[`lsmeans()`](../reference/lsmeans.md) constructs a fixed-effects
-reference grid from the model terms. Requested factors vary over their
-levels, nuisance factors receive equal weights, and unrequested numeric
-covariates are held at their observed means. The corresponding rows of
-the fixed-effects model matrix are averaged to form the contrast matrix.
-This targets population marginal means as described by Searle et al.
-([1980](#ref-searle1980)).
+[`lsmeans()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lsmeans.md)
+constructs a fixed-effects reference grid from the model terms.
+Requested factors vary over their levels, nuisance factors receive equal
+weights, and unrequested numeric covariates are held at their observed
+means. The corresponding rows of the fixed-effects model matrix are
+averaged to form the contrast matrix. This targets population marginal
+means as described by Searle et al. ([1980](#ref-searle1980)).
 
 Pairwise contrasts are differences between automatically generated
 marginal mean rows. Multiplicity correction is applied to pairwise
 p-values with
-[`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html). Confidence
-intervals are pointwise and are not adjusted.
+[`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html). When
+p-values are adjusted, `conf_adjust = "auto"` produces simultaneous
+Bonferroni confidence intervals. Pointwise intervals remain available
+with `conf_adjust = "none"`.
 
 ## Empirical BLUPs and prediction
 
-After covariance estimation, the empirical BLUP is
+For each independent random-effect term (k), covariance estimation is
+followed by the empirical BLUP
 
 ``` math
-\widehat u = GZ^\mathsf{T}V^{-1}(Y-X\widehat\beta).
+\widehat u_k = G_kZ_k^\mathsf{T}V^{-1}(Y-X\widehat\beta).
 ```
 
 Conditional fitted values use (X+ Zu); marginal fitted values use (X).
-For new data, known grouping levels use their empirical random effects
-and new grouping levels receive a random contribution of zero.
+For new data, known grouping levels use their empirical random effects.
+New levels cause an error unless `allow.new.levels = TRUE`, which
+requests their population-level prediction with a zero random
+contribution.
 
 ## Computational scope
 
-The current implementation builds a dense (n n) marginal covariance
-matrix at each objective evaluation. Although the random-effects design
-matrix is initially sparse, covariance assembly and factorization are
-dense. The package is therefore intended for small and moderate data
-sets. Large-scale sparse algorithms, multiple random-effect terms,
-generalized responses and automatic optimizer restarts are not
-implemented in version `0.1.0`.
+Version `0.2.0` builds a dense (n n) marginal covariance matrix at each
+objective evaluation. Although the random-effects design matrix is
+initially sparse, covariance assembly and factorization are dense. The
+package is therefore intended for small and moderate data sets.
+Large-scale sparse algorithms and generalized responses are outside the
+current model scope. Independent crossed and nested random-effect terms
+are supported, with an unstructured covariance within each term.
 
 Fai, Alex Hrong-Tai, and Paul L. Cornelius. 1996. “Approximate f-Tests
 of Multiple Degree of Freedom Hypotheses in Generalized Least Squares
@@ -198,6 +236,10 @@ Harville, David A. 1977. “Maximum Likelihood Approaches to Variance
 Component Estimation and to Related Problems.” *Journal of the American
 Statistical Association* 72 (358): 320–38.
 <https://doi.org/10.1080/01621459.1977.10480998>.
+
+Kenward, Michael G., and James H. Roger. 1997. “Small Sample Inference
+for Fixed Effects from Restricted Maximum Likelihood.” *Biometrics* 53
+(3): 983–97. <https://doi.org/10.2307/2533558>.
 
 LaMotte, Lynn R. 2007. “A Direct Derivation of the REML Likelihood
 Function.” *Statistical Papers* 48 (2): 321–27.
@@ -218,3 +260,9 @@ Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. “Population
 Marginal Means in the Linear Model: An Alternative to Least Squares
 Means.” *The American Statistician* 34 (4): 216–21.
 <https://doi.org/10.1080/00031305.1980.10483031>.
+
+Self, Steven G., and Kung-Yee Liang. 1987. “Asymptotic Properties of
+Maximum Likelihood Estimators and Likelihood Ratio Tests Under
+Nonstandard Conditions.” *Journal of the American Statistical
+Association* 82 (398): 605–10.
+<https://doi.org/10.1080/01621459.1987.10478472>.

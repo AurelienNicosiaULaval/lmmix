@@ -3,8 +3,7 @@
 `lmm()` explicitly evaluates a profiled ML or REML criterion for
 `V = Z G Z' + R`. It can combine random effects with an independent,
 compound-symmetric, AR(1), Toeplitz, or unstructured residual
-covariance. Rows that are incomplete for any variable used by the fixed,
-random, or repeated formula are removed before fitting.
+covariance. Missing values are handled according to `na.action`.
 
 ## Usage
 
@@ -17,7 +16,8 @@ lmm(
   structure = c("id", "cs", "ar1", "toep", "un"),
   method = c("REML", "ML"),
   ddf = c("satterthwaite", "residual", "kenward-roger"),
-  control = lmm_control()
+  control = lmm_control(),
+  na.action = stats::na.omit
 )
 ```
 
@@ -34,8 +34,8 @@ lmm(
 
 - random:
 
-  Optional one-sided random-effects formula such as `~ 1 | subject` or
-  `~ 1 + time | subject`.
+  Optional one-sided random-effects formula such as `~ 1 | subject`, or
+  a list of such formulas.
 
 - repeated:
 
@@ -54,13 +54,20 @@ lmm(
 
 - ddf:
 
-  Denominator degrees-of-freedom method. `"satterthwaite"` and
-  `"residual"` are implemented. `"kenward-roger"` is reserved for future
-  implementation.
+  Denominator degrees-of-freedom method: `"satterthwaite"`,
+  `"kenward-roger"`, or `"residual"`.
 
 - control:
 
-  An object returned by [`lmm_control()`](lmm_control.md).
+  An object returned by
+  [`lmm_control()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm_control.md).
+
+- na.action:
+
+  Missing-value action:
+  [`stats::na.omit()`](https://rdrr.io/r/stats/na.fail.html),
+  [`stats::na.exclude()`](https://rdrr.io/r/stats/na.fail.html), or
+  [`stats::na.fail()`](https://rdrr.io/r/stats/na.fail.html).
 
 ## Value
 
@@ -70,10 +77,11 @@ diagnostics, the analysis data, and the model matrices.
 
 ## Details
 
-The `random` argument accepts one grouping formula. The `repeated`
-argument accepts one ordering variable and one grouping expression. Each
-repeated group may have at most one observation per ordering value. The
-current likelihood assembles a dense marginal covariance matrix.
+The `random` argument accepts a grouping formula or a list of
+independent grouping formulas. The `repeated` argument accepts one
+ordering variable and one grouping expression. Each repeated group may
+have at most one observation per ordering value. The current likelihood
+assembles a dense marginal covariance matrix.
 
 ## References
 
@@ -88,6 +96,10 @@ function. *Statistical Papers*, 48(2), 321-327.
 
 Pinheiro, J. C., and Bates, D. M. (2000). *Mixed-Effects Models in S and
 S-PLUS*. Springer. [doi:10.1007/b98882](https://doi.org/10.1007/b98882)
+
+Kenward, M. G., and Roger, J. H. (1997). Small sample inference for
+fixed effects from restricted maximum likelihood. *Biometrics*, 53(3),
+983-997. [doi:10.2307/2533558](https://doi.org/10.2307/2533558)
 
 ## Examples
 

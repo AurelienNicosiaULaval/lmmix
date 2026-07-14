@@ -2,73 +2,85 @@
 
 ## Fit and control
 
-- [`lmm()`](lmm.md) : Fit a Gaussian linear mixed model
+- [`lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm.md)
+  : Fit a Gaussian linear mixed model
 
-- [`lmm_control()`](lmm_control.md) :
+- [`lmm_control()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm_control.md)
+  :
 
-  Control numerical optimization for [`lmm()`](../reference/lmm.md)
+  Control numerical optimization for
+  [`lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm.md)
 
 ## Inference and marginal means
 
-- [`lsmeans()`](lsmeans.md) :
+- [`lsmeans()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lsmeans.md)
+  :
 
   Estimated marginal means for an `lmm` model
 
-- [`summary(`*`<lmm>`*`)`](summary.lmm.md) :
+- [`summary(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/summary.lmm.md)
+  :
 
   Summarize an `lmm` fit
 
 ## Model methods
 
-- [`print(`*`<lmm>`*`)`](lmm-methods.md)
-  [`coef(`*`<lmm>`*`)`](lmm-methods.md)
-  [`vcov(`*`<lmm>`*`)`](lmm-methods.md)
-  [`logLik(`*`<lmm>`*`)`](lmm-methods.md)
-  [`AIC(`*`<lmm>`*`)`](lmm-methods.md)
-  [`BIC(`*`<lmm>`*`)`](lmm-methods.md)
-  [`deviance(`*`<lmm>`*`)`](lmm-methods.md)
-  [`nobs(`*`<lmm>`*`)`](lmm-methods.md)
-  [`fitted(`*`<lmm>`*`)`](lmm-methods.md)
-  [`residuals(`*`<lmm>`*`)`](lmm-methods.md)
-  [`plot(`*`<lmm>`*`)`](lmm-methods.md)
-  [`sigma(`*`<lmm>`*`)`](lmm-methods.md)
-  [`predict(`*`<lmm>`*`)`](lmm-methods.md)
-  [`model.matrix(`*`<lmm>`*`)`](lmm-methods.md)
-  [`model.frame(`*`<lmm>`*`)`](lmm-methods.md)
-  [`formula(`*`<lmm>`*`)`](lmm-methods.md)
-  [`terms(`*`<lmm>`*`)`](lmm-methods.md)
-  [`anova(`*`<lmm>`*`)`](lmm-methods.md)
-  [`confint(`*`<lmm>`*`)`](lmm-methods.md) :
+- [`print(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`coef(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`vcov(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`logLik(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`AIC(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`BIC(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`deviance(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`nobs(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`fitted(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`residuals(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`plot(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`sigma(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`predict(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`model.matrix(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`model.frame(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`formula(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`terms(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`anova(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`confint(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  :
 
   Standard methods for `lmm` fits
 
 ## Extractors
 
-- [`fixef()`](fixef.md) : Extract fixed effects
-- [`ranef()`](ranef.md) : Extract random effects
-- [`VarCorr()`](VarCorr.md) : Extract covariance components
+- [`fixef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/fixef.md)
+  : Extract fixed effects
+- [`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md)
+  : Extract random effects
+- [`VarCorr()`](https://aureliennicosiaulaval.github.io/lmmix/reference/VarCorr.md)
+  : Extract covariance components
 
 ## Tidy methods
 
-- [`tidy(`*`<lmm>`*`)`](tidy.lmm.md) :
+- [`tidy(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/tidy.lmm.md)
+  :
 
   Tidy an `lmm` model
 
-- [`glance(`*`<lmm>`*`)`](glance.lmm.md) :
+- [`glance(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/glance.lmm.md)
+  :
 
   One-row model summary for an `lmm` model
 
-- [`augment(`*`<lmm>`*`)`](augment.lmm.md) : Augment data with fitted
-  values and residuals
+- [`augment(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/augment.lmm.md)
+  : Augment data with fitted values and residuals
 
 ## Interoperability
 
-- [`recover_data(`*`<lmm>`*`)`](recover_data.lmm.md)
-  [`emm_basis(`*`<lmm>`*`)`](recover_data.lmm.md) :
+- [`recover_data(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/recover_data.lmm.md)
+  [`emm_basis(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/recover_data.lmm.md)
+  :
 
   Support for `emmeans`
 
 ## Data
 
-- [`multicentre`](multicentre.md) : Multi-site repeated-measures
-  experiment
+- [`multicentre`](https://aureliennicosiaulaval.github.io/lmmix/reference/multicentre.md)
+  : Multi-site repeated-measures experiment

@@ -38,9 +38,10 @@ colSums(is.na(multicentre))
 ```
 
 The fixed, random and repeated formulas jointly determine the variables
-used by the analysis. [`lmm()`](../reference/lmm.md) removes rows that
-are incomplete for any of those variables and stores the retained data
-in the fitted object.
+used by the analysis. Missing rows are handled with `na.omit`,
+`na.exclude`, or `na.fail`. The default is `na.omit`; `na.exclude`
+restores omitted positions in fitted values, residuals, and augmented
+data.
 
 ## Fit a combined covariance model
 
@@ -62,7 +63,7 @@ fit <- lmm(
 fit
 #> Linear mixed model fit by REML
 #> Formula: `Y ~ Drug * Time`
-#> Random: `~1 | Center`
+#> Random (Center): `~1 | Center`
 #> Repeated: `~Time | Center:Drug:Subject` (AR1)
 #> Log-likelihood: -245.313
 #> Convergence code: 0
@@ -106,6 +107,11 @@ fit$convergence[c(
 #> 
 #> $hessian_positive_definite
 #> [1] TRUE
+fit$convergence$attempts
+#> # A tibble: 1 × 6
+#>   attempt optimizer method convergence objective selected
+#>     <int> <chr>     <chr>        <int>     <dbl> <lgl>   
+#> 1       1 nlminb    NA               0      245. TRUE
 ```
 
 A nonzero convergence code or a non-positive-definite likelihood Hessian
@@ -212,16 +218,41 @@ confint(fit)
 #> Drug3:Time3 -0.9485017  1.6170050
 ```
 
-[`anova()`](https://rdrr.io/r/stats/anova.html) currently performs type
-III fixed-effect tests for one model. It does not compare nested models.
-Satterthwaite and residual denominator degrees of freedom are
-implemented. Kenward-Roger inference is not implemented.
+[`anova()`](https://rdrr.io/r/stats/anova.html) performs type III
+fixed-effect tests for one model. With multiple models it performs
+likelihood-ratio comparisons, automatically refitting REML models with
+ML when their fixed effects differ. Satterthwaite, Kenward-Roger, and
+residual denominator degrees of freedom are available. Kenward-Roger is
+restricted to REML fits.
+
+``` r
+
+fit_kr <- lmm(
+  data = multicentre,
+  formula = Y ~ Drug * Time,
+  random = ~ 1 | Center,
+  repeated = ~ Time | Center:Drug:Subject,
+  structure = "ar1",
+  ddf = "kenward-roger"
+)
+
+fit_reduced <- lmm(
+  data = multicentre,
+  formula = Y ~ Drug + Time,
+  random = ~ 1 | Center,
+  repeated = ~ Time | Center:Drug:Subject,
+  structure = "ar1"
+)
+anova(fit_reduced, fit)
+```
 
 ## Covariance parameters and random effects
 
-[`VarCorr()`](../reference/VarCorr.md) returns the estimated covariance
-components on their natural scale. [`ranef()`](../reference/ranef.md)
-returns empirical BLUPs as a tibble.
+[`VarCorr()`](https://aureliennicosiaulaval.github.io/lmmix/reference/VarCorr.md)
+returns the estimated covariance components on their natural scale.
+[`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md)
+returns empirical BLUPs as a tibble for one random term and a named list
+of tibbles for multiple terms.
 
 ``` r
 
@@ -243,7 +274,7 @@ ranef(fit)
 
 For a random-slope model, the random-effect covariance is unstructured.
 Its variances and correlations appear as separate rows in
-[`VarCorr()`](../reference/VarCorr.md).
+[`VarCorr()`](https://aureliennicosiaulaval.github.io/lmmix/reference/VarCorr.md).
 
 ## Estimated marginal means
 
@@ -272,9 +303,10 @@ lsmeans(fit, ~Time)
 
 Pairwise contrast matrices are generated automatically. The `adjust`
 argument is passed to
-[`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) and
-therefore adjusts pairwise p-values. The confidence intervals remain
-pointwise.
+[`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html). When
+p-values are adjusted, `conf_adjust = "auto"` reports simultaneous
+Bonferroni confidence intervals. Use `conf_adjust = "none"` for
+pointwise intervals.
 
 ``` r
 
@@ -289,12 +321,13 @@ lsmeans(fit, pairwise ~ Drug, adjust = "holm")
 #> 2 2         18.1        1.53  3.01     11.8    0.00128      13.3         23.0
 #> 3 3         17.1        1.53  3.01     11.1    0.00154      12.2         21.9
 #> ── Pairwise contrasts ──
+#> P-value adjustment: holm; confidence intervals: bonferroni
 #> # A tibble: 3 × 8
 #>   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`
 #>   <chr>       <dbl>       <dbl> <dbl>     <dbl>     <dbl>      <dbl>       <dbl>
-#> 1 1 - 2       -4.99        1.10  46.1    -4.54   0.000120      -7.20       -2.78
-#> 2 1 - 3       -3.89        1.10  46.1    -3.54   0.00183       -6.11       -1.68
-#> 3 2 - 3        1.10        1.10  46.9     0.993  0.326         -1.12        3.32
+#> 1 1 - 2       -4.99        1.10  46.1    -4.54   0.000120      -7.72       -2.26
+#> 2 1 - 3       -3.89        1.10  46.1    -3.54   0.00183       -6.62       -1.16
+#> 3 2 - 3        1.10        1.10  46.9     0.993  0.326         -1.64        3.84
 ```
 
 Reference values for numeric covariates can be overridden with `at`:
@@ -339,16 +372,18 @@ head(residuals(fit, type = "pearson"))
 ```
 
 For `predict(fit, newdata)`, known grouping levels receive their fitted
-random effect. New groups receive a random contribution of zero. Set
-`re.form` to a non-`NULL` value to request fixed-effects-only
-predictions.
+random effect. New groups cause an error unless
+`allow.new.levels = TRUE` is supplied; when allowed, their random
+contribution is zero. Set `re.form` to a non-`NULL` value to request
+fixed-effects-only predictions.
 
 ## Diagnostic plots
 
-The S3 method [`plot.lmm()`](../reference/lmm-methods.md) returns a
-`ggplot2` object. Three diagnostics are available through `which`:
-standardized residuals against fitted values, a normal Q-Q plot, and
-observed against fitted values.
+The S3 method
+[`plot.lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+returns a `ggplot2` object. Three diagnostics are available through
+`which`: standardized residuals against fitted values, a normal Q-Q
+plot, and observed against fitted values.
 
 ``` r
 
@@ -384,7 +419,7 @@ Printed tables use readable headings without dots, such as `Std Error`,
 `p value`, `Conf Low`, and `Conf High`. The underlying tibbles retain
 the standard `broom` column names required for programmatic use. Input
 column names are preserved by `augment()` and
-[`ranef()`](../reference/ranef.md).
+[`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md).
 
 ``` r
 
@@ -440,6 +475,16 @@ fit_random <- lmm(
   structure = "id"
 )
 
+# Independent crossed random intercepts
+fit_crossed <- lmm(
+  data,
+  response ~ treatment + time,
+  random = list(
+    center = ~ 1 | center,
+    subject = ~ 1 | subject
+  )
+)
+
 # Combined random intercept and Toeplitz residual covariance
 fit_combined <- lmm(
   data,
@@ -452,13 +497,12 @@ fit_combined <- lmm(
 
 ## Practical limits
 
-The current implementation constructs the full dense matrix `V` during
+Version `0.2.0` constructs the full dense matrix `V` during
 optimization. It is appropriate for small and moderate data sets. It is
-not a large-scale sparse mixed-model engine. The interface accepts one
-random-effects formula and one repeated-measures structure. Generalized
-responses, multiple random-effect terms, Kenward-Roger inference and
-likelihood-ratio model comparison are outside the current `0.1.0`
-implementation.
+not a large-scale sparse mixed-model engine. The interface accepts
+multiple independent random-effect formulas and one repeated-measures
+structure. Generalized responses remain outside the Gaussian model
+scope.
 
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. “Population
 Marginal Means in the Linear Model: An Alternative to Least Squares
