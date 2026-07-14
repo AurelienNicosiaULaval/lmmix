@@ -487,7 +487,7 @@ tibble::tibble(
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | (Intercept) | 17.706713 | 17.706713 | 0 | 0.833917 | 0.833922 | 5e-06 | 99.35300 | 99.35237 | 0.000639 |
 | age | 0.660185 | 0.660185 | 0 | 0.061605 | 0.061606 | 1e-06 | 80.00151 | 80.00000 | 0.001514 |
-| SexFemale | -2.321023 | -2.321023 | 0 | 0.761416 | 0.761417 | 0e+00 | 25.00002 | 25.00000 | 0.000021 |
+| SexFemale | -2.321023 | -2.321023 | 0 | 0.761416 | 0.761417 | 0e+00 | 25.00002 | 25.00000 | 0.000020 |
 
 The type III comparison uses the same fixed-effect terms and the same
 Satterthwaite denominator-df method.
@@ -515,7 +515,7 @@ tibble::tibble(
 | term | lmmix num df | lmerTest num df | num df abs diff | lmmix den df | lmerTest den df | den df abs diff | lmmix statistic | lmerTest statistic | statistic abs diff |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | age | 1 | 1 | 0 | 80.00151 | 80 | 0.001514 | 114.840466 | 114.838287 | 0.002179 |
-| Sex | 1 | 1 | 0 | 25.00002 | 25 | 0.000021 | 9.292108 | 9.292099 | 0.000009 |
+| Sex | 1 | 1 | 0 | 25.00002 | 25 | 0.000020 | 9.292108 | 9.292099 | 0.000009 |
 
 ## Combined covariance structures
 
