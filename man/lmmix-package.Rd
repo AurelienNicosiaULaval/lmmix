@@ -65,6 +65,15 @@ means in the linear model: An alternative to least squares means.
 \emph{The American Statistician}, 34(4), 216-221.
 \doi{10.1080/00031305.1980.10483031}
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/AurelienNicosiaULaval/lmmix}
+  \item \url{https://aureliennicosiaulaval.github.io/lmmix/}
+  \item Report bugs at \url{https://github.com/AurelienNicosiaULaval/lmmix/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Aurélien Nicosia \email{116816597+AurelienNicosiaULaval@users.noreply.github.com}
 
