@@ -30,18 +30,11 @@ functionality from features that are not implemented.
 
 ## Installation
 
-The repository is private. Clone it with the configured GitHub SSH key, then
-install the local checkout:
+Install the development version directly from the public GitHub repository:
 
-```sh
-git clone git@github.com:AurelienNicosiaULaval/lmmix.git
-R CMD INSTALL lmmix
-```
-
-From an existing checkout, installation from R is also possible:
-
-```{r installation-r, eval=FALSE}
-devtools::install_local("/path/to/lmmix")
+```{r installation, eval=FALSE}
+install.packages("devtools")
+devtools::install_github("AurelienNicosiaULaval/lmmix")
 ```
 
 ## Vignettes

@@ -15,18 +15,12 @@ current functionality from features that are not implemented.
 
 ## Installation
 
-The repository is private. Clone it with the configured GitHub SSH key,
-then install the local checkout:
-
-``` sh
-git clone git@github.com:AurelienNicosiaULaval/lmmix.git
-R CMD INSTALL lmmix
-```
-
-From an existing checkout, installation from R is also possible:
+Install the development version directly from the public GitHub
+repository:
 
 ``` r
-devtools::install_local("/path/to/lmmix")
+install.packages("devtools")
+devtools::install_github("AurelienNicosiaULaval/lmmix")
 ```
 
 ## Vignettes
