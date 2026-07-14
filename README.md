@@ -71,6 +71,11 @@ vignette("validation", package = "lmmix")
 | Diagnostic plots | `plot.lmm()` returns `ggplot2` residual, Q-Q, and fitted-value diagnostics |
 | Model boundary | Gaussian responses and dense covariance factorization for small and moderate data sets |
 
+The [development
+roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html)
+centralizes the current limitations, validation boundaries, and planned
+development priorities.
+
 ## Quick start: random center effect and AR(1) residuals
 
 The included `multicentre` data are a three-center repeated-measures
@@ -349,6 +354,9 @@ and the validation vignette for model specifications, tolerances and
 limitations.
 
 ## Model scope and remaining boundaries
+
+The complete and maintained list is available in the [development
+roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html).
 
 Version `0.3.0` fits univariate Gaussian models. It is not a generalized
 mixed-model engine. The likelihood constructs and factors a dense
