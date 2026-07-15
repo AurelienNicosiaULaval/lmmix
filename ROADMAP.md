@@ -2,7 +2,7 @@
 
 This document centralizes the current scope, known limitations,
 validation boundaries, and development priorities for `lmmix`. It
-describes version 0.3.0 as released on 2026-07-14.
+describes version 0.4.0 as released on 2026-07-15.
 
 The roadmap is informative rather than a promise of release dates. A
 feature is considered implemented only when it appears in `NEWS.md`, is
@@ -57,9 +57,22 @@ validation against PROC MIXED example 79.6, transformed covariance
 intervals, and parametric-bootstrap likelihood-ratio tests for
 boundary-sensitive model comparisons.
 
+### 0.4.0: blockwise likelihood and standard model extensions
+
+[Version
+0.4.0](https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.4.0),
+published on 2026-07-15, introduced connected-component block
+factorization for the likelihood, cached Satterthwaite derivatives,
+simulation, model updating, prediction intervals, partial random-effect
+prediction, known precision weights, offsets, and custom contrasts. It
+also standardized the
+[`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md)
+return type and normal [`print()`](https://rdrr.io/r/base/print.html)
+output.
+
 ## Current production scope
 
-Version 0.3.0 fits univariate Gaussian linear mixed models by explicitly
+Version 0.4.0 fits univariate Gaussian linear mixed models by explicitly
 optimizing the ML or REML criterion. It supports:
 
 - one or more independent random-effect terms, including correlated
@@ -72,7 +85,10 @@ optimizing the ML or REML criterion. It supports:
 - type III tests, estimated marginal means, contrasts, BLUPs,
   prediction, covariance intervals, and nested-model comparisons;
 - parametric-bootstrap likelihood-ratio tests for boundary-sensitive
-  model comparisons.
+  model comparisons;
+- marginal simulation, model updating, prediction intervals, known
+  relative precision weights, offsets, and custom fixed-effect
+  contrasts.
 
 ## Current limitations
 
@@ -86,14 +102,26 @@ optimizing the ML or REML criterion. It supports:
   through the public API.
 - Missing responses and covariates can be omitted or rejected, but
   missing covariates are not imputed.
+- Rank-deficient fixed-effect model matrices are rejected. Automatically
+  dropping aliased columns is deferred until estimability and type III
+  contrast behavior can be defined and tested together.
+- Residual variance strata estimated from the data, analogous to
+  [`nlme::varIdent()`](https://rdrr.io/pkg/nlme/man/varIdent.html), are
+  not implemented. `weights` represent known relative precisions and are
+  not estimated.
 
 ### Computation and scale
 
-- The marginal covariance matrix is assembled and factorized as a dense
-  matrix at every objective evaluation.
-- The package is intended for small and moderate data sets.
-- Large-scale sparse algorithms, distributed fitting, and automatic
-  parallelization are not implemented.
+- Independent connected covariance components are assembled and
+  factorized separately during likelihood evaluation.
+- The fitted object still stores a complete dense marginal covariance
+  matrix, and some inference calculations remain dense.
+- Fully crossed designs can form one large connected component.
+  Practical cost depends primarily on the largest component, the
+  covariance parameter count, and the requested inference.
+- Sparse Woodbury algorithms, distributed fitting, and automatic
+  parallelization are not implemented. No fixed maximum sample size is
+  claimed.
 - Parametric-bootstrap comparisons refit both models for every
   simulation and can therefore be computationally expensive.
 
@@ -111,6 +139,11 @@ optimizing the ML or REML criterion. It supports:
 - Conditional predictions for unseen grouping levels require
   `allow.new.levels = TRUE`; their random-effect contribution is then
   zero.
+- Prediction confidence intervals condition on included empirical random
+  effects. Prediction intervals add residual variance but not BLUP
+  estimation uncertainty.
+- The Kenward-Roger implementation uses finite-difference covariance
+  derivatives. Analytic derivatives are not yet implemented.
 
 ## Validation boundaries
 
@@ -151,13 +184,19 @@ vignette](https://aureliennicosiaulaval.github.io/lmmix/articles/validation.html
   definitions.
 - Evaluate parallel execution for parametric-bootstrap comparisons while
   preserving reproducible random-number streams.
+- Implement estimability-aware handling of aliased fixed-effect columns
+  and define its consequences for type III tests and marginal means.
+- Evaluate estimated residual variance strata with an explicit
+  covariance parameterization and validation against `nlme` or PROC
+  MIXED.
 
 ### Computation
 
-- Exploit repeated-measures blocks more directly during covariance
-  assembly and factorization.
-- Evaluate sparse or blockwise algorithms before extending the package
-  to larger data sets.
+- Evaluate a sparse Woodbury formulation for large crossed random-effect
+  designs.
+- Derive and test analytic covariance derivatives for supported residual
+  and random-effect structures, including their use in Kenward-Roger
+  inference.
 - Add explicit performance regression tests before making scalability
   claims.
 

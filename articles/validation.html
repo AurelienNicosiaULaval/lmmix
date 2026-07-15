@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,7 @@
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
     <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Choosing lmmix and related R packages</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../ROADMAP.html">Roadmap</a></li>
@@ -474,7 +475,7 @@ effects, and the REML log-likelihood.</p>
 <tbody>
 <tr class="odd">
 <td align="left">random.intercept.var</td>
-<td align="right">7.823339</td>
+<td align="right">7.823340</td>
 <td align="right">7.823336</td>
 <td align="right">4e-06</td>
 </tr>
@@ -972,7 +973,7 @@ one-dimensional Satterthwaite degrees of freedom.</p>
 <td align="right">0e+00</td>
 <td align="right">25.00002</td>
 <td align="right">25.00000</td>
-<td align="right">0.000021</td>
+<td align="right">0.000020</td>
 </tr>
 </tbody>
 </table>
@@ -1040,7 +1041,7 @@ Satterthwaite denominator-df method.</p>
 <td align="right">0</td>
 <td align="right">25.00002</td>
 <td align="right">25</td>
-<td align="right">0.000021</td>
+<td align="right">0.000020</td>
 <td align="right">9.292108</td>
 <td align="right">9.292099</td>
 <td align="right">0.000009</td>
@@ -1337,7 +1338,7 @@ matrix.</p>
 <td align="left">toep</td>
 <td align="right">0</td>
 <td align="left">TRUE</td>
-<td align="right">0.467054</td>
+<td align="right">0.467053</td>
 </tr>
 <tr class="odd">
 <td align="left">un</td>
@@ -1605,63 +1606,63 @@ published covariance matrix.</p>
 <tbody>
 <tr class="odd">
 <td align="left">UN(1,1)</td>
-<td align="right">5.119290</td>
+<td align="right">5.119365</td>
 <td align="right">5.1192</td>
-<td align="right">0.000090</td>
+<td align="right">0.000165</td>
 </tr>
 <tr class="even">
 <td align="left">UN(2,1)</td>
-<td align="right">2.440903</td>
+<td align="right">2.440758</td>
 <td align="right">2.4409</td>
-<td align="right">0.000003</td>
+<td align="right">0.000142</td>
 </tr>
 <tr class="odd">
 <td align="left">UN(2,2)</td>
-<td align="right">3.927938</td>
+<td align="right">3.927855</td>
 <td align="right">3.9279</td>
-<td align="right">0.000038</td>
+<td align="right">0.000045</td>
 </tr>
 <tr class="even">
 <td align="left">UN(3,1)</td>
-<td align="right">3.610597</td>
+<td align="right">3.610416</td>
 <td align="right">3.6105</td>
-<td align="right">0.000097</td>
+<td align="right">0.000084</td>
 </tr>
 <tr class="odd">
 <td align="left">UN(3,2)</td>
-<td align="right">2.717738</td>
+<td align="right">2.717559</td>
 <td align="right">2.7175</td>
-<td align="right">0.000238</td>
+<td align="right">0.000059</td>
 </tr>
 <tr class="even">
 <td align="left">UN(3,3)</td>
-<td align="right">5.980250</td>
+<td align="right">5.979744</td>
 <td align="right">5.9798</td>
-<td align="right">0.000450</td>
+<td align="right">0.000056</td>
 </tr>
 <tr class="odd">
 <td align="left">UN(4,1)</td>
-<td align="right">2.522168</td>
+<td align="right">2.522030</td>
 <td align="right">2.5222</td>
-<td align="right">0.000032</td>
+<td align="right">0.000170</td>
 </tr>
 <tr class="even">
 <td align="left">UN(4,2)</td>
-<td align="right">3.062339</td>
+<td align="right">3.062336</td>
 <td align="right">3.0624</td>
-<td align="right">0.000061</td>
+<td align="right">0.000064</td>
 </tr>
 <tr class="odd">
 <td align="left">UN(4,3)</td>
-<td align="right">3.823700</td>
+<td align="right">3.823402</td>
 <td align="right">3.8235</td>
-<td align="right">0.000200</td>
+<td align="right">0.000098</td>
 </tr>
 <tr class="even">
 <td align="left">UN(4,4)</td>
-<td align="right">4.618104</td>
+<td align="right">4.617993</td>
 <td align="right">4.6180</td>
-<td align="right">0.000104</td>
+<td align="right">0.000007</td>
 </tr>
 </tbody>
 </table>
@@ -1749,39 +1750,39 @@ SAS scale before comparison.</p>
 <tbody>
 <tr class="odd">
 <td align="left">Intercept</td>
-<td align="right">15.842291</td>
+<td align="right">15.842191</td>
 <td align="right">15.8423</td>
-<td align="right">9.0e-06</td>
-<td align="right">0.935635</td>
+<td align="right">0.000109</td>
+<td align="right">0.935623</td>
 <td align="right">0.93560</td>
-<td align="right">3.5e-05</td>
+<td align="right">2.3e-05</td>
 </tr>
 <tr class="even">
 <td align="left">Gender F</td>
-<td align="right">1.583081</td>
+<td align="right">1.583192</td>
 <td align="right">1.5831</td>
-<td align="right">1.9e-05</td>
-<td align="right">1.465858</td>
+<td align="right">0.000092</td>
+<td align="right">1.465839</td>
 <td align="right">1.46580</td>
-<td align="right">5.8e-05</td>
+<td align="right">3.9e-05</td>
 </tr>
 <tr class="odd">
 <td align="left">Age</td>
-<td align="right">0.826805</td>
+<td align="right">0.826813</td>
 <td align="right">0.8268</td>
-<td align="right">5.0e-06</td>
-<td align="right">0.079118</td>
+<td align="right">0.000013</td>
+<td align="right">0.079117</td>
 <td align="right">0.07911</td>
-<td align="right">8.0e-06</td>
+<td align="right">7.0e-06</td>
 </tr>
 <tr class="even">
 <td align="left">Age*Gender F</td>
-<td align="right">-0.350440</td>
+<td align="right">-0.350450</td>
 <td align="right">-0.3504</td>
-<td align="right">4.0e-05</td>
-<td align="right">0.123954</td>
+<td align="right">0.000050</td>
+<td align="right">0.123952</td>
 <td align="right">0.12390</td>
-<td align="right">5.4e-05</td>
+<td align="right">5.2e-05</td>
 </tr>
 </tbody>
 </table>
@@ -1947,23 +1948,23 @@ equality of denominator degrees of freedom.</p>
 <tr class="odd">
 <td align="left">UN</td>
 <td align="left">Gender</td>
-<td align="right">1.166332</td>
+<td align="right">1.166527</td>
 <td align="right">1.17</td>
-<td align="right">0.003668</td>
+<td align="right">0.003473</td>
 </tr>
 <tr class="even">
 <td align="left">UN</td>
 <td align="left">Age</td>
-<td align="right">110.530874</td>
+<td align="right">110.534895</td>
 <td align="right">110.54</td>
-<td align="right">0.009126</td>
+<td align="right">0.005105</td>
 </tr>
 <tr class="odd">
 <td align="left">UN</td>
 <td align="left">Gender:Age</td>
-<td align="right">7.993007</td>
+<td align="right">7.993630</td>
 <td align="right">7.99</td>
-<td align="right">0.003007</td>
+<td align="right">0.003630</td>
 </tr>
 <tr class="even">
 <td align="left">CS</td>
@@ -2109,7 +2110,7 @@ Month test.</p>
 <span>  <span class="st">"random_coefficients"</span>,</span>
 <span>  <span class="st">"random"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">random.blup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">official.random.fit</span><span class="op">)</span></span>
+<span><span class="va">random.blup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">official.random.fit</span><span class="op">)</span><span class="op">[[</span><span class="fl">1L</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  term <span class="op">=</span> <span class="va">random.blup.target</span><span class="op">$</span><span class="va">term</span>,</span>
 <span>  lmmix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
@@ -2262,27 +2263,27 @@ are fixed to zero.</p>
 <tbody>
 <tr class="odd">
 <td align="left">Block</td>
-<td align="right">0.219407</td>
+<td align="right">0.219405</td>
 <td align="right">0.219400</td>
-<td align="right">7.0e-06</td>
+<td align="right">5.0e-06</td>
 </tr>
 <tr class="even">
 <td align="left">Block*Dir</td>
-<td align="right">0.017679</td>
+<td align="right">0.017678</td>
 <td align="right">0.017680</td>
-<td align="right">1.0e-06</td>
+<td align="right">2.0e-06</td>
 </tr>
 <tr class="odd">
 <td align="left">Block*Irrig</td>
-<td align="right">0.035393</td>
+<td align="right">0.035388</td>
 <td align="right">0.035390</td>
-<td align="right">3.0e-06</td>
+<td align="right">2.0e-06</td>
 </tr>
 <tr class="even">
 <td align="left">TOEP(2)</td>
-<td align="right">0.007983</td>
+<td align="right">0.007982</td>
 <td align="right">0.007986</td>
-<td align="right">3.0e-06</td>
+<td align="right">4.0e-06</td>
 </tr>
 <tr class="odd">
 <td align="left">TOEP(3)</td>
@@ -2292,15 +2293,15 @@ are fixed to zero.</p>
 </tr>
 <tr class="even">
 <td align="left">TOEP(4)</td>
-<td align="right">-0.092531</td>
+<td align="right">-0.092537</td>
 <td align="right">-0.092530</td>
-<td align="right">1.0e-06</td>
+<td align="right">7.0e-06</td>
 </tr>
 <tr class="odd">
 <td align="left">Residual</td>
-<td align="right">0.285013</td>
+<td align="right">0.285018</td>
 <td align="right">0.285000</td>
-<td align="right">1.3e-05</td>
+<td align="right">1.8e-05</td>
 </tr>
 </tbody>
 </table>
@@ -2356,9 +2357,9 @@ run;</code></pre>
 <code class="sourceCode R"><span><span class="va">sas.fit</span> <span class="op">&lt;-</span> <span class="va">combined.fits</span><span class="op">[[</span><span class="st">"ar1"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">sas.fit</span></span>
 <span><span class="co">#&gt; Linear mixed model fit by REML</span></span>
-<span><span class="co">#&gt; Formula: `Y ~ Drug * Time`</span></span>
-<span><span class="co">#&gt; Random (Center): `~1 | Center`</span></span>
-<span><span class="co">#&gt; Repeated: `~Time | Center:Drug:Subject` (AR1)</span></span>
+<span><span class="co">#&gt; Formula: Y ~ Drug * Time</span></span>
+<span><span class="co">#&gt; Random (Center): ~1 | Center</span></span>
+<span><span class="co">#&gt; Repeated: ~Time | Center:Drug:Subject (AR1)</span></span>
 <span><span class="co">#&gt; Log-likelihood: -245.313</span></span>
 <span><span class="co">#&gt; Convergence code: 0</span></span></code></pre></div>
 <div class="section level3">
@@ -2998,7 +2999,7 @@ assumed.</p>
 <tbody>
 <tr class="odd">
 <td align="left">lmmix</td>
-<td align="left">0.3.0</td>
+<td align="left">0.4.0</td>
 </tr>
 <tr class="even">
 <td align="left">nlme</td>

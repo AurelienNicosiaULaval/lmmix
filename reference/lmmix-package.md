@@ -18,14 +18,16 @@ ordering variable and the blocks of the residual covariance.
 Fitted objects provide coefficient tests, type III tests, estimated
 marginal means, pairwise contrasts, covariance-parameter intervals,
 parametric-bootstrap likelihood-ratio tests, empirical BLUPs,
-predictions, standard model methods, `ggplot2` diagnostic plots, `broom`
-methods, and `emmeans` interoperability.
+predictions, simulation, model updates, standard model methods,
+`ggplot2` diagnostic plots, `broom` methods, and `emmeans`
+interoperability.
 
 ## Current limits
 
-The package fits univariate Gaussian responses. The likelihood uses a
-dense marginal covariance matrix and is intended for small and moderate
-data sets rather than large-scale sparse problems.
+The package fits univariate Gaussian responses. The likelihood factors
+independent connected covariance components separately, but fitted
+objects and some inference calculations retain dense marginal matrices.
+It is not a general large-scale sparse mixed-model engine.
 
 ## References
 
@@ -69,5 +71,4 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Aurélien Nicosia
-<116816597+AurelienNicosiaULaval@users.noreply.github.com>
+**Maintainer**: Aurélien Nicosia <aurelien.nicosia@mat.ulaval.ca>

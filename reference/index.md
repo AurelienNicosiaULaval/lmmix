@@ -38,6 +38,8 @@
   [`plot(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
   [`sigma(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
   [`predict(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`simulate(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  [`update(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
   [`model.matrix(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
   [`model.frame(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
   [`formula(`*`<lmm>`*`)`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)

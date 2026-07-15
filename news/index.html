@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
     <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Choosing lmmix and related R packages</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../ROADMAP.html">Roadmap</a></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -41,6 +42,19 @@
       <small>Source: <a href="https://github.com/AurelienNicosiaULaval/lmmix/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="lmmix-040">lmmix 0.4.0<a class="anchor" aria-label="anchor" href="#lmmix-040"></a></h2>
+<ul><li>Evaluated ML and REML objectives by independent connected covariance blocks when the random and repeated grouping structures permit that decomposition. The fitted object continues to retain the complete marginal covariance for model methods.</li>
+<li>Cached the optimized GLS state and the fixed-effect covariance Jacobian, removing repeated likelihood and Satterthwaite calculations.</li>
+<li>Added <code><a href="../reference/lmm-methods.html">simulate.lmm()</a></code> with reproducible marginal Gaussian simulation and random-number-state preservation.</li>
+<li>Added <code><a href="../reference/lmm-methods.html">update.lmm()</a></code> and extended <code><a href="../reference/lmm-methods.html">predict.lmm()</a></code> with standard errors, confidence intervals, prediction intervals, and partial <code>re.form</code> selection.</li>
+<li>Added known relative precision <code>weights</code>, fixed-effect <code>offset</code> support, and custom <code>contrasts</code> to <code><a href="../reference/lmm.html">lmm()</a></code>.</li>
+<li>Standardized <code><a href="../reference/ranef.html">ranef()</a></code> to always return a named list of tibbles. This is an intentional pre-1.0 API change for single-term models.</li>
+<li>Moved regular <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> output to standard output, documented the residual scale returned by <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, and added a warning for the conservative multi-degree-of-freedom fallback.</li>
+<li>Moved <code>ggplot2</code> from <code>Imports</code> to <code>Suggests</code>; diagnostic plotting now checks for the optional package when called.</li>
+<li>Added a comparison vignette for choosing among <code>lmmix</code>, <code>lme4</code>, <code>lmerTest</code>, <code>nlme</code>, and <code>mmrm</code>, and updated the documented scalability boundaries.</li>
+<li>Replaced the maintainer’s GitHub no-reply address with a verifiable institutional address.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="lmmix-030">lmmix 0.3.0<a class="anchor" aria-label="anchor" href="#lmmix-030"></a></h2>
 <ul><li>Added fixed-band Toeplitz residual covariance through specifications such as <code>structure = "toep(4)"</code>, while retaining full <code>"toep"</code> behavior.</li>

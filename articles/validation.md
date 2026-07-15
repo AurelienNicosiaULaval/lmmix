@@ -222,7 +222,7 @@ comparison_table(
 
 | term                     |     lmmix | reference | abs diff |
 |:-------------------------|----------:|----------:|---------:|
-| random.intercept.var     |  7.823339 |  7.823336 |    4e-06 |
+| random.intercept.var     |  7.823340 |  7.823336 |    4e-06 |
 | random.age.var           |  0.051269 |  0.051269 |    0e+00 |
 | random.intercept.age.cor | -0.765844 | -0.765847 |    3e-06 |
 | residual.var             |  1.716198 |  1.716204 |    7e-06 |
@@ -498,7 +498,7 @@ tibble::tibble(
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | (Intercept) | 17.706713 | 17.706713 | 0 | 0.833917 | 0.833922 | 5e-06 | 99.35300 | 99.35237 | 0.000639 |
 | age | 0.660185 | 0.660185 | 0 | 0.061605 | 0.061606 | 1e-06 | 80.00151 | 80.00000 | 0.001514 |
-| SexFemale | -2.321023 | -2.321023 | 0 | 0.761416 | 0.761417 | 0e+00 | 25.00002 | 25.00000 | 0.000021 |
+| SexFemale | -2.321023 | -2.321023 | 0 | 0.761416 | 0.761417 | 0e+00 | 25.00002 | 25.00000 | 0.000020 |
 
 The type III comparison uses the same fixed-effect terms and the same
 Satterthwaite denominator-df method.
@@ -526,7 +526,7 @@ tibble::tibble(
 | term | lmmix num df | lmerTest num df | num df abs diff | lmmix den df | lmerTest den df | den df abs diff | lmmix statistic | lmerTest statistic | statistic abs diff |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | age | 1 | 1 | 0 | 80.00151 | 80 | 0.001514 | 114.840466 | 114.838287 | 0.002179 |
-| Sex | 1 | 1 | 0 | 25.00002 | 25 | 0.000021 | 9.292108 | 9.292099 | 0.000009 |
+| Sex | 1 | 1 | 0 | 25.00002 | 25 | 0.000020 | 9.292108 | 9.292099 | 0.000009 |
 
 ## Kenward-Roger comparison with `mmrm::mmrm()`
 
@@ -730,7 +730,7 @@ tibble::tibble(
 | id        |           0 | TRUE                      |                9.458960 |
 | cs        |           0 | TRUE                      |                0.618274 |
 | ar1       |           0 | TRUE                      |                0.473359 |
-| toep      |           0 | TRUE                      |                0.467054 |
+| toep      |           0 | TRUE                      |                0.467053 |
 | un        |           0 | TRUE                      |                0.383388 |
 
 ## Official PROC MIXED examples
@@ -883,16 +883,16 @@ tibble::tibble(
 
 | covariance parameter |    lmmix | SAS target | abs diff |
 |:---------------------|---------:|-----------:|---------:|
-| UN(1,1)              | 5.119290 |     5.1192 | 0.000090 |
-| UN(2,1)              | 2.440903 |     2.4409 | 0.000003 |
-| UN(2,2)              | 3.927938 |     3.9279 | 0.000038 |
-| UN(3,1)              | 3.610597 |     3.6105 | 0.000097 |
-| UN(3,2)              | 2.717738 |     2.7175 | 0.000238 |
-| UN(3,3)              | 5.980250 |     5.9798 | 0.000450 |
-| UN(4,1)              | 2.522168 |     2.5222 | 0.000032 |
-| UN(4,2)              | 3.062339 |     3.0624 | 0.000061 |
-| UN(4,3)              | 3.823700 |     3.8235 | 0.000200 |
-| UN(4,4)              | 4.618104 |     4.6180 | 0.000104 |
+| UN(1,1)              | 5.119365 |     5.1192 | 0.000165 |
+| UN(2,1)              | 2.440758 |     2.4409 | 0.000142 |
+| UN(2,2)              | 3.927855 |     3.9279 | 0.000045 |
+| UN(3,1)              | 3.610416 |     3.6105 | 0.000084 |
+| UN(3,2)              | 2.717559 |     2.7175 | 0.000059 |
+| UN(3,3)              | 5.979744 |     5.9798 | 0.000056 |
+| UN(4,1)              | 2.522030 |     2.5222 | 0.000170 |
+| UN(4,2)              | 3.062336 |     3.0624 | 0.000064 |
+| UN(4,3)              | 3.823402 |     3.8235 | 0.000098 |
+| UN(4,4)              | 4.617993 |     4.6180 | 0.000007 |
 
 ``` r
 
@@ -955,10 +955,10 @@ tibble::tibble(
 
 | term | lmmix estimate | SAS estimate | estimate abs diff | lmmix std error | SAS std error | std error abs diff |
 |:---|---:|---:|---:|---:|---:|---:|
-| Intercept | 15.842291 | 15.8423 | 9.0e-06 | 0.935635 | 0.93560 | 3.5e-05 |
-| Gender F | 1.583081 | 1.5831 | 1.9e-05 | 1.465858 | 1.46580 | 5.8e-05 |
-| Age | 0.826805 | 0.8268 | 5.0e-06 | 0.079118 | 0.07911 | 8.0e-06 |
-| Age\*Gender F | -0.350440 | -0.3504 | 4.0e-05 | 0.123954 | 0.12390 | 5.4e-05 |
+| Intercept | 15.842191 | 15.8423 | 0.000109 | 0.935623 | 0.93560 | 2.3e-05 |
+| Gender F | 1.583192 | 1.5831 | 0.000092 | 1.465839 | 1.46580 | 3.9e-05 |
+| Age | 0.826813 | 0.8268 | 0.000013 | 0.079117 | 0.07911 | 7.0e-06 |
+| Age\*Gender F | -0.350450 | -0.3504 | 0.000050 | 0.123952 | 0.12390 | 5.2e-05 |
 
 The compound-symmetry model reproduces the common covariance, diagonal
 enhancement, fixed-effects solution, and likelihood criterion.
@@ -1054,9 +1054,9 @@ tibble::tibble(
 
 | model | term       |    lmmix F |  SAS F | abs diff |
 |:------|:-----------|-----------:|-------:|---------:|
-| UN    | Gender     |   1.166332 |   1.17 | 0.003668 |
-| UN    | Age        | 110.530874 | 110.54 | 0.009126 |
-| UN    | Gender:Age |   7.993007 |   7.99 | 0.003007 |
+| UN    | Gender     |   1.166527 |   1.17 | 0.003473 |
+| UN    | Age        | 110.534895 | 110.54 | 0.005105 |
+| UN    | Gender:Age |   7.993630 |   7.99 | 0.003630 |
 | CS    | Gender     |   0.467892 |   0.47 | 0.002108 |
 | CS    | Age        | 111.099057 | 111.10 | 0.000943 |
 | CS    | Gender:Age |   6.462269 |   6.46 | 0.002269 |
@@ -1134,7 +1134,7 @@ random.blup.target <- official_sas_target(
   "random_coefficients",
   "random"
 )
-random.blup <- ranef(official.random.fit)
+random.blup <- ranef(official.random.fit)[[1L]]
 tibble::tibble(
   term = random.blup.target$term,
   lmmix = as.vector(t(as.matrix(
@@ -1232,13 +1232,13 @@ tibble::tibble(
 
 | covariance parameter |     lmmix | SAS target | abs diff |
 |:---------------------|----------:|-----------:|---------:|
-| Block                |  0.219407 |   0.219400 |  7.0e-06 |
-| Block\*Dir           |  0.017679 |   0.017680 |  1.0e-06 |
-| Block\*Irrig         |  0.035393 |   0.035390 |  3.0e-06 |
-| TOEP(2)              |  0.007983 |   0.007986 |  3.0e-06 |
+| Block                |  0.219405 |   0.219400 |  5.0e-06 |
+| Block\*Dir           |  0.017678 |   0.017680 |  2.0e-06 |
+| Block\*Irrig         |  0.035388 |   0.035390 |  2.0e-06 |
+| TOEP(2)              |  0.007982 |   0.007986 |  4.0e-06 |
 | TOEP(3)              |  0.001454 |   0.001452 |  2.0e-06 |
-| TOEP(4)              | -0.092531 |  -0.092530 |  1.0e-06 |
-| Residual             |  0.285013 |   0.285000 |  1.3e-05 |
+| TOEP(4)              | -0.092537 |  -0.092530 |  7.0e-06 |
+| Residual             |  0.285018 |   0.285000 |  1.8e-05 |
 
 ``` r
 
@@ -1288,9 +1288,9 @@ The exact `lmmix` fit used in the comparison is:
 sas.fit <- combined.fits[["ar1"]]
 sas.fit
 #> Linear mixed model fit by REML
-#> Formula: `Y ~ Drug * Time`
-#> Random (Center): `~1 | Center`
-#> Repeated: `~Time | Center:Drug:Subject` (AR1)
+#> Formula: Y ~ Drug * Time
+#> Random (Center): ~1 | Center
+#> Repeated: ~Time | Center:Drug:Subject (AR1)
 #> Log-likelihood: -245.313
 #> Convergence code: 0
 ```
@@ -1567,7 +1567,7 @@ tibble::tibble(
 
 | package  | version |
 |:---------|:--------|
-| lmmix    | 0.3.0   |
+| lmmix    | 0.4.0   |
 | nlme     | 3.1.169 |
 | lmerTest | 3.2.1   |
 | mmrm     | 0.3.18  |

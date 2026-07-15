@@ -232,13 +232,21 @@ contribution.
 
 ## Computational scope
 
-Version `0.3.0` builds a dense (n n) marginal covariance matrix at each
-objective evaluation. Although the random-effects design matrix is
-initially sparse, covariance assembly and factorization are dense. The
-package is therefore intended for small and moderate data sets.
-Large-scale sparse algorithms and generalized responses are outside the
-current model scope. Independent crossed and nested random-effect terms
-are supported, with an unstructured covariance within each term.
+Version `0.4.0` forms the connected components induced jointly by
+repeated groups and random-effect groups. If those components are
+independent, the ML or REML objective is evaluated from block-specific
+Cholesky factorizations and aggregated GLS quantities. The computational
+cost of that stage is therefore driven by the component sizes rather
+than necessarily by one factorization of the complete (n n) covariance.
+
+This is not a fully sparse implementation. The fitted object retains the
+full dense marginal covariance for method compatibility,
+finite-difference Kenward-Roger calculations remain dense, and crossed
+random effects may connect all observations into one component. Sparse
+Woodbury-based calculations, analytic covariance derivatives, and
+generalized responses are outside the current implementation.
+Independent crossed and nested random-effect terms are supported, with
+an unstructured covariance within each term.
 
 Davison, A. C., and D. V. Hinkley. 1997. *Bootstrap Methods and Their
 Application*. Cambridge University Press.

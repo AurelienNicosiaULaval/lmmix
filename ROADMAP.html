@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="articles/theory-reml.html">Estimation and inference in lmmix</a></li>
     <li><a class="dropdown-item" href="articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
+    <li><a class="dropdown-item" href="articles/comparison.html">Choosing lmmix and related R packages</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="ROADMAP.html">Roadmap</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -43,7 +44,7 @@
 
 <div id="lmmix-roadmap" class="section level1">
 
-<p>This document centralizes the current scope, known limitations, validation boundaries, and development priorities for <code>lmmix</code>. It describes version 0.3.0 as released on 2026-07-14.</p>
+<p>This document centralizes the current scope, known limitations, validation boundaries, and development priorities for <code>lmmix</code>. It describes version 0.4.0 as released on 2026-07-15.</p>
 <p>The roadmap is informative rather than a promise of release dates. A feature is considered implemented only when it appears in <code>NEWS.md</code>, is documented, and is covered by automated tests.</p>
 <div class="section level2">
 <h2 id="release-history">Release history<a class="anchor" aria-label="anchor" href="#release-history"></a></h2>
@@ -65,16 +66,21 @@
 <h3 id="id_030-boundary-aware-comparisons">0.3.0: boundary-aware comparisons<a class="anchor" aria-label="anchor" href="#id_030-boundary-aware-comparisons"></a></h3>
 <p><a href="https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.3.0" class="external-link">Version 0.3.0</a>, published on 2026-07-14, added fixed-band Toeplitz covariance, validation against PROC MIXED example 79.6, transformed covariance intervals, and parametric-bootstrap likelihood-ratio tests for boundary-sensitive model comparisons.</p>
 </div>
+<div class="section level3">
+<h3 id="id_040-blockwise-likelihood-and-standard-model-extensions">0.4.0: blockwise likelihood and standard model extensions<a class="anchor" aria-label="anchor" href="#id_040-blockwise-likelihood-and-standard-model-extensions"></a></h3>
+<p><a href="https://github.com/AurelienNicosiaULaval/lmmix/releases/tag/v0.4.0" class="external-link">Version 0.4.0</a>, published on 2026-07-15, introduced connected-component block factorization for the likelihood, cached Satterthwaite derivatives, simulation, model updating, prediction intervals, partial random-effect prediction, known precision weights, offsets, and custom contrasts. It also standardized the <code><a href="reference/ranef.html">ranef()</a></code> return type and normal <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> output.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="current-production-scope">Current production scope<a class="anchor" aria-label="anchor" href="#current-production-scope"></a></h2>
-<p>Version 0.3.0 fits univariate Gaussian linear mixed models by explicitly optimizing the ML or REML criterion. It supports:</p>
+<p>Version 0.4.0 fits univariate Gaussian linear mixed models by explicitly optimizing the ML or REML criterion. It supports:</p>
 <ul><li>one or more independent random-effect terms, including correlated random slopes within a term;</li>
 <li>independent, compound-symmetric, AR(1), full Toeplitz, fixed-band <code>toep(k)</code>, and unstructured residual covariance;</li>
 <li>combined random effects and correlated residuals;</li>
 <li>Satterthwaite, Kenward-Roger, and residual denominator degrees of freedom;</li>
 <li>type III tests, estimated marginal means, contrasts, BLUPs, prediction, covariance intervals, and nested-model comparisons;</li>
-<li>parametric-bootstrap likelihood-ratio tests for boundary-sensitive model comparisons.</li>
+<li>parametric-bootstrap likelihood-ratio tests for boundary-sensitive model comparisons;</li>
+<li>marginal simulation, model updating, prediction intervals, known relative precision weights, offsets, and custom fixed-effect contrasts.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="current-limitations">Current limitations<a class="anchor" aria-label="anchor" href="#current-limitations"></a></h2>
@@ -85,12 +91,15 @@
 <li>One repeated-measures structure can be specified per fitted model.</li>
 <li>Externally fixed multivariate G and R matrices are not accepted through the public API.</li>
 <li>Missing responses and covariates can be omitted or rejected, but missing covariates are not imputed.</li>
+<li>Rank-deficient fixed-effect model matrices are rejected. Automatically dropping aliased columns is deferred until estimability and type III contrast behavior can be defined and tested together.</li>
+<li>Residual variance strata estimated from the data, analogous to <code><a href="https://rdrr.io/pkg/nlme/man/varIdent.html" class="external-link">nlme::varIdent()</a></code>, are not implemented. <code>weights</code> represent known relative precisions and are not estimated.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="computation-and-scale">Computation and scale<a class="anchor" aria-label="anchor" href="#computation-and-scale"></a></h3>
-<ul><li>The marginal covariance matrix is assembled and factorized as a dense matrix at every objective evaluation.</li>
-<li>The package is intended for small and moderate data sets.</li>
-<li>Large-scale sparse algorithms, distributed fitting, and automatic parallelization are not implemented.</li>
+<ul><li>Independent connected covariance components are assembled and factorized separately during likelihood evaluation.</li>
+<li>The fitted object still stores a complete dense marginal covariance matrix, and some inference calculations remain dense.</li>
+<li>Fully crossed designs can form one large connected component. Practical cost depends primarily on the largest component, the covariance parameter count, and the requested inference.</li>
+<li>Sparse Woodbury algorithms, distributed fitting, and automatic parallelization are not implemented. No fixed maximum sample size is claimed.</li>
 <li>Parametric-bootstrap comparisons refit both models for every simulation and can therefore be computationally expensive.</li>
 </ul></div>
 <div class="section level3">
@@ -100,6 +109,8 @@
 <li>Parametric-bootstrap p-values have Monte Carlo error. The installed vignette uses 49 simulations only as a fast demonstration; substantive analyses should use a larger <code>nsim</code>, commonly at least 999.</li>
 <li>Deletion and influence diagnostics comparable to PROC MIXED examples 79.7 and 79.8 are not implemented.</li>
 <li>Conditional predictions for unseen grouping levels require <code>allow.new.levels = TRUE</code>; their random-effect contribution is then zero.</li>
+<li>Prediction confidence intervals condition on included empirical random effects. Prediction intervals add residual variance but not BLUP estimation uncertainty.</li>
+<li>The Kenward-Roger implementation uses finite-difference covariance derivatives. Analytic derivatives are not yet implemented.</li>
 </ul></div>
 </div>
 <div class="section level2">
@@ -125,11 +136,13 @@
 <li>Evaluate containment degrees of freedom for designs where that convention is required for direct PROC MIXED reproduction.</li>
 <li>Add influence and deletion diagnostics with documented statistical definitions.</li>
 <li>Evaluate parallel execution for parametric-bootstrap comparisons while preserving reproducible random-number streams.</li>
+<li>Implement estimability-aware handling of aliased fixed-effect columns and define its consequences for type III tests and marginal means.</li>
+<li>Evaluate estimated residual variance strata with an explicit covariance parameterization and validation against <code>nlme</code> or PROC MIXED.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="computation">Computation<a class="anchor" aria-label="anchor" href="#computation"></a></h3>
-<ul><li>Exploit repeated-measures blocks more directly during covariance assembly and factorization.</li>
-<li>Evaluate sparse or blockwise algorithms before extending the package to larger data sets.</li>
+<ul><li>Evaluate a sparse Woodbury formulation for large crossed random-effect designs.</li>
+<li>Derive and test analytic covariance derivatives for supported residual and random-effect structures, including their use in Kenward-Roger inference.</li>
 <li>Add explicit performance regression tests before making scalability claims.</li>
 </ul></div>
 </div>

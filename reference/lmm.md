@@ -17,6 +17,9 @@ lmm(
   structure = c("id", "cs", "ar1", "toep", "un"),
   method = c("REML", "ML"),
   ddf = c("satterthwaite", "residual", "kenward-roger"),
+  weights = NULL,
+  offset = NULL,
+  contrasts = NULL,
   control = lmm_control(),
   na.action = stats::na.omit
 )
@@ -60,6 +63,22 @@ lmm(
   Denominator degrees-of-freedom method: `"satterthwaite"`,
   `"kenward-roger"`, or `"residual"`.
 
+- weights:
+
+  Optional known relative precision weights. The residual covariance is
+  scaled on both sides by `diag(1 / sqrt(weights))`.
+
+- offset:
+
+  Optional numeric offset added to the fixed-effect predictor. An
+  [`offset()`](https://rdrr.io/r/stats/offset.html) term in `formula` is
+  also supported.
+
+- contrasts:
+
+  Optional contrasts passed to
+  [`stats::model.matrix()`](https://rdrr.io/r/stats/model.matrix.html).
+
 - control:
 
   An object returned by
@@ -83,8 +102,9 @@ diagnostics, the analysis data, and the model matrices.
 The `random` argument accepts a grouping formula or a list of
 independent grouping formulas. The `repeated` argument accepts one
 ordering variable and one grouping expression. Each repeated group may
-have at most one observation per ordering value. The current likelihood
-assembles a dense marginal covariance matrix.
+have at most one observation per ordering value. The likelihood factors
+independent connected covariance components separately. The fitted
+object retains the complete marginal covariance for model methods.
 
 ## References
 
@@ -113,36 +133,31 @@ fit <- lmm(
   random = ~ 1 | Subject
 )
 summary(fit)
-#> 
-#> ── Linear mixed model ──────────────────────────────────────────────────────────
+#> Linear mixed model
 #> Estimation: REML
 #> Denominator df: satterthwaite
 #> Residual covariance: ID
 #> 
-#> ── Fixed effects ──
-#> 
+#> Fixed effects
 #> # A tibble: 3 × 8
 #>   Term     Estimate `Std Error` Statistic    DF `p value` `Conf Low` `Conf High`
 #>   <chr>       <dbl>       <dbl>     <dbl> <dbl>     <dbl>      <dbl>       <dbl>
 #> 1 (Interc…   17.7        0.834      21.2   99.4  1.04e-38     16.1        19.4  
 #> 2 age         0.660      0.0616     10.7   80.0  3.95e-17      0.538       0.783
 #> 3 SexFema…   -2.32       0.761      -3.05  25.0  5.38e- 3     -3.89       -0.753
-#> ── Type III tests ──
-#> 
+#> Type III tests
 #> # A tibble: 2 × 5
 #>   Term  `Num DF` `Den DF` Statistic `p value`
 #>   <chr>    <dbl>    <dbl>     <dbl>     <dbl>
 #> 1 age          1     80.0    115.    3.95e-17
 #> 2 Sex          1     25.0      9.29  5.38e- 3
-#> ── Covariance parameters ──
-#> 
+#> Covariance parameters
 #> # A tibble: 2 × 5
 #>   Group    Term        Component Estimate `Std Error`
 #>   <chr>    <chr>       <chr>        <dbl>       <dbl>
 #> 1 Subject  (Intercept) var           3.27       1.07 
 #> 2 Residual id          var           2.05       0.324
-#> ── Information criteria ──
-#> 
+#> Information criteria
 #>    logLik       AIC       BIC  deviance 
 #> -218.7563  447.5125  460.9232  437.5125 
 ```

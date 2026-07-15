@@ -62,9 +62,9 @@ fit <- lmm(
 
 fit
 #> Linear mixed model fit by REML
-#> Formula: `Y ~ Drug * Time`
-#> Random (Center): `~1 | Center`
-#> Repeated: `~Time | Center:Drug:Subject` (AR1)
+#> Formula: Y ~ Drug * Time
+#> Random (Center): ~1 | Center
+#> Repeated: ~Time | Center:Drug:Subject (AR1)
 #> Log-likelihood: -245.313
 #> Convergence code: 0
 ```
@@ -128,14 +128,12 @@ information criteria.
 ``` r
 
 summary(fit)
-#> 
-#> ── Linear mixed model ──────────────────────────────────────────────────────────
+#> Linear mixed model
 #> Estimation: REML
 #> Denominator df: satterthwaite
 #> Residual covariance: AR1
 #> 
-#> ── Fixed effects ──
-#> 
+#> Fixed effects
 #> # A tibble: 9 × 8
 #>   Term     Estimate `Std Error` Statistic    DF `p value` `Conf Low` `Conf High`
 #>   <chr>       <dbl>       <dbl>     <dbl> <dbl>     <dbl>      <dbl>       <dbl>
@@ -147,22 +145,22 @@ summary(fit)
 #> 6 Drug2:T…   -0.143       0.438    -0.326 67.9    7.46e-1     -1.02        0.732
 #> 7 Drug3:T…   -0.474       0.448    -1.06  68.0    2.94e-1     -1.37        0.421
 #> 8 Drug2:T…    0.823       0.666     1.24  72.7    2.21e-1     -0.505       2.15 
-#> 9 Drug3:T…    0.334       0.644     0.519 73.1    6.05e-1     -0.949       1.62
-#> ── Type III tests ──
+#> 9 Drug3:T…    0.334       0.644     0.519 73.1    6.05e-1     -0.949       1.62 
+#> Type III tests
 #> # A tibble: 3 × 5
 #>   Term      `Num DF` `Den DF` Statistic `p value`
 #>   <chr>        <dbl>    <dbl>     <dbl>     <dbl>
 #> 1 Drug             2     46.4     11.4   9.23e- 5
 #> 2 Time             2     68.5     59.3   1.16e-15
 #> 3 Drug:Time        4     68.4      1.35  2.60e- 1
-#> ── Covariance parameters ──
+#> Covariance parameters
 #> # A tibble: 3 × 5
 #>   Group    Term        Component Estimate `Std Error`
 #>   <chr>    <chr>       <chr>        <dbl>       <dbl>
 #> 1 Center   (Intercept) var          5.17       5.73  
 #> 2 Residual ar1         var         10.7        2.14  
 #> 3 Residual ar1         cor          0.935      0.0169
-#> ── Information criteria ──
+#> Information criteria
 #>    logLik       AIC       BIC  deviance 
 #> -245.3129  514.6257  548.5655  490.6257
 ```
@@ -218,7 +216,7 @@ confint(fit)
 #> Drug3:Time3 -0.9485017  1.6170050
 confint(fit, parm = "theta_")
 #>                            Lower      Upper
-#> random.var.(Intercept) 0.5898096 45.3849859
+#> random.var.(Intercept) 0.5898096 45.3849861
 #> residual.var           7.2045422 15.8028806
 #> residual.cor           0.8923747  0.9612359
 ```
@@ -265,8 +263,9 @@ anova(
 [`VarCorr()`](https://aureliennicosiaulaval.github.io/lmmix/reference/VarCorr.md)
 returns the estimated covariance components on their natural scale.
 [`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md)
-returns empirical BLUPs as a tibble for one random term and a named list
-of tibbles for multiple terms.
+always returns a named list with one tibble per random term. This stable
+contract also applies when the model has only one random term; a
+marginal model returns an empty list.
 
 ``` r
 
@@ -278,6 +277,14 @@ VarCorr(fit)
 #> 2 Residual ar1         var         10.7        2.14  
 #> 3 Residual ar1         cor          0.935      0.0169
 ranef(fit)
+#> $Center
+#> # A tibble: 3 × 2
+#>   Center `(Intercept)`
+#>   <chr>          <dbl>
+#> 1 R              0.901
+#> 2 S              1.55 
+#> 3 T             -2.45
+ranef(fit)[[1L]]
 #> # A tibble: 3 × 2
 #>   Center `(Intercept)`
 #>   <chr>          <dbl>
@@ -325,16 +332,14 @@ pointwise intervals.
 ``` r
 
 lsmeans(fit, pairwise ~ Drug, adjust = "holm")
-#> 
-#> ── Estimated marginal means ──
-#> 
+#> Estimated marginal means
 #> # A tibble: 3 × 8
 #>   Drug  Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`
 #>   <fct>    <dbl>       <dbl> <dbl>     <dbl>     <dbl>      <dbl>       <dbl>
 #> 1 1         13.2        1.53  2.98      8.60   0.00339       8.27        18.0
 #> 2 2         18.1        1.53  3.01     11.8    0.00128      13.3         23.0
 #> 3 3         17.1        1.53  3.01     11.1    0.00154      12.2         21.9
-#> ── Pairwise contrasts ──
+#> Pairwise contrasts
 #> P-value adjustment: holm; confidence intervals: bonferroni
 #> # A tibble: 3 × 8
 #>   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`
@@ -388,8 +393,52 @@ head(residuals(fit, type = "pearson"))
 For `predict(fit, newdata)`, known grouping levels receive their fitted
 random effect. New groups cause an error unless
 `allow.new.levels = TRUE` is supplied; when allowed, their random
-contribution is zero. Set `re.form` to a non-`NULL` value to request
-fixed-effects-only predictions.
+contribution is zero. Use `re.form = NA` or `re.form = ~ 0` for
+fixed-effects-only predictions. A fitted random-effects formula, or a
+list of fitted formulas, selects a subset of random terms.
+
+Standard errors and intervals are available directly. Confidence
+intervals describe the expected response. Prediction intervals
+additionally include the fitted residual variance. Both condition on
+empirical random effects selected through `re.form`; BLUP estimation
+uncertainty is not added.
+
+``` r
+
+predict(fit, se.fit = TRUE, re.form = NA)
+predict(fit, interval = "confidence", re.form = NA)
+predict(fit, interval = "prediction", level = 0.90, re.form = NA)
+```
+
+## Simulation, updating, weights, and offsets
+
+[`simulate()`](https://rdrr.io/r/stats/simulate.html) draws marginal
+Gaussian response vectors from the fitted mean and covariance. Supplying
+a seed makes the result reproducible without changing the caller’s
+random-number state. [`update()`](https://rdrr.io/r/stats/update.html)
+refits a modified formula or model argument.
+
+``` r
+
+simulate(fit, nsim = 50, seed = 2026)
+update(fit, . ~ . - Drug:Time)
+update(fit, structure = "cs")
+```
+
+Known relative precision weights rescale the residual covariance on both
+sides by `diag(1 / sqrt(weights))`. Formula offsets, explicit offsets,
+and custom fixed-effect contrasts are also supported.
+
+``` r
+
+weighted_fit <- lmm(
+  data = analysis_data,
+  formula = response ~ treatment + offset(baseline),
+  random = ~ 1 | subject,
+  weights = precision,
+  contrasts = list(treatment = "contr.sum")
+)
+```
 
 ## Diagnostic plots
 
@@ -520,12 +569,20 @@ fit_banded <- lmm(
 
 ## Practical limits
 
-Version `0.3.0` constructs the full dense matrix `V` during
-optimization. It is appropriate for small and moderate data sets. It is
-not a large-scale sparse mixed-model engine. The interface accepts
-multiple independent random-effect formulas and one repeated-measures
-structure. Generalized responses remain outside the Gaussian model
-scope.
+Version `0.4.0` identifies independent connected components induced by
+the random and repeated grouping structures. The likelihood is evaluated
+by factoring one covariance matrix per component and aggregating their
+GLS contributions. This substantially reduces work for many
+subject-level or nested designs.
+
+The fitted object still stores the complete dense marginal covariance,
+and some inference calculations remain dense. Crossed effects can
+connect all observations into one component. Consequently, `lmmix` is
+not yet a large-scale sparse mixed-model engine and does not promise a
+fixed observation limit. The practical cost depends on the size of the
+largest connected component, the number of covariance parameters, and
+the requested inference. Generalized responses remain outside the
+Gaussian model scope.
 
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. “Population
 Marginal Means in the Linear Model: An Alternative to Least Squares

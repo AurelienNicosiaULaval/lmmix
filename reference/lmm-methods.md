@@ -49,9 +49,18 @@ predict(
   newdata = NULL,
   re.form = NULL,
   allow.new.levels = FALSE,
+  se.fit = FALSE,
+  interval = c("none", "confidence", "prediction"),
+  level = 0.95,
   na.action = stats::na.pass,
   ...
 )
+
+# S3 method for class 'lmm'
+simulate(object, nsim = 1, seed = NULL, ...)
+
+# S3 method for class 'lmm'
+update(object, formula., ..., evaluate = TRUE)
 
 # S3 method for class 'lmm'
 model.matrix(object, data = NULL, ...)
@@ -122,17 +131,53 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
 
 - re.form:
 
-  `NULL` includes empirical random effects. Any non-`NULL` value
-  requests a fixed-effects-only prediction.
+  `NULL` includes every empirical random-effect term, `NA` or `~ 0`
+  excludes all random effects, and a random-effects formula or list of
+  formulas selects a subset of fitted terms.
 
 - allow.new.levels:
 
   Whether conditional predictions may include new grouping levels. Their
   random contribution is zero when allowed.
 
+- se.fit:
+
+  Whether [`predict()`](https://rdrr.io/r/stats/predict.html) returns
+  standard errors for the expected response. These standard errors use
+  the fixed-effect covariance and condition on any empirical random
+  effects included through `re.form`.
+
+- interval:
+
+  Prediction interval type. `"confidence"` describes the expected
+  response. `"prediction"` additionally includes the fitted residual
+  variance but not uncertainty in empirical random effects.
+
+- level:
+
+  Confidence level for fixed-effect and covariance intervals.
+
 - na.action:
 
   Missing-value action retained for prediction-method compatibility.
+
+- nsim:
+
+  Number of simulations for a parametric-bootstrap comparison.
+
+- seed:
+
+  Optional integer seed for a reproducible parametric bootstrap.
+
+- formula.:
+
+  Optional formula update accepted by
+  [`update()`](https://rdrr.io/r/stats/update.html).
+
+- evaluate:
+
+  Whether [`update()`](https://rdrr.io/r/stats/update.html) evaluates
+  the updated call.
 
 - data:
 
@@ -156,24 +201,12 @@ confint(object, parm = names(object$coefficients), level = 0.95, ...)
   `"parametric.bootstrap"` option simulates under each smaller model and
   is appropriate when covariance parameters can lie on a boundary.
 
-- nsim:
-
-  Number of simulations for a parametric-bootstrap comparison.
-
-- seed:
-
-  Optional integer seed for a reproducible parametric bootstrap.
-
 - parm:
 
   Parameters requested from
   [`confint()`](https://rdrr.io/r/stats/confint.html), supplied by name
   or fixed effect position. Use `"beta_"` for every fixed effect and
   `"theta_"` for every covariance parameter.
-
-- level:
-
-  Confidence level for fixed-effect and covariance intervals.
 
 ## Value
 
@@ -186,6 +219,13 @@ effects. Marginal values use fixed effects only. In prediction from new
 data, known grouping levels use their fitted random effect. New levels
 are rejected by default and receive a random contribution of zero only
 when explicitly allowed.
+
+[`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md)
+always returns a named list with one tibble per random-effect term,
+including for models with a single term. It returns an empty list for
+marginal models. [`sigma()`](https://rdrr.io/r/stats/sigma.html) is
+defined as `sqrt(mean(diag(R)))`; it is a descriptive residual scale
+when residual variances differ across observations.
 
 ## References
 

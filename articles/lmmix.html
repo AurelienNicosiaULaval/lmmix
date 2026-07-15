@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,7 @@
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
     <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Choosing lmmix and related R packages</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../ROADMAP.html">Roadmap</a></li>
@@ -125,9 +126,9 @@ covariance within subject.</p>
 <span></span>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; Linear mixed model fit by REML</span></span>
-<span><span class="co">#&gt; Formula: `Y ~ Drug * Time`</span></span>
-<span><span class="co">#&gt; Random (Center): `~1 | Center`</span></span>
-<span><span class="co">#&gt; Repeated: `~Time | Center:Drug:Subject` (AR1)</span></span>
+<span><span class="co">#&gt; Formula: Y ~ Drug * Time</span></span>
+<span><span class="co">#&gt; Random (Center): ~1 | Center</span></span>
+<span><span class="co">#&gt; Repeated: ~Time | Center:Drug:Subject (AR1)</span></span>
 <span><span class="co">#&gt; Log-likelihood: -245.313</span></span>
 <span><span class="co">#&gt; Convergence code: 0</span></span></code></pre></div>
 <p>The three formulas have distinct roles:</p>
@@ -209,14 +210,12 @@ either case.</p>
 tests, covariance parameters and information criteria.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Linear mixed model</span> <span style="color: #00BBBB;">──────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; Linear mixed model</span></span>
 <span><span class="co">#&gt; Estimation: REML</span></span>
 <span><span class="co">#&gt; Denominator df: satterthwaite</span></span>
 <span><span class="co">#&gt; Residual covariance: AR1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Fixed effects</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Fixed effects</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 8</span></span></span>
 <span><span class="co">#&gt;   Term     Estimate `Std Error` Statistic    DF `p value` `Conf Low` `Conf High`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
@@ -228,22 +227,22 @@ tests, covariance parameters and information criteria.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Drug2:T…   -<span style="color: #BB0000;">0.143</span>       0.438    -<span style="color: #BB0000;">0.326</span> 67.9    7.46<span style="color: #949494;">e</span><span style="color: #BB0000;">-1</span>     -<span style="color: #BB0000;">1.02</span>        0.732</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> Drug3:T…   -<span style="color: #BB0000;">0.474</span>       0.448    -<span style="color: #BB0000;">1.06</span>  68.0    2.94<span style="color: #949494;">e</span><span style="color: #BB0000;">-1</span>     -<span style="color: #BB0000;">1.37</span>        0.421</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> Drug2:T…    0.823       0.666     1.24  72.7    2.21<span style="color: #949494;">e</span><span style="color: #BB0000;">-1</span>     -<span style="color: #BB0000;">0.505</span>       2.15 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span> Drug3:T…    0.334       0.644     0.519 73.1    6.05<span style="color: #949494;">e</span><span style="color: #BB0000;">-1</span>     -<span style="color: #BB0000;">0.949</span>       1.62</span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Type III tests</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span> Drug3:T…    0.334       0.644     0.519 73.1    6.05<span style="color: #949494;">e</span><span style="color: #BB0000;">-1</span>     -<span style="color: #BB0000;">0.949</span>       1.62 </span></span>
+<span><span class="co">#&gt; Type III tests</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
 <span><span class="co">#&gt;   Term      `Num DF` `Den DF` Statistic `p value`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Drug             2     46.4     11.4   9.23<span style="color: #949494;">e</span><span style="color: #BB0000;">- 5</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Time             2     68.5     59.3   1.16<span style="color: #949494;">e</span><span style="color: #BB0000;">-15</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Drug:Time        4     68.4      1.35  2.60<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span></span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Covariance parameters</span> ──</span></span>
+<span><span class="co">#&gt; Covariance parameters</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
 <span><span class="co">#&gt;   Group    Term        Component Estimate `Std Error`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Center   (Intercept) var          5.17       5.73  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Residual ar1         var         10.7        2.14  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Residual ar1         cor          0.935      0.016<span style="text-decoration: underline;">9</span></span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Information criteria</span> ──</span></span>
+<span><span class="co">#&gt; Information criteria</span></span>
 <span><span class="co">#&gt;    logLik       AIC       BIC  deviance </span></span>
 <span><span class="co">#&gt; -245.3129  514.6257  548.5655  490.6257</span></span></code></pre></div>
 <p>Individual components are also available through standard
@@ -296,7 +295,7 @@ methods.</p>
 <span><span class="co">#&gt; Drug3:Time3 -0.9485017  1.6170050</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, parm <span class="op">=</span> <span class="st">"theta_"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                            Lower      Upper</span></span>
-<span><span class="co">#&gt; random.var.(Intercept) 0.5898096 45.3849859</span></span>
+<span><span class="co">#&gt; random.var.(Intercept) 0.5898096 45.3849861</span></span>
 <span><span class="co">#&gt; residual.var           7.2045422 15.8028806</span></span>
 <span><span class="co">#&gt; residual.cor           0.8923747  0.9612359</span></span></code></pre></div>
 <p><code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> performs type III fixed-effect tests for one
@@ -336,9 +335,10 @@ of freedom are available. Kenward-Roger is restricted to REML fits.</p>
 <h2 id="covariance-parameters-and-random-effects">Covariance parameters and random effects<a class="anchor" aria-label="anchor" href="#covariance-parameters-and-random-effects"></a>
 </h2>
 <p><code><a href="../reference/VarCorr.html">VarCorr()</a></code> returns the estimated covariance components on
-their natural scale. <code><a href="../reference/ranef.html">ranef()</a></code> returns empirical BLUPs as a
-tibble for one random term and a named list of tibbles for multiple
-terms.</p>
+their natural scale. <code><a href="../reference/ranef.html">ranef()</a></code> always returns a named list
+with one tibble per random term. This stable contract also applies when
+the model has only one random term; a marginal model returns an empty
+list.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/VarCorr.html">VarCorr</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
@@ -348,6 +348,14 @@ terms.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Residual ar1         var         10.7        2.14  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Residual ar1         cor          0.935      0.016<span style="text-decoration: underline;">9</span></span></span>
 <span><span class="fu"><a href="../reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $Center</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
+<span><span class="co">#&gt;   Center `(Intercept)`</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> R              0.901</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> S              1.55 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> T             -<span style="color: #BB0000;">2.45</span></span></span>
+<span><span class="fu"><a href="../reference/ranef.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">[[</span><span class="fl">1L</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
 <span><span class="co">#&gt;   Center `(Intercept)`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
@@ -388,16 +396,14 @@ confidence intervals. Use <code>conf_adjust = "none"</code> for
 pointwise intervals.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/lsmeans.html">lsmeans</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">pairwise</span> <span class="op">~</span> <span class="va">Drug</span>, adjust <span class="op">=</span> <span class="st">"holm"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Estimated marginal means</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Estimated marginal means</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 8</span></span></span>
 <span><span class="co">#&gt;   Drug  Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 1         13.2        1.53  2.98      8.60   0.003<span style="text-decoration: underline;">39</span>       8.27        18.0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2         18.1        1.53  3.01     11.8    0.001<span style="text-decoration: underline;">28</span>      13.3         23.0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 3         17.1        1.53  3.01     11.1    0.001<span style="text-decoration: underline;">54</span>      12.2         21.9</span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Pairwise contrasts</span> ──</span></span>
+<span><span class="co">#&gt; Pairwise contrasts</span></span>
 <span><span class="co">#&gt; P-value adjustment: holm; confidence intervals: bonferroni</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 8</span></span></span>
 <span><span class="co">#&gt;   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`</span></span>
@@ -441,9 +447,43 @@ fitted values use fixed effects only.</p>
 <p>For <code>predict(fit, newdata)</code>, known grouping levels receive
 their fitted random effect. New groups cause an error unless
 <code>allow.new.levels = TRUE</code> is supplied; when allowed, their
-random contribution is zero. Set <code>re.form</code> to a
-non-<code>NULL</code> value to request fixed-effects-only
-predictions.</p>
+random contribution is zero. Use <code>re.form = NA</code> or
+<code>re.form = ~ 0</code> for fixed-effects-only predictions. A fitted
+random-effects formula, or a list of fitted formulas, selects a subset
+of random terms.</p>
+<p>Standard errors and intervals are available directly. Confidence
+intervals describe the expected response. Prediction intervals
+additionally include the fitted residual variance. Both condition on
+empirical random effects selected through <code>re.form</code>; BLUP
+estimation uncertainty is not added.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, se.fit <span class="op">=</span> <span class="cn">TRUE</span>, re.form <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, interval <span class="op">=</span> <span class="st">"confidence"</span>, re.form <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, interval <span class="op">=</span> <span class="st">"prediction"</span>, level <span class="op">=</span> <span class="fl">0.90</span>, re.form <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="simulation-updating-weights-and-offsets">Simulation, updating, weights, and offsets<a class="anchor" aria-label="anchor" href="#simulation-updating-weights-and-offsets"></a>
+</h2>
+<p><code><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate()</a></code> draws marginal Gaussian response vectors from
+the fitted mean and covariance. Supplying a seed makes the result
+reproducible without changing the caller’s random-number state.
+<code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> refits a modified formula or model argument.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">fit</span>, nsim <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">.</span> <span class="op">~</span> <span class="va">.</span> <span class="op">-</span> <span class="va">Drug</span><span class="op">:</span><span class="va">Time</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">fit</span>, structure <span class="op">=</span> <span class="st">"cs"</span><span class="op">)</span></span></code></pre></div>
+<p>Known relative precision weights rescale the residual covariance on
+both sides by <code>diag(1 / sqrt(weights))</code>. Formula offsets,
+explicit offsets, and custom fixed-effect contrasts are also
+supported.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">weighted_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
+<span>  formula <span class="op">=</span> <span class="va">response</span> <span class="op">~</span> <span class="va">treatment</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="va">baseline</span><span class="op">)</span>,</span>
+<span>  random <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">subject</span>,</span>
+<span>  weights <span class="op">=</span> <span class="va">precision</span>,</span>
+<span>  contrasts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>treatment <span class="op">=</span> <span class="st">"contr.sum"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="diagnostic-plots">Diagnostic plots<a class="anchor" aria-label="anchor" href="#diagnostic-plots"></a>
@@ -452,13 +492,13 @@ predictions.</p>
 object. Three diagnostics are available through <code>which</code>:
 standardized residuals against fitted values, a normal Q-Q plot, and
 observed against fitted values.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"residuals"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="lmmix_files/figure-html/diagnostic-plots-1.png" class="r-plt" alt="Residual and normal Q-Q diagnostic plots" width="48%"><img src="lmmix_files/figure-html/diagnostic-plots-2.png" class="r-plt" alt="Residual and normal Q-Q diagnostic plots" width="48%"></p>
 <p>Because the returned object is a <code>ggplot</code>, layers and
 themes can be added in the usual way.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="lmmix_files/figure-html/customize-plot-1.png" class="r-plt" alt="Observed values plotted against fitted values" width="700"></p>
@@ -473,7 +513,7 @@ within the repeated-measures groups.</p>
 <code>broom</code> column names required for programmatic use. Input
 column names are preserved by <code>augment()</code> and
 <code><a href="../reference/ranef.html">ranef()</a></code>.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 7</span></span></span>
 <span><span class="co">#&gt;   Effect Term        Estimate `Std Error` Statistic    DF   `p value`</span></span>
@@ -508,7 +548,7 @@ column names are preserved by <code>augment()</code> and
 </h2>
 <p>The same interface covers marginal, random-effects and combined
 models.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Marginal model with unstructured repeated-measures covariance</span></span>
 <span><span class="va">fit_marginal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lmm.html">lmm</a></span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
@@ -556,12 +596,19 @@ models.</p>
 <div class="section level2">
 <h2 id="practical-limits">Practical limits<a class="anchor" aria-label="anchor" href="#practical-limits"></a>
 </h2>
-<p>Version <code>0.3.0</code> constructs the full dense matrix
-<code>V</code> during optimization. It is appropriate for small and
-moderate data sets. It is not a large-scale sparse mixed-model engine.
-The interface accepts multiple independent random-effect formulas and
-one repeated-measures structure. Generalized responses remain outside
-the Gaussian model scope.</p>
+<p>Version <code>0.4.0</code> identifies independent connected
+components induced by the random and repeated grouping structures. The
+likelihood is evaluated by factoring one covariance matrix per component
+and aggregating their GLS contributions. This substantially reduces work
+for many subject-level or nested designs.</p>
+<p>The fitted object still stores the complete dense marginal
+covariance, and some inference calculations remain dense. Crossed
+effects can connect all observations into one component. Consequently,
+<code>lmmix</code> is not yet a large-scale sparse mixed-model engine
+and does not promise a fixed observation limit. The practical cost
+depends on the size of the largest connected component, the number of
+covariance parameters, and the requested inference. Generalized
+responses remain outside the Gaussian model scope.</p>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-searle1980" class="csl-entry">
 Searle, S. R., F. M. Speed, and G. A. Milliken. 1980. <span>“Population

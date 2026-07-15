@@ -1,5 +1,42 @@
 # Changelog
 
+## lmmix 0.4.0
+
+- Evaluated ML and REML objectives by independent connected covariance
+  blocks when the random and repeated grouping structures permit that
+  decomposition. The fitted object continues to retain the complete
+  marginal covariance for model methods.
+- Cached the optimized GLS state and the fixed-effect covariance
+  Jacobian, removing repeated likelihood and Satterthwaite calculations.
+- Added
+  [`simulate.lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  with reproducible marginal Gaussian simulation and random-number-state
+  preservation.
+- Added
+  [`update.lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  and extended
+  [`predict.lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm-methods.md)
+  with standard errors, confidence intervals, prediction intervals, and
+  partial `re.form` selection.
+- Added known relative precision `weights`, fixed-effect `offset`
+  support, and custom `contrasts` to
+  [`lmm()`](https://aureliennicosiaulaval.github.io/lmmix/reference/lmm.md).
+- Standardized
+  [`ranef()`](https://aureliennicosiaulaval.github.io/lmmix/reference/ranef.md)
+  to always return a named list of tibbles. This is an intentional
+  pre-1.0 API change for single-term models.
+- Moved regular [`print()`](https://rdrr.io/r/base/print.html) output to
+  standard output, documented the residual scale returned by
+  [`sigma()`](https://rdrr.io/r/stats/sigma.html), and added a warning
+  for the conservative multi-degree-of-freedom fallback.
+- Moved `ggplot2` from `Imports` to `Suggests`; diagnostic plotting now
+  checks for the optional package when called.
+- Added a comparison vignette for choosing among `lmmix`, `lme4`,
+  `lmerTest`, `nlme`, and `mmrm`, and updated the documented scalability
+  boundaries.
+- Replaced the maintainer’s GitHub no-reply address with a verifiable
+  institutional address.
+
 ## lmmix 0.3.0
 
 - Added fixed-band Toeplitz residual covariance through specifications

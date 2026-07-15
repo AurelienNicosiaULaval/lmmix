@@ -13,7 +13,7 @@ Kenward-Roger inference."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">lmmix</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@ Kenward-Roger inference."></head><body>
     <li><a class="dropdown-item" href="../articles/theory-reml.html">Estimation and inference in lmmix</a></li>
     <li><a class="dropdown-item" href="../articles/boundary-inference.html">Covariance intervals and boundary-aware model comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Validation against independent R implementations and PROC MIXED</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Choosing lmmix and related R packages</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../ROADMAP.html">Roadmap</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -74,16 +75,17 @@ the residual covariance.</p>
 <p>Fitted objects provide coefficient tests, type III tests, estimated
 marginal means, pairwise contrasts, covariance-parameter intervals,
 parametric-bootstrap likelihood-ratio tests, empirical BLUPs, predictions,
-standard model methods, <code>ggplot2</code> diagnostic plots, <code>broom</code> methods, and
-<code>emmeans</code> interoperability.</p>
+simulation, model updates, standard model methods, <code>ggplot2</code> diagnostic
+plots, <code>broom</code> methods, and <code>emmeans</code> interoperability.</p>
     </div>
     <div class="section level2">
     <h2 id="current-limits">Current limits<a class="anchor" aria-label="anchor" href="#current-limits"></a></h2>
 
 
-<p>The package fits univariate Gaussian responses. The likelihood uses a dense
-marginal covariance matrix and is intended for small and moderate data
-sets rather than large-scale sparse problems.</p>
+<p>The package fits univariate Gaussian responses. The likelihood factors
+independent connected covariance components separately, but fitted objects
+and some inference calculations retain dense marginal matrices. It is not a
+general large-scale sparse mixed-model engine.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -119,7 +121,7 @@ means in the linear model: An alternative to least squares means.
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
-    <p><strong>Maintainer</strong>: Aurélien Nicosia <a href="mailto:116816597+AurelienNicosiaULaval@users.noreply.github.com">116816597+AurelienNicosiaULaval@users.noreply.github.com</a></p>
+    <p><strong>Maintainer</strong>: Aurélien Nicosia <a href="mailto:aurelien.nicosia@mat.ulaval.ca">aurelien.nicosia@mat.ulaval.ca</a></p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
