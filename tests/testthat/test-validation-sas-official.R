@@ -239,7 +239,7 @@ test_that("SAS random-coefficients fixed and random solutions are reproduced", {
   )
 
   random_target <- sas_targets("random_coefficients", "random")
-  random_result <- ranef(official_random_fit)
+  random_result <- ranef(official_random_fit)[[1L]]
   observed <- as.vector(t(as.matrix(random_result[c("(Intercept)", "Month")])))
   expect_absolute_error_below(
     observed,

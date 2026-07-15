@@ -1,17 +1,19 @@
 test_that("core S3 methods return documented shapes", {
   fit <- fit_orthodont_intercept()
 
-  expect_message(print(fit), "Linear mixed model")
+  expect_output(print(fit), "Linear mixed model")
   model_summary <- summary(fit)
   expect_s3_class(model_summary, "summary.lmm")
-  expect_message(print(model_summary), "Fixed effects")
+  expect_output(print(model_summary), "Fixed effects")
   uncertain_summary <- model_summary
   uncertain_summary$convergence$hessian_positive_definite <- FALSE
   expect_message(print(uncertain_summary), "Hessian")
   expect_equal(coef(fit), fixef(fit))
   expect_named(fixef(fit), c("(Intercept)", "age", "SexFemale"))
   expect_s3_class(VarCorr(fit), "tbl_df")
-  expect_s3_class(ranef(fit), "tbl_df")
+  expect_type(ranef(fit), "list")
+  expect_named(ranef(fit), "Subject")
+  expect_s3_class(ranef(fit)$Subject, "tbl_df")
   expect_equal(dim(vcov(fit)), c(3L, 3L))
   expect_s3_class(logLik(fit), "logLik")
   expect_length(fitted(fit), nobs(fit))
@@ -31,7 +33,7 @@ test_that("core S3 methods return documented shapes", {
   expect_identical(terms(fit), fit$terms)
   type3 <- anova(fit)
   expect_s3_class(type3, "anova.lmm")
-  expect_message(print(type3), "Type III")
+  expect_output(print(type3), "Type III")
   expect_equal(dim(confint(fit)), c(3L, 2L))
   expect_identical(colnames(confint(fit)), c("Lower", "Upper"))
   expect_equal(dim(confint(fit, parm = 2)), c(1L, 2L))
@@ -199,5 +201,5 @@ test_that("marginal models have no random-effect table", {
     structure = "ar1"
   )
 
-  expect_equal(nrow(ranef(fit)), 0L)
+  expect_length(ranef(fit), 0L)
 })

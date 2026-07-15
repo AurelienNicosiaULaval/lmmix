@@ -149,6 +149,7 @@ prepare_analysis_data <- function(
   formula,
   random,
   repeated,
+  extra = list(),
   na.action = stats::na.omit
 ) {
   if (!is.data.frame(data)) {
@@ -165,6 +166,11 @@ prepare_analysis_data <- function(
   }
 
   used <- stats::complete.cases(data[vars])
+  if (length(extra) > 0L) {
+    for (value in extra) {
+      used <- used & !is.na(value)
+    }
+  }
   action <- na_action_name(na.action)
   if (action == "na.fail" && any(!used)) {
     message <- paste(
@@ -184,8 +190,38 @@ prepare_analysis_data <- function(
     row_index = which(used),
     omitted = which(!used),
     variables = vars,
+    extra = lapply(extra, `[`, used),
     na_action = action
   )
+}
+
+evaluate_data_vector <- function(expression, data, environment, arg) {
+  value <- tryCatch(
+    eval(expression, envir = data, enclos = environment),
+    error = function(cnd) {
+      cli::cli_abort(
+        paste0(
+          "Could not evaluate {.arg {arg}} in {.arg data}: ",
+          "{conditionMessage(cnd)}"
+        )
+      )
+    }
+  )
+  if (is.null(value)) {
+    return(NULL)
+  }
+  if (!is.numeric(value)) {
+    cli::cli_abort("{.arg {arg}} must evaluate to a numeric vector or NULL.")
+  }
+  if (length(value) == 1L) {
+    value <- rep(value, nrow(data))
+  }
+  if (length(value) != nrow(data)) {
+    cli::cli_abort(
+      "{.arg {arg}} must have length one or the number of rows in {.arg data}."
+    )
+  }
+  as.numeric(value)
 }
 
 restore_excluded <- function(object, values) {

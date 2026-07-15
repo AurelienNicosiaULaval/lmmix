@@ -40,7 +40,7 @@ devtools::install_github("AurelienNicosiaULaval/lmmix")
 
 ## Vignettes
 
-The package contains four complementary vignettes:
+The package contains five complementary vignettes:
 
 * [Using lmmix](articles/lmmix.html)
   ([source](vignettes/lmmix.Rmd))
@@ -56,7 +56,11 @@ The package contains four complementary vignettes:
 * [Validation against independent R implementations and PROC MIXED](articles/validation.html)
   ([source](vignettes/validation.Rmd))
   documents the independent comparisons, numerical tolerances, and validation
-  boundaries.
+  boundaries;
+* [Choosing lmmix and related R packages](articles/comparison.html)
+  ([source](vignettes/comparison.Rmd))
+  compares the implemented model and inference scope with `lme4`, `lmerTest`,
+  `nlme`, and `mmrm`.
 
 They are also available from an installed package:
 
@@ -65,6 +69,7 @@ vignette("lmmix", package = "lmmix")
 vignette("theory-reml", package = "lmmix")
 vignette("boundary-inference", package = "lmmix")
 vignette("validation", package = "lmmix")
+vignette("comparison", package = "lmmix")
 ```
 
 ## Current capability matrix
@@ -84,7 +89,8 @@ vignette("validation", package = "lmmix")
 | Missing data | `na.omit`, `na.exclude`, or `na.fail` |
 | Interoperability | `emmeans`, `tidy()`, `glance()`, and `augment()` |
 | Diagnostic plots | `plot.lmm()` returns `ggplot2` residual, Q-Q, and fitted-value diagnostics |
-| Model boundary | Gaussian responses and dense covariance factorization for small and moderate data sets |
+| Standard extensions | Known precision weights, offsets, custom contrasts, simulation, updating, and prediction intervals |
+| Model boundary | Gaussian responses; blockwise likelihood when independent components exist, with dense fitted covariance and inference matrices |
 
 The [development roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html)
 centralizes the version history, current limitations, validation boundaries,
@@ -195,7 +201,7 @@ predictions, residuals and information criteria.
 
 ```{r model-methods}
 fixef(fit)
-head(ranef(fit))
+head(ranef(fit)[[1L]])
 head(residuals(fit))
 head(predict(fit))
 ```
@@ -224,6 +230,21 @@ model-specific denominator degrees of freedom.
 ```{r emmeans-example, eval=requireNamespace("emmeans", quietly = TRUE)}
 emmeans::emmeans(fit, ~Drug)
 ```
+
+`predict()` can return standard errors, confidence intervals, or prediction
+intervals. `simulate()` draws marginal Gaussian responses from the fitted
+model, and `update()` refits a modified specification.
+
+```{r standard-extensions, eval=FALSE}
+predict(fit, se.fit = TRUE, re.form = NA)
+predict(fit, interval = "prediction", re.form = NA)
+simulate(fit, nsim = 20, seed = 2026)
+update(fit, . ~ . - Drug:Time)
+```
+
+Prediction standard errors condition on any included empirical random effects.
+Prediction intervals add the fitted residual variance; they do not add BLUP
+estimation uncertainty.
 
 Kenward-Roger inference is available for REML fits. Nested models with
 different fixed effects are automatically refitted with ML for a
@@ -268,10 +289,12 @@ validation vignette for model specifications, tolerances and limitations.
 The complete and maintained list is available in the
 [development roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html).
 
-Version `0.3.0` fits univariate Gaussian models. It is not a generalized
-mixed-model engine. The likelihood constructs and factors a dense marginal
-covariance matrix, so the package targets small and moderate data sets rather
-than large-scale sparse problems.
+Version `0.4.0` fits univariate Gaussian models. It is not a generalized
+mixed-model engine. The likelihood detects independent connected components
+and factors their covariance blocks separately. The fitted object and some
+inference calculations still retain dense marginal matrices. Fully crossed
+designs may also form one large connected component, so the package does not
+yet make a large-scale sparse-computation claim.
 
 Rows with missing responses or model covariates are handled according to
 `na.action`; the package does not impute missing covariates. Conditional
@@ -287,7 +310,9 @@ The REML implementation follows Patterson and Thompson (1971), Harville
 Small-sample covariance adjustment follows Kenward and Roger (1997).
 Estimated marginal means follow Searle, Speed, and Milliken (1980). Full
 citations and DOI links are included in the package help and the
-[theory vignette](articles/theory-reml.html).
+[theory vignette](articles/theory-reml.html). The
+[comparison vignette](articles/comparison.html) cites the primary software
+papers and official package documentation used to delimit overlapping scope.
 
 ## Package citation
 

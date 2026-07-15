@@ -933,7 +933,7 @@ random.blup.target <- official_sas_target(
   "random_coefficients",
   "random"
 )
-random.blup <- ranef(official.random.fit)
+random.blup <- ranef(official.random.fit)[[1L]]
 tibble::tibble(
   term = random.blup.target$term,
   lmmix = as.vector(t(as.matrix(

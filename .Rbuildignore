@@ -8,6 +8,7 @@
 ^VALIDATION\.md$
 ^cran-comments\.md$
 ^CITATION\.cff$
+^ROADMAP\.md$
 ^\.lintr$
 ^lmmix_.*\.tar\.gz$
 ^lmmix\.Rcheck$

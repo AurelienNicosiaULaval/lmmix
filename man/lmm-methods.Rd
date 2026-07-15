@@ -15,6 +15,8 @@
 \alias{plot.lmm}
 \alias{sigma.lmm}
 \alias{predict.lmm}
+\alias{simulate.lmm}
+\alias{update.lmm}
 \alias{model.matrix.lmm}
 \alias{model.frame.lmm}
 \alias{formula.lmm}
@@ -52,9 +54,16 @@
   newdata = NULL,
   re.form = NULL,
   allow.new.levels = FALSE,
+  se.fit = FALSE,
+  interval = c("none", "confidence", "prediction"),
+  level = 0.95,
   na.action = stats::na.pass,
   ...
 )
+
+\method{simulate}{lmm}(object, nsim = 1, seed = NULL, ...)
+
+\method{update}{lmm}(object, formula., ..., evaluate = TRUE)
 
 \method{model.matrix}{lmm}(object, data = NULL, ...)
 
@@ -97,14 +106,33 @@ values, a normal quantile-quantile plot, or observed against fitted values.}
 
 \item{newdata}{Optional data frame used for prediction.}
 
-\item{re.form}{\code{NULL} includes empirical random effects. Any non-\code{NULL}
-value requests a fixed-effects-only prediction.}
+\item{re.form}{\code{NULL} includes every empirical random-effect term, \code{NA} or
+\code{~ 0} excludes all random effects, and a random-effects formula or list of
+formulas selects a subset of fitted terms.}
 
 \item{allow.new.levels}{Whether conditional predictions may include new
 grouping levels. Their random contribution is zero when allowed.}
 
+\item{se.fit}{Whether \code{predict()} returns standard errors for the expected
+response. These standard errors use the fixed-effect covariance and
+condition on any empirical random effects included through \code{re.form}.}
+
+\item{interval}{Prediction interval type. \code{"confidence"} describes the
+expected response. \code{"prediction"} additionally includes the fitted
+residual variance but not uncertainty in empirical random effects.}
+
+\item{level}{Confidence level for fixed-effect and covariance intervals.}
+
 \item{na.action}{Missing-value action retained for prediction-method
 compatibility.}
+
+\item{nsim}{Number of simulations for a parametric-bootstrap comparison.}
+
+\item{seed}{Optional integer seed for a reproducible parametric bootstrap.}
+
+\item{formula.}{Optional formula update accepted by \code{update()}.}
+
+\item{evaluate}{Whether \code{update()} evaluates the updated call.}
 
 \item{data}{Optional data frame used to construct a fixed-effects model
 matrix.}
@@ -120,15 +148,9 @@ default \code{"chisq"} uses the usual asymptotic chi-squared reference. The
 \code{"parametric.bootstrap"} option simulates under each smaller model and is
 appropriate when covariance parameters can lie on a boundary.}
 
-\item{nsim}{Number of simulations for a parametric-bootstrap comparison.}
-
-\item{seed}{Optional integer seed for a reproducible parametric bootstrap.}
-
 \item{parm}{Parameters requested from \code{confint()}, supplied by name or fixed
 effect position. Use \code{"beta_"} for every fixed effect and \code{"theta_"} for
 every covariance parameter.}
-
-\item{level}{Confidence level for fixed-effect and covariance intervals.}
 }
 \value{
 The return value follows the corresponding base R generic.
@@ -144,6 +166,12 @@ Marginal values use fixed effects only. In prediction from new data, known
 grouping levels use their fitted random effect. New levels are rejected by
 default and receive a random contribution of zero only when explicitly
 allowed.
+
+\code{ranef()} always returns a named list with one tibble per random-effect
+term, including for models with a single term. It returns an empty list for
+marginal models. \code{sigma()} is defined as \code{sqrt(mean(diag(R)))}; it is a
+descriptive residual scale when residual variances differ across
+observations.
 }
 \references{
 Self, S. G., and Liang, K.-Y. (1987). Asymptotic properties of maximum

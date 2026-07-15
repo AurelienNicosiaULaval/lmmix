@@ -27,7 +27,7 @@ test_that("fixed-band Toeplitz reproduces SAS Example 79.6", {
   expect_equal(VarCorr(fit)$estimate, expected, tolerance = 5e-4)
   expect_equal(deviance(fit), 183.23797748, tolerance = 1e-5)
   expect_equal(fit$covariance$residual_base[1, 5], 0, tolerance = 1e-12)
-  expect_message(print(fit), "TOEP\\(4\\)")
+  expect_output(print(fit), "TOEP\\(4\\)")
 })
 
 test_that("fixed-band Toeplitz validates its order", {
@@ -113,7 +113,7 @@ test_that("parametric-bootstrap likelihood-ratio tests are reproducible", {
   expect_identical(attr(first, "nsim"), 5L)
   expect_identical(attr(first, "bootstrap")[[2L]]$successful, 5L)
   expect_true(first$p.value[[2L]] %in% (seq_len(6L) / 6))
-  expect_message(print(first), "bootstrap simulations")
+  expect_output(print(first), "bootstrap simulations")
   expect_error(
     anova(marginal, random, test = "parametric.bootstrap", nsim = 0),
     "positive integer"
