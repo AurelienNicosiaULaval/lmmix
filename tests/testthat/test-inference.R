@@ -65,7 +65,7 @@ test_that("residual degrees of freedom are available", {
 
 test_that("the ANOVA print method reports its denominator df method", {
   fit <- fit_orthodont_intercept()
-  expect_message(print(anova(fit)), "satterthwaite")
+  expect_output(print(anova(fit)), "satterthwaite")
 })
 
 test_that("Kenward-Roger agrees with lmerTest degrees of freedom", {

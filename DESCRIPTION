@@ -1,9 +1,9 @@
 Package: lmmix
 Title: Linear Mixed Models with Correlated Residuals
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: 
     person("Aurélien", "Nicosia", ,
-           "116816597+AurelienNicosiaULaval@users.noreply.github.com",
+           "aurelien.nicosia@mat.ulaval.ca",
            role = c("aut", "cre"))
 Description: Fits Gaussian linear mixed models by explicitly optimizing the
     maximum likelihood or restricted maximum likelihood criterion. Random
@@ -23,7 +23,6 @@ Depends:
 Imports:
     cli,
     generics,
-    ggplot2,
     Matrix,
     numDeriv,
     rlang,
@@ -33,6 +32,7 @@ Imports:
 Suggests:
     covr,
     emmeans,
+    ggplot2,
     knitr,
     lme4,
     lmerTest,

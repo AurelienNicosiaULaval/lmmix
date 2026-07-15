@@ -23,7 +23,7 @@ test_that("pairwise LS-mean contrasts are automatic", {
     c(-4.991561, -3.894755, 1.096806),
     tolerance = 1e-3
   )
-  expect_message(print(result), "Pairwise contrasts")
+  expect_output(print(result), "Pairwise contrasts")
 })
 
 test_that("emmeans uses the lmm basis and Satterthwaite df", {

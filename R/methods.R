@@ -35,6 +35,12 @@ VarCorr <- function(object, ...) {
 #' default and receive a random contribution of zero only when explicitly
 #' allowed.
 #'
+#' `ranef()` always returns a named list with one tibble per random-effect
+#' term, including for models with a single term. It returns an empty list for
+#' marginal models. `sigma()` is defined as `sqrt(mean(diag(R)))`; it is a
+#' descriptive residual scale when residual variances differ across
+#' observations.
+#'
 #' @param x,object,formula An `lmm` object. The `formula` name follows the
 #'   argument name of the `model.frame()` generic.
 #' @param ... Additional fitted `lmm` models for likelihood-ratio comparison,
@@ -54,10 +60,17 @@ VarCorr <- function(object, ...) {
 #' @param which Diagnostic plot to draw: standardized residuals against fitted
 #'   values, a normal quantile-quantile plot, or observed against fitted values.
 #' @param newdata Optional data frame used for prediction.
-#' @param re.form `NULL` includes empirical random effects. Any non-`NULL`
-#'   value requests a fixed-effects-only prediction.
+#' @param re.form `NULL` includes every empirical random-effect term, `NA` or
+#'   `~ 0` excludes all random effects, and a random-effects formula or list of
+#'   formulas selects a subset of fitted terms.
 #' @param allow.new.levels Whether conditional predictions may include new
 #'   grouping levels. Their random contribution is zero when allowed.
+#' @param se.fit Whether `predict()` returns standard errors for the expected
+#'   response. These standard errors use the fixed-effect covariance and
+#'   condition on any empirical random effects included through `re.form`.
+#' @param interval Prediction interval type. `"confidence"` describes the
+#'   expected response. `"prediction"` additionally includes the fitted
+#'   residual variance but not uncertainty in empirical random effects.
 #' @param na.action Missing-value action retained for prediction-method
 #'   compatibility.
 #' @param data Optional data frame used to construct a fixed-effects model
@@ -70,6 +83,8 @@ VarCorr <- function(object, ...) {
 #' @param level Confidence level for fixed-effect and covariance intervals.
 #' @param adjusted Whether `vcov()` returns the Kenward-Roger-adjusted
 #'   covariance when available.
+#' @param formula. Optional formula update accepted by `update()`.
+#' @param evaluate Whether `update()` evaluates the updated call.
 #'
 #' @references
 #' Self, S. G., and Liang, K.-Y. (1987). Asymptotic properties of maximum
@@ -88,29 +103,43 @@ NULL
 #' @rdname lmm-methods
 #' @export
 print.lmm <- function(x, ...) {
-  cli::cli_text("Linear mixed model fit by {x$method}")
-  cli::cli_text("Formula: {.code {deparse(x$formula)}}")
+  lines <- c(
+    paste("Linear mixed model fit by", x$method),
+    paste("Formula:", paste(deparse(x$formula), collapse = " "))
+  )
   if (!is.null(x$random_formula)) {
     random_formulas <- normalize_random_formulas(x$random_formula)
     for (index in seq_along(random_formulas)) {
       label <- names(x$design$random$terms)[[index]]
-      cli::cli_text(
-        "Random ({label}): {.code {deparse(random_formulas[[index]])}}"
+      lines <- c(
+        lines,
+        paste0(
+          "Random (", label, "): ",
+          paste(deparse(random_formulas[[index]]), collapse = " ")
+        )
       )
     }
   }
   if (!is.null(x$repeated_formula)) {
-    cli::cli_text(
+    lines <- c(
+      lines,
       paste0(
-        "Repeated: {.code {deparse(x$repeated_formula)}} ",
-        "({toupper(x$structure_label)})"
+        "Repeated: ", paste(deparse(x$repeated_formula), collapse = " "),
+        " (", toupper(x$structure_label), ")"
       )
     )
   } else {
-    cli::cli_text("Residual structure: {toupper(x$structure_label)}")
+    lines <- c(
+      lines,
+      paste("Residual structure:", toupper(x$structure_label))
+    )
   }
-  cli::cli_text("Log-likelihood: {format(x$log_likelihood, digits = 6)}")
-  cli::cli_text("Convergence code: {x$convergence$code}")
+  lines <- c(
+    lines,
+    paste("Log-likelihood:", format(x$log_likelihood, digits = 6)),
+    paste("Convergence code:", x$convergence$code)
+  )
+  writeLines(lines)
   invisible(x)
 }
 
@@ -148,17 +177,20 @@ summary.lmm <- function(object, level = 0.95, ...) {
 
 #' @export
 print.summary.lmm <- function(x, ...) {
-  cli::cli_h1("Linear mixed model")
-  cli::cli_text("Estimation: {x$method}")
-  cli::cli_text("Denominator df: {x$ddf}")
-  cli::cli_text("Residual covariance: {toupper(x$structure)}")
-  cli::cli_h2("Fixed effects")
+  writeLines(c(
+    "Linear mixed model",
+    paste("Estimation:", x$method),
+    paste("Denominator df:", x$ddf),
+    paste("Residual covariance:", toupper(x$structure)),
+    "",
+    "Fixed effects"
+  ))
   print(x$fixed)
-  cli::cli_h2("Type III tests")
+  writeLines("Type III tests")
   print(x$type3)
-  cli::cli_h2("Covariance parameters")
+  writeLines("Covariance parameters")
   print(x$covariance)
-  cli::cli_h2("Information criteria")
+  writeLines("Information criteria")
   print(x$criteria)
   if (x$convergence$code != 0L) {
     cli::cli_alert_warning("Optimizer convergence code: {x$convergence$code}")
@@ -208,7 +240,7 @@ fixef.lmm <- function(object, ...) {
 #' @export
 ranef.lmm <- function(object, ...) {
   if (is.null(object$random_effects)) {
-    return(as_lmm_table(tibble::tibble()))
+    return(list())
   }
 
   out <- lapply(names(object$random_effects), function(label) {
@@ -223,7 +255,7 @@ ranef.lmm <- function(object, ...) {
     as_lmm_table(tibble::as_tibble(table))
   })
   names(out) <- names(object$random_effects)
-  if (length(out) == 1L) out[[1L]] else out
+  out
 }
 
 #' @export
@@ -296,7 +328,7 @@ residuals.lmm <- function(
   if (type == "marginal") {
     return(restore_excluded(
       object,
-      object$design$y - object$marginal_fitted
+      object$design$response - object$marginal_fitted
     ))
   }
   if (type == "pearson") {
@@ -315,11 +347,15 @@ plot.lmm <- function(
   which = c("residuals", "qq", "fitted"),
   ...
 ) {
+  rlang::check_installed(
+    "ggplot2",
+    reason = "to draw diagnostic plots for lmm models"
+  )
   which <- match.arg(which)
   diagnostics <- tibble::tibble(
     .fitted = x$fitted,
     .std.resid = x$residuals / sqrt(diag(x$covariance$r)),
-    .observed = x$design$y
+    .observed = x$design$response
   )
 
   if (which == "residuals") {
@@ -384,8 +420,43 @@ sigma.lmm <- function(object, ...) {
   sqrt(mean(diag(object$covariance$r)))
 }
 
-random_prediction <- function(object, newdata, allow.new.levels) {
-  contributions <- lapply(names(object$design$random$terms), function(label) {
+selected_random_labels <- function(object, re.form) {
+  available <- names(object$design$random$terms %||% list())
+  if (is.null(re.form)) {
+    return(available)
+  }
+  if (is.atomic(re.form) && length(re.form) == 1L && is.na(re.form)) {
+    return(character())
+  }
+  if (inherits(re.form, "formula")) {
+    right <- paste(deparse(re.form[[2L]]), collapse = "")
+    if (right %in% c("0", "-1")) {
+      return(character())
+    }
+  }
+  if (length(available) == 0L) {
+    cli::cli_abort("This model does not contain random-effect terms.")
+  }
+
+  requested <- normalize_random_formulas(re.form)
+  fitted <- normalize_random_formulas(object$random_formula)
+  requested_signatures <- vapply(requested, formula_signature, character(1L))
+  fitted_signatures <- vapply(fitted, formula_signature, character(1L))
+  matched <- match(requested_signatures, fitted_signatures)
+  if (anyNA(matched)) {
+    unknown <- requested_signatures[is.na(matched)]
+    cli::cli_abort(
+      paste0(
+        "Unknown random-effect specification in {.arg re.form}: ",
+        "{.code {unknown}}."
+      )
+    )
+  }
+  available[matched]
+}
+
+random_prediction <- function(object, newdata, allow.new.levels, labels) {
+  contributions <- lapply(labels, function(label) {
     random <- object$design$random$terms[[label]]
     parsed <- random$parsed
     group <- make_group(newdata, parsed$group_vars, "newdata")
@@ -417,6 +488,91 @@ random_prediction <- function(object, newdata, allow.new.levels) {
   Reduce(`+`, contributions, init = numeric(nrow(newdata)))
 }
 
+fitted_random_prediction <- function(object, labels) {
+  contributions <- lapply(labels, function(label) {
+    random <- object$design$random$terms[[label]]
+    effects <- as.vector(t(object$random_effects[[label]]))
+    as.numeric(random$z %*% effects)
+  })
+  Reduce(`+`, contributions, init = numeric(nrow(object$design$x)))
+}
+
+prediction_residual_variance <- function(object, newdata = NULL) {
+  if (is.null(newdata)) {
+    return(diag(object$covariance$r))
+  }
+  base <- object$covariance$residual_base
+  if (object$structure == "id") {
+    variance <- rep(base[[1L]], nrow(newdata))
+  } else {
+    time_variable <- object$design$repeated$time_variable
+    if (is.null(time_variable) || !time_variable %in% names(newdata)) {
+      cli::cli_abort(
+        "Prediction intervals require the repeated-measures ordering variable."
+      )
+    }
+    time <- match(
+      as.character(newdata[[time_variable]]),
+      object$design$repeated$time_levels
+    )
+    if (anyNA(time)) {
+      cli::cli_abort(
+        "Prediction intervals cannot use unseen repeated-measures time values."
+      )
+    }
+    variance <- diag(base)[time]
+  }
+  weights <- prediction_weights(object, newdata)
+  variance / weights
+}
+
+prediction_offset <- function(object, newdata = NULL) {
+  if (is.null(newdata)) {
+    return(object$offset)
+  }
+  fixed_terms <- stats::delete.response(object$terms)
+  frame <- stats::model.frame(
+    fixed_terms,
+    data = newdata,
+    xlev = object$xlevels,
+    na.action = stats::na.pass
+  )
+  formula_offset <- stats::model.offset(frame)
+  if (is.null(formula_offset)) {
+    formula_offset <- numeric(nrow(newdata))
+  }
+  explicit <- if (is.null(object$offset_expression)) {
+    numeric(nrow(newdata))
+  } else {
+    evaluate_data_vector(
+      object$offset_expression,
+      newdata,
+      object$evaluation_environment,
+      "offset"
+    )
+  }
+  as.numeric(formula_offset) + explicit
+}
+
+prediction_weights <- function(object, newdata = NULL) {
+  if (is.null(newdata)) {
+    return(object$weights)
+  }
+  if (is.null(object$weights_expression)) {
+    return(rep(1, nrow(newdata)))
+  }
+  weights <- evaluate_data_vector(
+    object$weights_expression,
+    newdata,
+    object$evaluation_environment,
+    "weights"
+  )
+  if (any(!is.finite(weights) | weights <= 0)) {
+    cli::cli_abort("{.arg weights} must contain positive finite values.")
+  }
+  weights
+}
+
 #' @rdname lmm-methods
 #' @export
 predict.lmm <- function(
@@ -424,24 +580,137 @@ predict.lmm <- function(
   newdata = NULL,
   re.form = NULL,
   allow.new.levels = FALSE,
+  se.fit = FALSE,
+  interval = c("none", "confidence", "prediction"),
+  level = 0.95,
   na.action = stats::na.pass,
   ...
 ) {
+  interval <- match.arg(interval)
+  if (!is.logical(se.fit) || length(se.fit) != 1L || is.na(se.fit)) {
+    cli::cli_abort("{.arg se.fit} must be TRUE or FALSE.")
+  }
+  if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
+    cli::cli_abort("{.arg level} must be one number strictly between 0 and 1.")
+  }
+  labels <- selected_random_labels(object, re.form)
   if (is.null(newdata)) {
-    if (is.null(re.form)) fitted(object) else fitted(object, type = "marginal")
+    x <- object$design$x
+    prediction <- object$marginal_fitted +
+      fitted_random_prediction(object, labels)
   } else {
     x <- model_matrix_newdata(object, newdata)
-    prediction <- drop(x %*% object$coefficients)
-    include_random <- is.null(re.form) && !is.null(object$random_effects)
-    if (include_random) {
+    prediction <- prediction_offset(object, newdata) +
+      drop(x %*% object$coefficients)
+    if (length(labels) > 0L) {
       prediction <- prediction + random_prediction(
         object,
         newdata,
-        allow.new.levels = allow.new.levels
+        allow.new.levels = allow.new.levels,
+        labels = labels
       )
     }
-    prediction
   }
+
+  if (!isTRUE(se.fit) && interval == "none") {
+    return(prediction)
+  }
+  fixed_variance <- rowSums((x %*% object$beta_vcov) * x)
+  fixed_se <- sqrt(pmax(fixed_variance, 0))
+  df <- vapply(seq_len(nrow(x)), function(index) {
+    contrast_df(object, x[index, ])
+  }, numeric(1L))
+  fit <- prediction
+  if (interval != "none") {
+    interval_variance <- fixed_variance
+    if (interval == "prediction") {
+      interval_variance <- interval_variance + prediction_residual_variance(
+        object,
+        newdata = newdata
+      )
+    }
+    critical <- stats::qt((1 + level) / 2, df = df)
+    width <- critical * sqrt(pmax(interval_variance, 0))
+    fit <- cbind(
+      fit = prediction,
+      lwr = prediction - width,
+      upr = prediction + width
+    )
+  }
+  if (isTRUE(se.fit)) {
+    return(list(fit = fit, se.fit = fixed_se, df = df))
+  }
+  fit
+}
+
+#' @rdname lmm-methods
+#' @export
+simulate.lmm <- function(object, nsim = 1, seed = NULL, ...) {
+  if (
+    !is.numeric(nsim) || length(nsim) != 1L || !is.finite(nsim) ||
+      nsim < 1 || nsim > .Machine$integer.max || nsim != floor(nsim)
+  ) {
+    cli::cli_abort("{.arg nsim} must be one positive integer.")
+  }
+  restore_seed <- set_bootstrap_seed(seed)
+  if (!is.null(restore_seed)) {
+    on.exit(restore_seed(), add = TRUE)
+  }
+  chol_v <- chol_factor(object$covariance$v)
+  if (is.null(chol_v)) {
+    cli::cli_abort("The fitted covariance matrix is not positive definite.")
+  }
+  nsim <- as.integer(nsim)
+  simulations <- replicate(nsim, {
+    object$marginal_fitted +
+      drop(t(chol_v) %*% stats::rnorm(nobs(object)))
+  })
+  simulations <- as.data.frame(simulations, optional = TRUE)
+  names(simulations) <- paste0("sim_", seq_len(nsim))
+  simulations
+}
+
+#' @rdname lmm-methods
+#' @export
+update.lmm <- function(object, formula., ..., evaluate = TRUE) {
+  formula <- if (missing(formula.)) {
+    object$formula
+  } else {
+    stats::update.formula(object$formula, formula.)
+  }
+  arguments <- list(
+    data = object$original_data,
+    formula = formula,
+    random = object$random_formula,
+    repeated = object$repeated_formula,
+    structure = object$structure_label,
+    method = object$method,
+    ddf = object$ddf,
+    control = object$control,
+    na.action = switch(object$na_action,
+      na.omit = stats::na.omit,
+      na.exclude = stats::na.exclude,
+      na.fail = stats::na.fail
+    )
+  )
+  if (!is.null(object$weights_input)) {
+    arguments$weights <- object$weights_input
+  }
+  if (!is.null(object$offset_input)) {
+    arguments$offset <- object$offset_input
+  }
+  if (!is.null(object$contrasts_input)) {
+    arguments$contrasts <- object$contrasts_input
+  }
+  changes <- list(...)
+  if (length(changes) > 0L) {
+    arguments[names(changes)] <- changes
+  }
+  call <- as.call(c(list(quote(lmm)), arguments))
+  if (!isTRUE(evaluate)) {
+    return(call)
+  }
+  do.call(lmm, arguments)
 }
 
 #' @rdname lmm-methods
@@ -612,6 +881,9 @@ refit_lmm_ml <- function(object) {
     structure = object$structure_label,
     method = "ML",
     ddf = "satterthwaite",
+    weights = object$weights_input,
+    offset = object$offset_input,
+    contrasts = object$contrasts_input,
     control = object$control,
     na.action = action
   )
@@ -854,8 +1126,12 @@ compare_lmm_models <- function(models, refit, test, nsim, seed) {
 #' @export
 print.anova.lmm_list <- function(x, ...) {
   if (identical(attr(x, "test"), "parametric.bootstrap")) {
-    cli::cli_text(
-      "Likelihood-ratio tests with {attr(x, 'nsim')} bootstrap simulations"
+    writeLines(
+      paste(
+        "Likelihood-ratio tests with",
+        attr(x, "nsim"),
+        "bootstrap simulations"
+      )
     )
   }
   NextMethod("print")
@@ -865,7 +1141,7 @@ print.anova.lmm_list <- function(x, ...) {
 #' @export
 print.anova.lmm <- function(x, ...) {
   label <- attr(x, "ddf") %||% "model"
-  cli::cli_text("Type III tests with {label} degrees of freedom")
+  writeLines(paste("Type III tests with", label, "degrees of freedom"))
   NextMethod("print")
   invisible(x)
 }

@@ -17,13 +17,14 @@
 #' Fitted objects provide coefficient tests, type III tests, estimated
 #' marginal means, pairwise contrasts, covariance-parameter intervals,
 #' parametric-bootstrap likelihood-ratio tests, empirical BLUPs, predictions,
-#' standard model methods, `ggplot2` diagnostic plots, `broom` methods, and
-#' `emmeans` interoperability.
+#' simulation, model updates, standard model methods, `ggplot2` diagnostic
+#' plots, `broom` methods, and `emmeans` interoperability.
 #'
 #' @section Current limits:
-#' The package fits univariate Gaussian responses. The likelihood uses a dense
-#' marginal covariance matrix and is intended for small and moderate data
-#' sets rather than large-scale sparse problems.
+#' The package fits univariate Gaussian responses. The likelihood factors
+#' independent connected covariance components separately, but fitted objects
+#' and some inference calculations retain dense marginal matrices. It is not a
+#' general large-scale sparse mixed-model engine.
 #'
 #' @references
 #' Patterson, H. D., and Thompson, R. (1971). Recovery of inter-block
@@ -55,8 +56,8 @@
 #' \doi{10.1080/00031305.1980.10483031}
 #'
 #' @importFrom stats AIC BIC anova coef confint deviance fitted formula logLik
-#' @importFrom stats model.frame model.matrix nobs predict residuals sigma terms
-#' @importFrom stats vcov
+#' @importFrom stats model.frame model.matrix nobs predict residuals sigma
+#' @importFrom stats simulate terms update vcov
 #' @keywords internal
 "_PACKAGE"
 

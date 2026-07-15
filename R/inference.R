@@ -180,6 +180,22 @@ kenward_roger_test_parameters <- function(object, contrast) {
   list(df = df, scale = scale)
 }
 
+beta_vcov_derivatives_at_eta <- function(eta, design, method = "Richardson") {
+  p <- ncol(design$x)
+  jacobian <- numDeriv::jacobian(
+    func = function(parameters) {
+      as.vector(beta_vcov_at_eta(parameters, design))
+    },
+    x = eta,
+    method = method
+  )
+  derivatives <- lapply(seq_along(eta), function(index) {
+    symmetrize(matrix(jacobian[, index], nrow = p, ncol = p))
+  })
+  names(derivatives) <- names(eta)
+  derivatives
+}
+
 contrast_variance <- function(object, contrast, eta = object$eta) {
   beta_vcov <- beta_vcov_at_eta(eta, object$design)
   drop(contrast %*% beta_vcov %*% contrast)
@@ -187,17 +203,23 @@ contrast_variance <- function(object, contrast, eta = object$eta) {
 
 satterthwaite_df <- function(object, contrast) {
   contrast <- as.numeric(contrast)
-  variance <- contrast_variance(object, contrast)
+  variance <- drop(
+    contrast %*% object$beta_vcov_model %*% contrast
+  )
   invalid_variance <- !is.finite(variance) || variance <= 0
   if (invalid_variance || any(!is.finite(object$eta_vcov))) {
     return(NA_real_)
   }
 
-  gradient <- numDeriv::grad(
-    func = function(eta) contrast_variance(object, contrast, eta),
-    x = object$eta,
-    method = object$control$deriv_method
-  )
+  derivatives <- object$beta_vcov_derivatives %||%
+    beta_vcov_derivatives_at_eta(
+      object$eta,
+      object$design,
+      method = object$control$deriv_method
+    )
+  gradient <- vapply(derivatives, function(derivative) {
+    drop(contrast %*% derivative %*% contrast)
+  }, numeric(1L))
   variance_of_variance <- drop(
     crossprod(gradient, object$eta_vcov %*% gradient)
   )
@@ -304,6 +326,13 @@ f_statistic_df <- function(component_df, tolerance = 1e-8) {
     return(mean(component_df))
   }
   if (any(component_df <= 2)) {
+    cli::cli_warn(c(
+      "A component denominator degree of freedom is at most 2.",
+      "i" = paste(
+        "The multi-degree-of-freedom test uses the conservative",
+        "fallback of 2."
+      )
+    ))
     return(2)
   }
 

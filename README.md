@@ -26,7 +26,7 @@ devtools::install_github("AurelienNicosiaULaval/lmmix")
 
 ## Vignettes
 
-The package contains four complementary vignettes:
+The package contains five complementary vignettes:
 
 - [Using lmmix](articles/lmmix.html) ([source](vignettes/lmmix.Rmd))
   presents the fitting workflow and the main methods;
@@ -41,7 +41,10 @@ The package contains four complementary vignettes:
 - [Validation against independent R implementations and PROC
   MIXED](articles/validation.html) ([source](vignettes/validation.Rmd))
   documents the independent comparisons, numerical tolerances, and
-  validation boundaries.
+  validation boundaries;
+- [Choosing lmmix and related R packages](articles/comparison.html)
+  ([source](vignettes/comparison.Rmd)) compares the implemented model
+  and inference scope with `lme4`, `lmerTest`, `nlme`, and `mmrm`.
 
 They are also available from an installed package:
 
@@ -50,6 +53,7 @@ vignette("lmmix", package = "lmmix")
 vignette("theory-reml", package = "lmmix")
 vignette("boundary-inference", package = "lmmix")
 vignette("validation", package = "lmmix")
+vignette("comparison", package = "lmmix")
 ```
 
 ## Current capability matrix
@@ -69,7 +73,8 @@ vignette("validation", package = "lmmix")
 | Missing data | `na.omit`, `na.exclude`, or `na.fail` |
 | Interoperability | `emmeans`, `tidy()`, `glance()`, and `augment()` |
 | Diagnostic plots | `plot.lmm()` returns `ggplot2` residual, Q-Q, and fitted-value diagnostics |
-| Model boundary | Gaussian responses and dense covariance factorization for small and moderate data sets |
+| Standard extensions | Known precision weights, offsets, custom contrasts, simulation, updating, and prediction intervals |
+| Model boundary | Gaussian responses; blockwise likelihood when independent components exist, with dense fitted covariance and inference matrices |
 
 The [development
 roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html)
@@ -98,9 +103,9 @@ fit <- lmm(
 
 fit
 #> Linear mixed model fit by REML
-#> Formula: `Y ~ Drug * Time`
-#> Random (Center): `~1 | Center`
-#> Repeated: `~Time | Center:Drug:Subject` (AR1)
+#> Formula: Y ~ Drug * Time
+#> Random (Center): ~1 | Center
+#> Repeated: ~Time | Center:Drug:Subject (AR1)
 #> Log-likelihood: -245.313
 #> Convergence code: 0
 ```
@@ -144,16 +149,14 @@ lsmeans(fit, ~Drug)
 #> 2 2         18.1        1.53  3.01     11.8    0.00128      13.3         23.0
 #> 3 3         17.1        1.53  3.01     11.1    0.00154      12.2         21.9
 lsmeans(fit, pairwise ~ Drug, adjust = "holm")
-#>
-#> ── Estimated marginal means ──
-#>
+#> Estimated marginal means
 #> # A tibble: 3 × 8
 #>   Drug  Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`
 #>   <fct>    <dbl>       <dbl> <dbl>     <dbl>     <dbl>      <dbl>       <dbl>
 #> 1 1         13.2        1.53  2.98      8.60   0.00339       8.27        18.0
 #> 2 2         18.1        1.53  3.01     11.8    0.00128      13.3         23.0
 #> 3 3         17.1        1.53  3.01     11.1    0.00154      12.2         21.9
-#> ── Pairwise contrasts ──
+#> Pairwise contrasts
 #> P-value adjustment: holm; confidence intervals: bonferroni
 #> # A tibble: 3 × 8
 #>   Contrast Estimate `Std Error`    DF Statistic `p value` `Conf Low` `Conf High`
@@ -238,7 +241,7 @@ fixef(fit)
 #>  12.0523806   4.7647059   3.9411765   0.9210922   2.3922323  -0.1427492
 #> Drug3:Time2 Drug2:Time3 Drug3:Time3
 #>  -0.4735144   0.8233159   0.3342512
-head(ranef(fit))
+head(ranef(fit)[[1L]])
 #> # A tibble: 3 × 2
 #>   Center `(Intercept)`
 #>   <chr>          <dbl>
@@ -313,6 +316,21 @@ emmeans::emmeans(fit, ~Drug)
 #> Confidence level used: 0.95
 ```
 
+`predict()` can return standard errors, confidence intervals, or
+prediction intervals. `simulate()` draws marginal Gaussian responses
+from the fitted model, and `update()` refits a modified specification.
+
+``` r
+predict(fit, se.fit = TRUE, re.form = NA)
+predict(fit, interval = "prediction", re.form = NA)
+simulate(fit, nsim = 20, seed = 2026)
+update(fit, . ~ . - Drug:Time)
+```
+
+Prediction standard errors condition on any included empirical random
+effects. Prediction intervals add the fitted residual variance; they do
+not add BLUP estimation uncertainty.
+
 Kenward-Roger inference is available for REML fits. Nested models with
 different fixed effects are automatically refitted with ML for a
 likelihood-ratio comparison.
@@ -358,10 +376,13 @@ limitations.
 The complete and maintained list is available in the [development
 roadmap](https://aureliennicosiaulaval.github.io/lmmix/ROADMAP.html).
 
-Version `0.3.0` fits univariate Gaussian models. It is not a generalized
-mixed-model engine. The likelihood constructs and factors a dense
-marginal covariance matrix, so the package targets small and moderate
-data sets rather than large-scale sparse problems.
+Version `0.4.0` fits univariate Gaussian models. It is not a generalized
+mixed-model engine. The likelihood detects independent connected
+components and factors their covariance blocks separately. The fitted
+object and some inference calculations still retain dense marginal
+matrices. Fully crossed designs may also form one large connected
+component, so the package does not yet make a large-scale
+sparse-computation claim.
 
 Rows with missing responses or model covariates are handled according to
 `na.action`; the package does not impute missing covariates. Conditional
@@ -377,7 +398,10 @@ Satterthwaite (1946), with multi-degree-of-freedom tests based on Fai
 and Cornelius (1996). Small-sample covariance adjustment follows Kenward
 and Roger (1997). Estimated marginal means follow Searle, Speed, and
 Milliken (1980). Full citations and DOI links are included in the
-package help and the [theory vignette](articles/theory-reml.html).
+package help and the [theory vignette](articles/theory-reml.html). The
+[comparison vignette](articles/comparison.html) cites the primary
+software papers and official package documentation used to delimit
+overlapping scope.
 
 ## Package citation
 

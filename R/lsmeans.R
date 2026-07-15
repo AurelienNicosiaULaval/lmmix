@@ -285,13 +285,16 @@ lsmeans <- function(
 
 #' @export
 print.lmm_lsmeans_list <- function(x, ...) {
-  cli::cli_h2("Estimated marginal means")
+  writeLines("Estimated marginal means")
   print(x$lsmeans)
-  cli::cli_h2("Pairwise contrasts")
+  writeLines("Pairwise contrasts")
   p_adjust <- attr(x$contrasts, "p.adjust")
   conf_adjust <- attr(x$contrasts, "conf.adjust")
-  cli::cli_text(
-    "P-value adjustment: {p_adjust}; confidence intervals: {conf_adjust}"
+  writeLines(
+    paste0(
+      "P-value adjustment: ", p_adjust,
+      "; confidence intervals: ", conf_adjust
+    )
   )
   print(x$contrasts)
   invisible(x)

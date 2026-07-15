@@ -59,8 +59,20 @@ fit_covariance_parameters <- function(
   control,
   compute_hessian = TRUE
 ) {
+  cache <- new.env(parent = emptyenv())
   objective <- function(eta) {
-    negative_log_likelihood(eta, design = design, method = method)
+    fit <- tryCatch(
+      gls_at_eta(eta, design = design),
+      error = function(cnd) NULL
+    )
+    cache$fit <- fit
+    cache$eta <- eta
+    nll_from_gls(
+      fit,
+      n = nrow(design$x),
+      p = ncol(design$x),
+      method = method
+    )
   }
   npar <- design$covariance_spec$npar
   start <- control$initial %||% initial_eta(design$y, design)
@@ -129,6 +141,7 @@ fit_covariance_parameters <- function(
       }
     )
     result$objective <- objective(result$eta)
+    result$gls <- cache$fit
     result$attempt <- attempt
     attempts[[attempt]] <- result
     if (result$code == 0L && is.finite(result$objective)) {
@@ -175,7 +188,8 @@ fit_covariance_parameters <- function(
 
   list(
     eta = eta,
-    objective = objective(eta),
+    objective = selected$objective,
+    gls = selected$gls,
     hessian = hessian,
     eta_vcov = hessian_result$vcov,
     hessian_positive_definite = hessian_result$positive_definite,

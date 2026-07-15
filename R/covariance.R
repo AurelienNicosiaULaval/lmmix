@@ -140,6 +140,47 @@ make_repeated_design <- function(repeated, data, structure) {
   )
 }
 
+make_likelihood_blocks <- function(random_design, repeated_design, n) {
+  parent <- seq_len(n)
+
+  find_root <- function(index) {
+    root <- index
+    while (parent[[root]] != root) {
+      root <- parent[[root]]
+    }
+    while (parent[[index]] != index) {
+      next_index <- parent[[index]]
+      parent[[index]] <<- root
+      index <- next_index
+    }
+    root
+  }
+
+  merge_rows <- function(rows) {
+    if (length(rows) <= 1L) {
+      return(invisible(NULL))
+    }
+    root <- find_root(rows[[1L]])
+    for (index in rows[-1L]) {
+      other <- find_root(index)
+      if (other != root) {
+        parent[[other]] <<- root
+      }
+    }
+    invisible(NULL)
+  }
+
+  lapply(repeated_design$blocks, merge_rows)
+  if (!is.null(random_design)) {
+    for (term in random_design$terms) {
+      lapply(split(seq_len(n), term$group_index), merge_rows)
+    }
+  }
+
+  roots <- vapply(seq_len(n), find_root, integer(1L))
+  unname(split(seq_len(n), match(roots, unique(roots))))
+}
+
 triangle_size <- function(n) {
   n * (n + 1L) / 2L
 }
@@ -325,15 +366,12 @@ random_covariance <- function(eta, random_design) {
   tcrossprod(cholesky)
 }
 
-build_covariance <- function(eta, design) {
+covariance_parts <- function(eta, design) {
   spec <- design$covariance_spec
   random_design <- design$random
-  repeated_design <- design$repeated
-  n <- nrow(design$x)
 
   g <- list()
   g_big <- list()
-  random_part <- matrix(0, n, n)
   if (!is.null(random_design)) {
     for (index in seq_along(random_design$terms)) {
       term <- random_design$terms[[index]]
@@ -344,31 +382,74 @@ build_covariance <- function(eta, design) {
         term_g,
         simplify = FALSE
       ))
-      random_part <- random_part + as.matrix(
-        term$z %*% term_g_big %*% Matrix::t(term$z)
-      )
       g[[label]] <- term_g
       g_big[[label]] <- term_g_big
     }
   }
 
   residual_base <- residual_covariance(eta[spec$residual_index], spec)
-  if (spec$structure == "id") {
-    residual <- diag(residual_base[[1L]], n)
-  } else {
-    residual <- matrix(0, n, n)
-    for (rows in repeated_design$blocks) {
-      times <- repeated_design$time_index[rows]
-      residual[rows, rows] <- residual_base[times, times, drop = FALSE]
+
+  list(
+    g = if (length(g) == 0L) NULL else g,
+    g_big = if (length(g_big) == 0L) NULL else g_big,
+    residual_base = residual_base
+  )
+}
+
+build_covariance_block <- function(eta, design, rows, parts = NULL) {
+  parts <- parts %||% covariance_parts(eta, design)
+  repeated_design <- design$repeated
+  n <- length(rows)
+
+  random_part <- matrix(0, n, n)
+  if (!is.null(design$random)) {
+    for (label in names(design$random$terms)) {
+      z <- design$random$terms[[label]]$z[rows, , drop = FALSE]
+      random_part <- random_part + as.matrix(
+        z %*% parts$g_big[[label]] %*% Matrix::t(z)
+      )
     }
   }
 
+  if (design$covariance_spec$structure == "id") {
+    residual <- diag(parts$residual_base[[1L]], n)
+  } else {
+    residual <- matrix(0, n, n)
+    local_blocks <- split(seq_along(rows), repeated_design$group[rows])
+    for (positions in local_blocks) {
+      global_rows <- rows[positions]
+      times <- repeated_design$time_index[global_rows]
+      residual[positions, positions] <- parts$residual_base[
+        times,
+        times,
+        drop = FALSE
+      ]
+    }
+  }
+  residual_scale <- 1 / sqrt(design$weights[rows])
+  residual <- residual * tcrossprod(residual_scale)
+
   list(
     v = symmetrize(random_part + residual),
-    g = if (length(g) == 0L) NULL else g,
-    g_big = if (length(g_big) == 0L) NULL else g_big,
-    r = residual,
-    residual_base = residual_base
+    r = residual
+  )
+}
+
+build_covariance <- function(eta, design) {
+  parts <- covariance_parts(eta, design)
+  block <- build_covariance_block(
+    eta,
+    design,
+    rows = seq_len(nrow(design$x)),
+    parts = parts
+  )
+
+  list(
+    v = block$v,
+    g = parts$g,
+    g_big = parts$g_big,
+    r = block$r,
+    residual_base = parts$residual_base
   )
 }
 

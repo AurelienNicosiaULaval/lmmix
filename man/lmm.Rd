@@ -12,6 +12,9 @@ lmm(
   structure = c("id", "cs", "ar1", "toep", "un"),
   method = c("REML", "ML"),
   ddf = c("satterthwaite", "residual", "kenward-roger"),
+  weights = NULL,
+  offset = NULL,
+  contrasts = NULL,
   control = lmm_control(),
   na.action = stats::na.omit
 )
@@ -39,6 +42,14 @@ or maximum likelihood (\code{"ML"}).}
 \item{ddf}{Denominator degrees-of-freedom method: \code{"satterthwaite"},
 \code{"kenward-roger"}, or \code{"residual"}.}
 
+\item{weights}{Optional known relative precision weights. The residual
+covariance is scaled on both sides by \code{diag(1 / sqrt(weights))}.}
+
+\item{offset}{Optional numeric offset added to the fixed-effect predictor.
+An \code{offset()} term in \code{formula} is also supported.}
+
+\item{contrasts}{Optional contrasts passed to \code{\link[stats:model.matrix]{stats::model.matrix()}}.}
+
 \item{control}{An object returned by \code{lmm_control()}.}
 
 \item{na.action}{Missing-value action: \code{\link[stats:na.fail]{stats::na.omit()}},
@@ -60,8 +71,9 @@ Missing values are handled according to \code{na.action}.
 The \code{random} argument accepts a grouping formula or a list of independent
 grouping formulas. The \code{repeated} argument
 accepts one ordering variable and one grouping expression. Each repeated
-group may have at most one observation per ordering value. The current
-likelihood assembles a dense marginal covariance matrix.
+group may have at most one observation per ordering value. The likelihood
+factors independent connected covariance components separately. The fitted
+object retains the complete marginal covariance for model methods.
 }
 \examples{
 fit <- lmm(

@@ -88,8 +88,9 @@ lmm_control <- function(
 #' The `random` argument accepts a grouping formula or a list of independent
 #' grouping formulas. The `repeated` argument
 #' accepts one ordering variable and one grouping expression. Each repeated
-#' group may have at most one observation per ordering value. The current
-#' likelihood assembles a dense marginal covariance matrix.
+#' group may have at most one observation per ordering value. The likelihood
+#' factors independent connected covariance components separately. The fitted
+#' object retains the complete marginal covariance for model methods.
 #'
 #' @param data A data frame or tibble. Placing `data` first makes the function
 #'   pipe-friendly.
@@ -106,6 +107,11 @@ lmm_control <- function(
 #'   or maximum likelihood (`"ML"`).
 #' @param ddf Denominator degrees-of-freedom method: `"satterthwaite"`,
 #'   `"kenward-roger"`, or `"residual"`.
+#' @param weights Optional known relative precision weights. The residual
+#'   covariance is scaled on both sides by `diag(1 / sqrt(weights))`.
+#' @param offset Optional numeric offset added to the fixed-effect predictor.
+#'   An `offset()` term in `formula` is also supported.
+#' @param contrasts Optional contrasts passed to [stats::model.matrix()].
 #' @param control An object returned by `lmm_control()`.
 #' @param na.action Missing-value action: [stats::na.omit()],
 #'   [stats::na.exclude()], or [stats::na.fail()].
@@ -147,10 +153,51 @@ lmm <- function(
   structure = c("id", "cs", "ar1", "toep", "un"),
   method = c("REML", "ML"),
   ddf = c("satterthwaite", "residual", "kenward-roger"),
+  weights = NULL,
+  offset = NULL,
+  contrasts = NULL,
   control = lmm_control(),
   na.action = stats::na.omit
 ) {
   call <- match.call()
+  evaluation_environment <- parent.frame()
+  weights_expression <- substitute(weights)
+  offset_expression <- substitute(offset)
+  weights_input <- if (missing(weights)) {
+    NULL
+  } else {
+    evaluate_data_vector(
+      weights_expression,
+      data,
+      evaluation_environment,
+      "weights"
+    )
+  }
+  offset_input <- if (missing(offset)) {
+    NULL
+  } else {
+    evaluate_data_vector(
+      offset_expression,
+      data,
+      evaluation_environment,
+      "offset"
+    )
+  }
+  if (
+    !is.null(weights_input) &&
+      any(
+        !is.na(weights_input) &
+          (!is.finite(weights_input) | weights_input <= 0)
+      )
+  ) {
+    cli::cli_abort("{.arg weights} must contain positive finite values.")
+  }
+  if (
+    !is.null(offset_input) &&
+      any(!is.na(offset_input) & !is.finite(offset_input))
+  ) {
+    cli::cli_abort("{.arg offset} must contain finite values.")
+  }
   formula <- check_formula(formula, "formula")
   if (length(formula) != 3L) {
     cli::cli_abort("{.arg formula} must be a two-sided formula.")
@@ -183,6 +230,10 @@ lmm <- function(
     formula,
     random_formulas,
     repeated,
+    extra = Filter(Negate(is.null), list(
+      weights = weights_input,
+      offset = offset_input
+    )),
     na.action = na.action
   )
   analysis_data <- prepared$data
@@ -197,7 +248,11 @@ lmm <- function(
   if (!is.numeric(y) || is.matrix(y)) {
     cli::cli_abort("The response in {.arg formula} must be a numeric vector.")
   }
-  x <- stats::model.matrix(fixed_terms, fixed_frame)
+  x <- stats::model.matrix(
+    fixed_terms,
+    fixed_frame,
+    contrasts.arg = contrasts
+  )
   if (qr(x)$rank < ncol(x)) {
     message <- paste(
       "The fixed-effects model matrix is rank deficient;",
@@ -217,18 +272,45 @@ lmm <- function(
     structure,
     covariance_order = structure_spec$order
   )
+  formula_offset <- stats::model.offset(fixed_frame)
+  if (is.null(formula_offset)) {
+    formula_offset <- numeric(nrow(x))
+  }
+  explicit_offset <- prepared$extra$offset %||% numeric(nrow(x))
+  total_offset <- as.numeric(formula_offset) + explicit_offset
+  analysis_weights <- prepared$extra$weights %||% rep(1, nrow(x))
   design <- list(
     x = x,
-    y = as.numeric(y),
+    y = as.numeric(y) - total_offset,
+    response = as.numeric(y),
+    offset = total_offset,
+    weights = analysis_weights,
     random = random_design,
     repeated = repeated_design,
     covariance_spec = covariance_spec
   )
+  design$likelihood_blocks <- make_likelihood_blocks(
+    random_design,
+    repeated_design,
+    n = nrow(x)
+  )
 
   optimization <- fit_covariance_parameters(design, method, control)
-  gls <- gls_at_eta(optimization$eta, design)
+  gls <- optimization$gls
   if (is.null(gls)) {
     cli::cli_abort("The fitted covariance matrix is not positive definite.")
+  }
+  if (is.null(gls$covariance)) {
+    gls$covariance <- build_covariance(optimization$eta, design)
+  }
+  beta_vcov_derivatives <- if (ddf == "satterthwaite") {
+    beta_vcov_derivatives_at_eta(
+      optimization$eta,
+      design,
+      method = control$deriv_method
+    )
+  } else {
+    NULL
   }
   random_effects <- estimate_blup(gls, design)
   kr <- NULL
@@ -242,7 +324,7 @@ lmm <- function(
     )
     beta_vcov <- kr$adjusted_vcov
   }
-  marginal_fitted <- drop(x %*% gls$beta)
+  marginal_fitted <- total_offset + drop(x %*% gls$beta)
   conditional_fitted <- marginal_fitted
   if (!is.null(random_effects)) {
     for (label in names(random_design$terms)) {
@@ -278,17 +360,30 @@ lmm <- function(
     repeated_formula = repeated,
     terms = fixed_terms,
     contrasts = attr(x, "contrasts"),
+    contrasts_input = contrasts,
     xlevels = factor_xlevels(fixed_frame),
     model_frame = fixed_frame,
     data = analysis_data,
     original_data = data,
     original_row_index = prepared$row_index,
+    weights = analysis_weights,
+    weights_input = weights_input,
+    weights_expression = if (is.null(weights_input)) {
+      NULL
+    } else {
+      weights_expression
+    },
+    offset = total_offset,
+    offset_input = offset_input,
+    offset_expression = if (is.null(offset_input)) NULL else offset_expression,
+    evaluation_environment = evaluation_environment,
     na.action = omitted,
     na_action = prepared$na_action,
     design = design,
     coefficients = gls$beta,
     beta_vcov = beta_vcov,
     beta_vcov_model = gls$beta_vcov,
+    beta_vcov_derivatives = beta_vcov_derivatives,
     kr = kr,
     eta = optimization$eta,
     eta_vcov = optimization$eta_vcov,
